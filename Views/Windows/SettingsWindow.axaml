@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:VSuiteLab.Views"
+        xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
+        x:Class="VSuiteLab.Views.SettingsWindow"
+        x:DataType="vm:SettingsWindowViewModel"
+        Width="800"
+        Height="500"
+        Title="VSuite Lab - Settings">
+
+    <DockPanel>
+        
+        <!-- Content -->
+        <TabControl TabStripPlacement="Left"
+                    Classes="SettingsTabs"
+                    SelectedIndex="{Binding SelectedTabIndex}">
+
+            <!-- Sync -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="24" Height="24"
+                               Source="avares://VSuiteLab/Assets/Material_Symbols_Sharp/sync_.png"/>
+                        <TextBlock Text="Sync"/>
+                    </StackPanel>
+                </TabItem.Header>
+
+                <views:SyncSettingsView
+                    DataContext="{Binding SyncSettings}" />
+            </TabItem>
+
+            <!-- DAV -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="24" Height="24"
+                               Source="avares://VSuiteLab/Assets/Material_Symbols_Sharp/cloud_.png"/>
+                        <TextBlock Text="DAV Instances"/>
+                    </StackPanel>
+                </TabItem.Header>
+
+                <views:DavInstancesView
+                    DataContext="{Binding DavSettings}" />
+            </TabItem>
+
+        </TabControl>
+    </DockPanel>
+</Window>

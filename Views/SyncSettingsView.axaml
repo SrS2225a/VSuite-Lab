@@ -1,0 +1,96 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
+             x:Class="VSuiteLab.Views.SyncSettingsView"
+             x:DataType="vm:SyncSettingsViewModel">
+
+    <ScrollViewer Padding="12">
+    <StackPanel MaxWidth="480" Spacing="12">
+
+        <CheckBox Content="Enable automatic sync"
+                  IsChecked="{Binding IsAutoSyncEnabled}" />
+
+        <TextBlock FontSize="11"
+                   Opacity="0.6"
+                   TextWrapping="Wrap">
+            Automatic sync will periodically synchronize your journals, notes, and tasks with the
+            server. Setting the interval to 0 disables automatic sync entirely.
+        </TextBlock>
+
+        <Border Padding="10"
+                CornerRadius="6"
+                Background="{DynamicResource ThemeBackgroundLowBrush}"
+                IsEnabled="{Binding IsAutoSyncEnabled}">
+
+            <Grid ColumnDefinitions="Auto,*"
+                  RowDefinitions="Auto,Auto"
+                  ColumnSpacing="12"
+                  RowSpacing="10">
+
+                <!-- Interval -->
+                <TextBlock Text="Interval"
+                           Opacity="0.7"
+                           VerticalAlignment="Center"/>
+
+                <Grid Grid.Column="1"
+                      ColumnDefinitions="*,Auto"
+                      ColumnSpacing="8">
+
+                    <NumericUpDown
+                        Value="{Binding SyncIntervalDisplay, Mode=TwoWay}"
+                        Grid.Column="0"
+                        HorizontalAlignment="Stretch" />
+
+                    <ComboBox
+                        Grid.Column="1"
+                        Width="110"
+                        ItemsSource="{Binding TimeUnits}"
+                        SelectedItem="{Binding SelectedUnit}" />
+                </Grid>
+
+                <!-- Max retries -->
+                <TextBlock Grid.Row="1"
+                           Text="Max retries"
+                           Opacity="0.7"
+                           VerticalAlignment="Center"/>
+
+                <NumericUpDown Grid.Row="1"
+                               Grid.Column="1"
+                               Minimum="0"
+                               Maximum="10"
+                               Value="{Binding MaxRetry}"/>
+
+            </Grid>
+        </Border>
+
+        <CheckBox Content="Sync immediately on startup"
+                  IsChecked="{Binding SyncOnChange}" />
+        
+        <Border Padding="10"
+                CornerRadius="6"
+                Background="{DynamicResource ThemeBackgroundLowBrush}">
+
+            <StackPanel Spacing="10">
+
+                <TextBlock Text="Conflict Resolution"
+                           FontWeight="SemiBold" />
+
+                <TextBlock FontSize="11"
+                           Opacity="0.6"
+                           TextWrapping="Wrap">
+                    When a conflict occurs between local and server versions of an item,
+                    choose how the application should resolve it.
+                </TextBlock>
+
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding ConflictStrategies}"
+                          DisplayMemberBinding="{Binding Label}"
+                          SelectedValueBinding="{Binding Value}"
+                          SelectedValue="{Binding SelectedConflictStrategy}" />
+            </StackPanel>
+        </Border>
+
+    </StackPanel>
+</ScrollViewer>
+
+</UserControl>

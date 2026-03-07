@@ -1,0 +1,20 @@
+using System;
+
+namespace VSuiteLab.Models;
+
+public class Settings
+{
+    public Guid Id  { get; set; }
+    public float SyncAuto { get; set; } = 600;
+    public int MaxRetry { get; set; } = 3;
+    public bool SyncOnChange { get; set; } = false;
+    
+    public ConflictStrategy ConflictStrategy { get; set; } = ConflictStrategy.PreferServer;
+}
+
+public enum ConflictStrategy
+{
+    PreferServer,
+    PreferClient,
+    Ignore
+}

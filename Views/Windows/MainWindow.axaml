@@ -1,0 +1,70 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
+        xmlns:views="clr-namespace:VSuiteLab.Views"
+        x:Class="VSuiteLab.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1100" Height="700"
+        mc:Ignorable="d"
+        Title="VSuite Lab">
+    <Window.DataContext>
+        <vm:MainWindowViewModel/>
+    </Window.DataContext>
+    
+    <Grid>
+
+        <!-- Main content layer -->
+        <DockPanel>
+            <!-- Toolbar / Tabs -->
+            <Border DockPanel.Dock="Top" Padding="5,0,5,0"
+                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    Height="40">
+                <Grid ColumnDefinitions="200,*,*,Auto">
+                    
+                    <TextBox Grid.Column="0"
+                             Height="32"
+                             Text="{Binding TasksViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Watermark="{Binding SelectedItem.(TabItem.Header), ElementName=MainTabs, StringFormat=Search {0}}" />
+
+                    <TabControl Grid.Column="1"
+                                Background="Transparent"
+                                TabStripPlacement="Top"
+                                x:Name="MainTabs">
+                        <TabItem Header="Journals" />
+                        <TabItem Header="Notes" />
+                        <TabItem Header="Tasks" />
+                    </TabControl>
+                    
+                    <TextBlock Grid.Column="2" 
+                               TextAlignment="Center" 
+                               Foreground="{DynamicResource SystemControlDescriptionTextForegroundBrush}" 
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap"
+                               Text="{Binding Message.Message}"/>
+
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding SyncCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Width="20" Height="20" Source="avares://VSuiteLab/Assets/Material_Symbols_Sharp/sync_desktop_.png" />
+                                <TextBlock Text=" Sync"></TextBlock>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding OpenSettingsCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Width="20" Height="20" Source="avares://VSuiteLab/Assets/Material_Symbols_Sharp/settings_.png" />
+                                <TextBlock Text=" Settings"></TextBlock>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                </Grid>
+            </Border>
+            
+            <ContentControl>
+                <views:TasksView DataContext="{Binding TasksViewModel}" />
+            </ContentControl>
+        </DockPanel>
+    </Grid>
+</Window>

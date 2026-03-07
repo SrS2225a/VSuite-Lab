@@ -1,0 +1,110 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
+             x:DataType="vm:DavSettingsViewModel"
+             xmlns:models="clr-namespace:VSuiteLab.Models"
+             xmlns:panels="using:Avalonia.Labs.Panels"
+             xmlns:vs="clr-namespace:VSuiteLab.Resources"
+             x:Class="VSuiteLab.Views.DavInstancesView">
+
+     <DockPanel Margin="12">
+        <panels:FlexPanel Direction="Row" JustifyContent="SpaceBetween" AlignItems="Center" DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Command="{Binding AddCommand}" IsEnabled="{Binding !IsAddSaving}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <vs:LoadingIndicator Width="20"
+                                             Height="20"
+                                             IsVisible="{Binding IsAddSaving}"
+                                             SpeedRatio="1.2" />
+                        <TextBlock Text="Add"
+                                   IsVisible="{Binding !IsAddSaving}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Button Command="{Binding UpdateCommand}" IsEnabled="{Binding !IsUpdateSaving}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <vs:LoadingIndicator Width="20"
+                                             Height="20"
+                                             IsVisible="{Binding IsUpdateSaving}"
+                                             SpeedRatio="1.2" />
+                        <TextBlock Text="Update"
+                                   IsVisible="{Binding !IsUpdateSaving}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Button Content="Delete" Background="{DynamicResource SystemControlBackgroundCriticalBrush}"
+                        Command="{Binding RemoveCommand}" />
+            </StackPanel>
+        </panels:FlexPanel>
+
+        <Grid ColumnDefinitions="2*,3*"
+              Margin="0,10,0,0">
+
+            <!-- List of mounts -->
+            <ListBox ItemsSource="{Binding DavConfigs}"
+                     SelectedItem="{Binding SelectedDavConfig}">
+
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:DavConfig">
+                        <TextBlock Text="{Binding Name}" Foreground="{Binding Color}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+
+            </ListBox>
+
+            <!-- Editor -->
+            <ScrollViewer Grid.Column="1"
+                          Margin="10,0,0,0">
+
+                <StackPanel Spacing="6">
+
+                    <TextBox Watermark="Name"
+                             Text="{Binding SelectedDavConfig.Name}" />
+
+                    <Border CornerRadius="6"
+                            Padding="6,0"
+                            Background="{DynamicResource TextControlBackground}"
+                            BorderBrush="{DynamicResource TextControlBorderBrush}"
+                            BorderThickness="1">
+
+                        <Grid ColumnDefinitions="Auto,*"
+                              VerticalAlignment="Center"
+                              ColumnSpacing="10">
+
+                            <TextBlock Text="Color"
+                                       VerticalAlignment="Center"
+                                       Opacity="0.7" />
+
+                            <ColorPicker Grid.Column="1"
+                                         HorizontalAlignment="Stretch"
+                                         IsAlphaEnabled="False" IsAlphaVisible="False"
+                                         Color="{Binding SelectedDavConfig.Color}" />
+                        </Grid>
+                    </Border>
+
+
+                    <TextBox Watermark="HTTP URL"
+                             Text="{Binding SelectedDavConfig.httpUrl}" />
+
+                    <TextBox Watermark="Username"
+                             Text="{Binding SelectedDavConfig.username}" />
+
+                    <TextBox Watermark="Password"
+                             PasswordChar="*"
+                             Text="{Binding SelectedDavConfig.password}" />
+
+                    <!-- Status message -->
+                    <TextBlock Text="{Binding StatusResponse.Message}"
+                               Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"
+                               TextWrapping="Wrap"
+                               Margin="0,6,0,0" />
+
+                </StackPanel>
+
+            </ScrollViewer>
+
+        </Grid>
+    </DockPanel>
+</UserControl>
