@@ -1,0 +1,586 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
+             xmlns:models="clr-namespace:VSuiteLab.Models"
+             x:DataType="vm:TasksViewModel"
+             x:Class="VSuiteLab.Views.TasksView"
+             mc:Ignorable="d">
+
+    <Grid ColumnDefinitions="340,*" RowDefinitions="Auto,*">
+        
+        <!-- Sidebar -->
+        <Border Grid.Row="1"
+                BorderThickness="0,1,1,0"
+                BorderBrush="{DynamicResource ThemeBorderLowBrush}">
+
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="8">
+                    <Button Content="Save New" Command="{Binding SaveNewNoteCommand}" />
+                    <Button Content="Update" Command="{Binding SaveNoteCommand}" />
+                    <Button Content="Delete" Command="{Binding DeleteNoteCommand}"/>
+                </StackPanel>
+
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding GroupedNotes}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:GroupItemsCalDavTask">
+                                <StackPanel Spacing="8" Margin="6">
+
+                                    <!-- Group Header -->
+                                    <Border Padding="4"
+                                            Background="{DynamicResource ThemeControlMidBrush}"
+                                            CornerRadius="6">
+                                        <TextBlock Text="{Binding Key}"
+                                                   FontWeight="Bold"
+                                                   FontSize="12"/>
+                                    </Border>
+
+                                    <!-- Task list -->
+                                    <ListBox ItemsSource="{Binding Items}"
+                                             SelectedItem="{Binding $parent[UserControl].DataContext.SelectedNote, Mode=TwoWay}"
+                                             BorderThickness="0"
+                                             Background="Transparent" >
+                                        <ListBox.ItemTemplate>
+
+                                            <DataTemplate x:DataType="models:CalDavTask">
+
+                                                <Border CornerRadius="8"
+                                                        Padding="2"
+                                                        Background="{DynamicResource ThemeControlLowBrush}">
+                                                    <Border.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem IsEnabled="False">
+                                                                <MenuItem.Header>
+                                                                    <TextBlock Text="{Binding Id, StringFormat='Id: {0}'}"/>
+                                                                </MenuItem.Header>
+                                                            </MenuItem>
+                                                            <MenuItem IsEnabled="False">
+                                                                <MenuItem.Header>
+                                                                    <TextBlock Text="{Binding uriUrl, StringFormat='Uri: {0}'}"/>
+                                                                </MenuItem.Header>
+                                                            </MenuItem>
+                                                            <MenuItem IsEnabled="False">
+                                                                <MenuItem.Header>
+                                                                    <TextBlock Text="{Binding Etag, StringFormat='Etag: {0}'}"/>
+                                                                </MenuItem.Header>
+                                                            </MenuItem>
+                                                            <MenuItem IsEnabled="False">
+                                                                <MenuItem.Header>
+                                                                    <TextBlock Text="{Binding Uid, StringFormat='Uid: {0}'}"/>
+                                                                </MenuItem.Header>
+                                                            </MenuItem>
+                                                            <MenuItem IsEnabled="False">
+                                                                <MenuItem.Header>
+                                                                    <TextBlock Text="{Binding Sequence, StringFormat='Sequence: {0}'}"/>
+                                                                </MenuItem.Header>
+                                                            </MenuItem>
+                                                        </ContextMenu>
+                                                    </Border.ContextMenu>
+
+                                                    <StackPanel Spacing="6">
+
+                                                        <!-- TODO:
+                                                        1. Fix the icons to be used correctly making them pop a bit out more
+                                                        2. The title should be able to wrap
+                                                        3. Fix the cutting off in title context menu and start/due dates
+                                                         -->
+                                                        <TextBlock Text="{Binding Summary}"
+                                                                   FontWeight="SemiBold"
+                                                                   FontSize="13"
+                                                                   TextTrimming="CharacterEllipsis"/>
+
+                                                        <!-- Badges -->
+                                                        <WrapPanel>
+                                                            <Border Background="{DynamicResource ThemeSuccessBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="4,1"
+                                                                    VerticalAlignment="Center">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                    <TextBlock Text="{Binding Status}" FontSize="10"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            
+                                                            <Border Background="{DynamicResource ThemeAccentBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="4,1"
+                                                                    VerticalAlignment="Center"
+                                                                    IsVisible="{Binding Priority, Converter={StaticResource IntToBoolConverter}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                    <TextBlock Text="{Binding Priority}" FontSize="10"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            
+                                                            <ItemsControl ItemsSource="{Binding Categories}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <WrapPanel/>
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border Background="{DynamicResource ThemeSecondaryBrush}"
+                                                                                CornerRadius="8"
+                                                                                Padding="4,1">
+                                                                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                                <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                                <TextBlock Text="{Binding Value}" FontSize="10"/>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            
+                                                            <Border Background="{DynamicResource ThemeChromeMediumBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="4,1"
+                                                                    IsVisible="{Binding Attachments.Count, Converter={StaticResource IntToBoolConverter}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                    <TextBlock Text="Attach" FontSize="10"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            
+                                                            <Border Background="{DynamicResource ThemeChromeHighBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="4,1"
+                                                                    IsVisible="{Binding Comments.Count, Converter={StaticResource IntToBoolConverter}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                    <TextBlock Text="Notes" FontSize="10"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            
+                                                            <Border Background="{DynamicResource ThemeInfoBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="4,1"
+                                                                    IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                    <TextBlock Text="{Binding DueDate, StringFormat='{}{0:MMM dd}'}" FontSize="10"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            
+                                                            <Border Background="{DynamicResource ThemeAccentBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="4,1"
+                                                                    IsVisible="{Binding StartDate, Converter={StaticResource NullToBoolConverter}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                    <TextBlock Text="{Binding StartDate, StringFormat='{}{0:MMM dd}'}" FontSize="10"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            
+                                                            <Border Background="{DynamicResource ThemeSuccessBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="4,1"
+                                                                    IsVisible="{Binding CompletedDate, Converter={StaticResource NullToBoolConverter}}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                    <TextBlock Text="{Binding CompletedDate, StringFormat='{}{0:MMM dd}'}" FontSize="10"/>
+                                                                </StackPanel>
+                                                            </Border>
+
+                                                            <!-- DAV Server -->
+                                                            <Border CornerRadius="8"
+                                                                    Padding="4,1"
+                                                                    Background="{Binding DavConfig.Color}">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock FontFamily="Material Icons" Text="" FontSize="10"/>
+                                                                    <TextBlock Text="{Binding DavConfig.Name}" FontSize="10"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </WrapPanel>
+
+                                                    </StackPanel>
+
+                                                </Border>
+
+                                            </DataTemplate>
+
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </StackPanel>
+                            </DataTemplate>
+
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                
+            </DockPanel>
+        </Border>
+
+        <!-- Editor -->
+        <ScrollViewer Grid.Row="1" Grid.Column="1">
+            <StackPanel Margin="16" Spacing="16">
+
+                <!-- Card -->
+                <Border Padding="0,0,0,10" CornerRadius="12"
+                        Background="{DynamicResource ThemeControlMidBrush}">
+
+                    <StackPanel Spacing="14">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+
+                            <!-- DAV instance -->
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding DavInstances}"
+                                      SelectedItem="{Binding SelectedDavInstance}"
+                                      PlaceholderText="DAV instance"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"
+                                                   Foreground="{Binding Color}"
+                                                   IsEnabled="{Binding SupportsVtodo}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+
+                            <!-- Title -->
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding SelectedNote.Summary}"
+                                     Watermark="Title"
+                                     FontSize="20"
+                                     FontWeight="SemiBold"
+                                     HorizontalAlignment="Stretch"
+                                     VerticalAlignment="Stretch"/>
+                        </Grid>
+
+                        <!-- Description -->
+                        <StackPanel>
+                            <TextBox Text="{Binding SelectedNote.Description}"
+                                     Watermark="Write your note…"
+                                     AcceptsReturn="True"
+                                     MinHeight="180" />
+                        </StackPanel>
+                        
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,*,*"
+                                  ColumnSpacing="16">
+
+                                <!-- Status -->
+                                <Grid Grid.Column="0" RowDefinitions="Auto,*">
+                                    <TextBlock Text="Status"
+                                               FontSize="11"
+                                               Opacity="0.6"/>
+                                    <ComboBox Grid.Row="1"
+                                              HorizontalAlignment="Stretch"
+                                              ItemsSource="{Binding TodoStatuses}"
+                                              DisplayMemberBinding="{Binding Label}"
+                                              SelectedValueBinding="{Binding Value}"
+                                              SelectedValue="{Binding SelectedNote.Status}" />
+                                </Grid>
+
+                                <!-- Priority -->
+                                <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                                    <TextBlock Text="Priority"
+                                               FontSize="11"
+                                               Opacity="0.6"/>
+                                    <ComboBox Grid.Row="1"
+                                              HorizontalAlignment="Stretch"
+                                              ItemsSource="{Binding Priorities}"
+                                              DisplayMemberBinding="{Binding Label}"
+                                              SelectedValueBinding="{Binding Value}"
+                                              SelectedValue="{Binding SelectedNote.Priority}" />
+                                    
+                                </Grid>
+                                
+                                <!-- Class -->
+                                <Grid Grid.Column="2" RowDefinitions="Auto,*">
+                                    <TextBlock Text="Class"
+                                               FontSize="11"
+                                               Opacity="0.6"/>
+                                    <ComboBox Grid.Row="1"
+                                              HorizontalAlignment="Stretch"
+                                              ItemsSource="{Binding Classifications}"
+                                              DisplayMemberBinding="{Binding Label}"
+                                              SelectedValueBinding="{Binding Value}"
+                                              SelectedValue="{Binding SelectedNote.Classification}" />
+                                    
+                                </Grid>
+                            </Grid>
+                                
+                            <!-- ~1~ Completed @1@ -->
+                            <!-- <DatePicker SelectedDate="{Binding SelectedNote.CompletedDate}" -->
+                            <!--             Watermark="Completed Date"/> -->
+
+                        </StackPanel>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+
+                            <!-- Start -->
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="Start"
+                                           FontSize="11"
+                                           Opacity="0.6"/>
+                                
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+                                    <Grid ColumnDefinitions="2*,1*" ColumnSpacing="8">
+                                        <DatePicker Grid.Column="0"
+                                                    SelectedDate="{Binding StartDateOnly, Mode=TwoWay}"
+                                                    HorizontalAlignment="Stretch" />
+
+                                        <TimePicker Grid.Column="1"
+                                                    SelectedTime="{Binding StartTimeOnly, Mode=TwoWay}"
+                                                    HorizontalAlignment="Stretch" />
+                                    </Grid>
+
+                                    <!-- Clear button -->
+                                    <Button Grid.Column="1"
+                                            Content="✕"
+                                            Padding="6,2"
+                                            VerticalAlignment="Center"
+                                            Command="{Binding ClearStartDate}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Due -->
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="Due"
+                                           FontSize="11"
+                                           Opacity="0.6"/>
+                                
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+                                    
+                                    <Grid ColumnDefinitions="2*,1*" ColumnSpacing="8">
+                                        <DatePicker Grid.Column="0"
+                                                    SelectedDate="{Binding DueDateOnly, Mode=TwoWay}"
+                                                    HorizontalAlignment="Stretch" />
+
+                                        <TimePicker Grid.Column="1"
+                                                    SelectedTime="{Binding DueTimeOnly, Mode=TwoWay}"
+                                                    HorizontalAlignment="Stretch" />
+                                    </Grid>
+
+                                    <!-- Clear button -->
+                                    <Button Grid.Column="1"
+                                            Content="✕"
+                                            Padding="6,2"
+                                            VerticalAlignment="Center"
+                                            Command="{Binding ClearDueDate}" />
+                                </Grid>
+                            </StackPanel>
+
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Metadata + Comments -->
+                <Expander Header="More Options"
+                          IsExpanded="False"
+                          HorizontalAlignment="Stretch">
+
+                    <StackPanel Spacing="16">
+
+                        <!-- ===== Metadata ===== -->
+                        <Border CornerRadius="10"
+                                Background="{DynamicResource ThemeControlLowBrush}">
+
+                            <StackPanel Spacing="12">
+
+                                <TextBlock Text="Metadata"
+                                           FontWeight="SemiBold"
+                                           FontSize="14" />
+
+                                <!-- Status + Location -->
+                                <Grid ColumnDefinitions="*,*,*"
+                                      ColumnSpacing="12">
+                                    
+                                    <TextBox Text="{Binding SelectedNote.Url}"
+                                             Watermark="Url"></TextBox>
+
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding SelectedNote.Location}"
+                                             Watermark="Location" />
+
+                                    <TextBox Grid.Column="2" 
+                                             Text="{Binding SelectedNote.Contact}"
+                                             Watermark="Contact"></TextBox>
+                                </Grid>
+
+                                <!-- Categories -->
+                                <TextBlock Text="Categories"
+                                           FontWeight="SemiBold" />
+                                
+                                <Button Content="Add Category"
+                                        Command="{Binding AddCategoryCommand}"
+                                        HorizontalAlignment="Left"/>
+
+                                <ItemsControl ItemsSource="{Binding SelectedNote.Categories}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:CalDavCategory">
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Stretch"
+                                                        Spacing="12">
+
+                                                <TextBox Text="{Binding Value}"
+                                                         Margin="0,2" />
+
+                                                <Button Content="✕"
+                                                        Command="{Binding $parent[ItemsControl].DataContext.RemoveCategoryCommand}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Attendees -->
+                                <TextBlock Text="Attendees"
+                                           FontWeight="SemiBold" />
+                                <TextBlock FontSize="12" Text="Attention: Servers might automatically process attendees e.g. by sending iMAP messages."></TextBlock>
+                                
+                                <Button Content="Add Attendee"
+                                        Command="{Binding AddAttendeeCommand}"
+                                        HorizontalAlignment="Left"/>
+                                
+                                <ItemsControl ItemsSource="{Binding SelectedNote.Attendees}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:CalDavAttendee">
+                                            <Grid ColumnDefinitions="2*,2*,1.5*,Auto"
+                                                  ColumnSpacing="8"
+                                                  Margin="0,2">
+                                                <TextBox Grid.Column="0"
+                                                         Text="{Binding Name}"
+                                                         Watermark="Name"/>
+                                                
+                                                <TextBox Grid.Column="1"
+                                                         Text="{Binding Email}"
+                                                         Watermark="Email"/>
+                                                
+                                                <ComboBox Grid.Column="2"
+                                                   SelectedItem="{Binding Role}">
+                                                    <x:String>REQ-PARTICIPANT</x:String>
+                                                    <x:String>OPT-PARTICIPANT</x:String>
+                                                    <x:String>NON-PARTICIPANT</x:String>
+                                                    <x:String>CHAIR</x:String>
+                                                </ComboBox>
+
+                                                <!-- Remove -->
+                                                <Button Grid.Column="3"
+                                                        Content="✕"
+                                                        Command="{Binding $parent[ItemsControl].DataContext.RemoveAttendeeCommand}"
+                                                        CommandParameter="{Binding}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ===== Comments + Attachments ===== -->
+                        <Border CornerRadius="10"
+                                Background="{DynamicResource ThemeControlLowBrush}">
+
+                            <StackPanel Spacing="12">
+
+                                <TextBlock Text="Comments"
+                                           FontWeight="SemiBold"
+                                           FontSize="14" />
+                                
+                                <Button Content="Add Comment"
+                                        Command="{Binding AddCommentCommand}"
+                                        HorizontalAlignment="Left"/>
+
+                                <ItemsControl ItemsSource="{Binding SelectedNote.Comments}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:CalDavComment">
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Stretch"
+                                                        Spacing="12">
+                                                <TextBox Text="{Binding Value}"
+                                                         AcceptsReturn="True"
+                                                         Margin="0,2" />
+                                                
+                                                <Button Content="✕"
+                                                        Command="{Binding $parent[ItemsControl].DataContext.RemoveCommentCommand}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Text="Attachments"
+                                           FontWeight="SemiBold"
+                                           Margin="0,12,0,0"/>
+                                
+                                <Button Content="Add Attachment"
+                                        Command="{Binding AddAttachmentCommand}"
+                                        HorizontalAlignment="Left"/>
+
+                                <ItemsControl ItemsSource="{Binding SelectedNote.Attachments}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:CalDavAttachment">
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Stretch"
+                                                        Spacing="12">
+                                                <TextBlock Text="{Binding Title}"
+                                                           Margin="0,2" />
+                                                
+                                                <Button Content="✕"
+                                                        Command="{Binding $parent[ItemsControl].DataContext.RemoveAttachmentCommand}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- ===== Alarms ===== -->
+                        <Border Background="{DynamicResource ThemeControlLowBrush}">
+
+                            <StackPanel Spacing="12">
+
+                                <TextBlock Text="Alarms"
+                                           FontWeight="SemiBold"
+                                           FontSize="14" />
+                                
+                                <Button Content="Add Alarm"
+                                        Command="{Binding AddAlarmCommand}"
+                                        HorizontalAlignment="Left"/>
+
+                                <ItemsControl ItemsSource="{Binding SelectedNote.Alarms}" Padding="0" Margin="0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:CalDavAlarm">
+                                            <Border Padding="8"
+                                                    Margin="0,4"
+                                                    CornerRadius="8"
+                                                    Background="{DynamicResource ThemeControlMidBrush}">
+                                                <StackPanel Spacing="12">
+                                                    <TextBox Text="{Binding Summary}" 
+                                                             Watermark="Summary" />
+
+                                                    <TextBox Text="{Binding Description}"
+                                                             Watermark="Description" />
+                                                    
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <DatePicker SelectedDate="{Binding SelectedDate}" />
+                                                        <TimePicker SelectedTime="{Binding SelectedTime, Mode=TwoWay}"  />
+                                                    </StackPanel>
+                                                    
+                                                    <Button Content="✕"
+                                                            Command="{Binding $parent[ItemsControl].DataContext.RemoveAlarmCommand}"
+                                                            CommandParameter="{Binding}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                
+                            </StackPanel>
+                        </Border>
+                        
+                    </StackPanel>
+                </Expander>
+                
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

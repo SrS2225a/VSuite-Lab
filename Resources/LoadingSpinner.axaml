@@ -1,0 +1,89 @@
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vs="using:VSuiteLab.Resources">
+
+  <Design.PreviewWith>
+    <Border Width="256" Height="256"
+            Background="#333333">
+
+      <vs:LoadingIndicator Foreground="Chartreuse"
+                          BorderBrush="DarkRed"
+                          BorderThickness="1"
+                          Theme="{DynamicResource Arcs}"
+                          IsActive="True"
+                          SpeedRatio="1" />
+    </Border>
+  </Design.PreviewWith>
+  
+  <ControlTheme x:Key="DefaultLoadingIndicator" TargetType="vs:LoadingIndicator">
+    <Setter Property="Width" Value="32"/>
+    <Setter Property="Height" Value="32"/>
+    <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border IsVisible="{TemplateBinding IsActive}"
+                Background="Transparent"
+                ClipToBounds="True"
+                IsHitTestVisible="False">
+          <Viewbox Stretch="Uniform">
+            <Grid Width="100" Height="100">
+              <Arc x:Name="OuterArc"
+                   Stroke="{TemplateBinding Foreground}"
+                   StrokeThickness="8"
+                   StartAngle="-90"
+                   SweepAngle="270"
+                   StrokeLineCap="Round">
+                <Arc.RenderTransform>
+                  <RotateTransform Angle="0"/>
+                </Arc.RenderTransform>
+              </Arc>
+              <Arc x:Name="InnerArc"
+                   Stroke="{TemplateBinding Foreground}"
+                   StrokeThickness="6"
+                   Opacity="0.35"
+                   StartAngle="90"
+                   SweepAngle="180"
+                   StrokeLineCap="Round">
+                <Arc.RenderTransform>
+                  <RotateTransform Angle="0"/>
+                </Arc.RenderTransform>
+              </Arc>
+            </Grid>
+          </Viewbox>
+
+          <Border.Styles>
+            <Style Selector="Arc#OuterArc">
+              <Style.Animations>
+                <Animation Duration="0:0:1.4"
+                           IterationCount="Infinite"
+                           SpeedRatio="{Binding $parent[vs:LoadingIndicator].SpeedRatio}">
+                  <KeyFrame Cue="0%">
+                    <Setter Property="RotateTransform.Angle" Value="0"/>
+                  </KeyFrame>
+                  <KeyFrame Cue="100%">
+                    <Setter Property="RotateTransform.Angle" Value="360"/>
+                  </KeyFrame>
+                </Animation>
+              </Style.Animations>
+            </Style>
+
+            <Style Selector="Arc#InnerArc">
+              <Style.Animations>
+                <Animation Duration="0:0:0.9"
+                           IterationCount="Infinite"
+                           SpeedRatio="{Binding $parent[vs:LoadingIndicator].SpeedRatio}">
+                  <KeyFrame Cue="0%">
+                    <Setter Property="RotateTransform.Angle" Value="0"/>
+                  </KeyFrame>
+                  <KeyFrame Cue="100%">
+                    <Setter Property="RotateTransform.Angle" Value="-360"/>
+                  </KeyFrame>
+                </Animation>
+              </Style.Animations>
+            </Style>
+          </Border.Styles>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>
