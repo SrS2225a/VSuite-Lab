@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -182,7 +183,8 @@ namespace VSuiteLab.ViewModels
         
         [ObservableProperty]
         private string _searchText = string.Empty;
-        
+
+        [ObservableProperty] private bool _debugEnabled = false; 
         
         [ObservableProperty]
         private ObservableCollection<GroupItemsCalDavTask> groupedNotes = new();
@@ -245,6 +247,11 @@ namespace VSuiteLab.ViewModels
             {
                 DavInstances.Add(instance);
             }
+
+            var appSettings = await _databaseService.ReadAllAsync<Settings>();
+            DebugEnabled = appSettings.Value?.FirstOrDefault().DebugEnabled ?? false;
+            Console.WriteLine("debug enabled:");
+            Console.WriteLine(DebugEnabled);
             
             var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
                 query
@@ -263,6 +270,34 @@ namespace VSuiteLab.ViewModels
             SelectedNote = new();
             // await _syncService.SyncAllAsync();
             ApplyGrouping();
+        }
+
+        [RelayCommand]
+        public async Task DownloadICSCommand(CalDavTask task)
+        {
+            if(task == null)
+                return;
+            
+            var sfd = new SaveFileDialog
+            {
+                DefaultExtension = "ics",
+                Filters = new List<FileDialogFilter>
+                {
+                    new FileDialogFilter { Name = "iCalendar", Extensions = { "ics" } }
+                },
+                InitialFileName = task.Uid + ".ics"
+            };
+            
+            var ICSUtils = new ICSUtils();
+            var IcsContent = ICSUtils.BuildVTodoICS(task);
+            
+            var lifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+            var path = await sfd.ShowAsync(lifetime?.MainWindow);
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                await File.WriteAllTextAsync(path, IcsContent);
+            }
         }
 
         [RelayCommand]

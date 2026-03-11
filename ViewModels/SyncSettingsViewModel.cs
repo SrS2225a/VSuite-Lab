@@ -137,6 +137,16 @@ public class SyncSettingsViewModel : ObservableObject
             OnPropertyChanged();
         }
     }
+
+    public bool DebugEnabled
+    {
+        get => _settings.DebugEnabled ?? false;
+        set
+        {
+            _settings.DebugEnabled = value;
+            OnPropertyChanged();
+        }
+    }
     
     public ConflictStrategy SelectedConflictStrategy
     {

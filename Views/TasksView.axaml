@@ -40,45 +40,34 @@
                                     <!-- Task list -->
                                     <ListBox ItemsSource="{Binding Items}"
                                              SelectedItem="{Binding $parent[UserControl].DataContext.SelectedNote, Mode=TwoWay}"
-                                             BorderThickness="0"
+                                             BorderThickness="0" CornerRadius="4"
                                              Background="Transparent" >
+                                        
                                         <ListBox.ItemTemplate>
-
                                             <DataTemplate x:DataType="models:CalDavTask">
-
-                                                <Border CornerRadius="8"
-                                                        Padding="2"
-                                                        Background="{DynamicResource ThemeControlLowBrush}">
-                                                    <Border.ContextMenu>
+                                                <StackPanel Background="Transparent">
+                                                    
+                                                    <StackPanel.ContextMenu>
                                                         <ContextMenu>
-                                                            <MenuItem IsEnabled="False">
-                                                                <MenuItem.Header>
-                                                                    <TextBlock Text="{Binding Id, StringFormat='Id: {0}'}"/>
-                                                                </MenuItem.Header>
-                                                            </MenuItem>
-                                                            <MenuItem IsEnabled="False">
-                                                                <MenuItem.Header>
-                                                                    <TextBlock Text="{Binding uriUrl, StringFormat='Uri: {0}'}"/>
-                                                                </MenuItem.Header>
-                                                            </MenuItem>
-                                                            <MenuItem IsEnabled="False">
-                                                                <MenuItem.Header>
-                                                                    <TextBlock Text="{Binding Etag, StringFormat='Etag: {0}'}"/>
-                                                                </MenuItem.Header>
-                                                            </MenuItem>
-                                                            <MenuItem IsEnabled="False">
-                                                                <MenuItem.Header>
-                                                                    <TextBlock Text="{Binding Uid, StringFormat='Uid: {0}'}"/>
-                                                                </MenuItem.Header>
-                                                            </MenuItem>
-                                                            <MenuItem IsEnabled="False">
-                                                                <MenuItem.Header>
-                                                                    <TextBlock Text="{Binding Sequence, StringFormat='Sequence: {0}'}"/>
-                                                                </MenuItem.Header>
-                                                            </MenuItem>
+                                                            <MenuItem Header="Download ICS"
+                                                                      Command="{Binding $parent[UserControl].DataContext.DownloadICSCommand}"
+                                                                      CommandParameter="{Binding}" />
                                                         </ContextMenu>
-                                                    </Border.ContextMenu>
-
+                                                    </StackPanel.ContextMenu>
+                                                    
+                                                    <ToolTip.Tip>
+                                                        <TextBlock TextWrapping="Wrap">
+                                                            <Run Text="Id: "/><Run Text="{Binding Id}"/><LineBreak/>
+                                                            <Run Text="Uri: "/><Run Text="{Binding uriUrl}"/><LineBreak/>
+                                                            <Run Text="Etag: "/><Run Text="{Binding Etag}"/><LineBreak/>
+                                                            <Run Text="Uid: "/><Run Text="{Binding Uid}"/><LineBreak/>
+                                                            <Run Text="Sequence: "/><Run Text="{Binding Sequence}"/>
+                                                        </TextBlock>
+                                                    </ToolTip.Tip>
+                                                    <ToolTip.ServiceEnabled>
+                                                        <Binding Path="$parent[UserControl].DataContext.DebugEnabled" />
+                                                    </ToolTip.ServiceEnabled>
+                                                    
                                                     <StackPanel Spacing="6">
 
                                                         <!-- TODO:
@@ -197,7 +186,7 @@
 
                                                     </StackPanel>
 
-                                                </Border>
+                                                </StackPanel>
 
                                             </DataTemplate>
 
