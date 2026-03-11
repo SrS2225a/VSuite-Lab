@@ -89,6 +89,9 @@
                           SelectedValue="{Binding SelectedConflictStrategy}" />
             </StackPanel>
         </Border>
+        
+        <CheckBox Content="Additional debug information"
+                  IsChecked="{Binding DebugEnabled}" />
 
     </StackPanel>
 </ScrollViewer>
