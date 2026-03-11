@@ -74,6 +74,7 @@
                                                         1. Fix the icons to be used correctly making them pop a bit out more
                                                         2. The title should be able to wrap
                                                         3. Fix the cutting off in title context menu and start/due dates
+                                                        4. Fix VALARM Datetime to just use Datetime, instead of seperating it using UTC instead of local time
                                                          -->
                                                         <TextBlock Text="{Binding Summary}"
                                                                    FontWeight="SemiBold"
