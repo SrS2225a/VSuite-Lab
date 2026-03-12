@@ -48,8 +48,8 @@ public class ICSUtils
         var note = new CalDavTask();
 
         var calendar = Calendar.Load(ics);
-       var vTodo = calendar?.Todos.FirstOrDefault();
-       if (vTodo == null) return note;
+        var vTodo = calendar?.Todos.FirstOrDefault();
+        if (vTodo == null) return note;
        
        note.Uid = vTodo.Uid ?? Guid.NewGuid().ToString();
        note.LastModified = vTodo.LastModified?.Value;
@@ -87,42 +87,31 @@ public class ICSUtils
        }
        foreach (var alarm in vTodo.Alarms)
        {
-           if (alarm.Trigger == null)
-               continue;
+           DateTimeOffset? triggerDate = null;
 
-           DateTimeOffset selectedDate;
-           TimeSpan selectedTime;
-           
-           if (alarm.Trigger.DateTime != null)
+           if (alarm.Trigger?.DateTime != null)
            {
-               var utc = alarm.Trigger.DateTime.AsUtc;
+               triggerDate = alarm.Trigger.DateTime.AsUtc;
+           }
+           else if (alarm.Trigger?.Duration != null)
+           {
+               var reference = vTodo.Start?.Value ?? DateTime.UtcNow;
+               var duration = alarm.Trigger.Duration.Value.ToTimeSpan(new CalDateTime(reference));
+               var triggerTime = reference + duration;
+               triggerDate = new DateTimeOffset(triggerTime, TimeSpan.Zero);
+           }
 
-               selectedDate = new DateTimeOffset(utc.Date, TimeSpan.Zero);
-               selectedTime = utc.TimeOfDay;
-           }
-           else if (alarm.Trigger.Duration != null)
+           if (triggerDate.HasValue)
            {
-               var referenceCal = vTodo.Start ?? vTodo.Due ?? new CalDateTime(DateTime.UtcNow);
-               var duration = alarm.Trigger.Duration.Value.ToTimeSpan(referenceCal);
-               var triggerTime = referenceCal.Value.Add(duration);
-               
-               selectedDate = new DateTimeOffset(triggerTime.Date, TimeSpan.Zero);
-               selectedTime = triggerTime.TimeOfDay;
+               note.Alarms.Add(new CalDavAlarm
+               {
+                   Action = alarm.Action,
+                   Description = alarm.Description ?? string.Empty,
+                   Summary = alarm.Summary ?? string.Empty,
+                   SelectedDate = triggerDate,
+                   Repeat = alarm.Repeat
+               });
            }
-           else
-           {
-               continue;
-           }
-           
-           note.Alarms.Add(new CalDavAlarm
-           {
-               Action = alarm.Action,
-               Description = alarm.Description ?? string.Empty,
-               Summary = alarm.Summary ?? string.Empty,
-               SelectedDate = selectedDate,
-               SelectedTime = selectedTime,
-               Repeat = alarm.Repeat
-           });
        }
        foreach (var attachment in vTodo.Attachments)
        {
@@ -201,13 +190,12 @@ public class ICSUtils
 
         foreach (var alarm in item.Alarms)
         {
-            var triggerUtc = alarm.SelectedDate
-                .UtcDateTime
-                .Add(alarm.SelectedTime);
+            if (!alarm.SelectedDate.HasValue) continue;
 
-            var trigger = new Trigger();
-            var calDate = new CalDateTime(triggerUtc, "UTC");
-            trigger.DateTime = calDate;
+            var trigger = new Trigger
+            {
+                DateTime = new CalDateTime(alarm.SelectedDate.Value.DateTime),
+            };
             trigger.Parameters.Add("VALUE", "DATE-TIME");
 
             vTodo.Alarms.Add(new Alarm
@@ -215,7 +203,8 @@ public class ICSUtils
                 Action = alarm.Action,
                 Description = alarm.Description,
                 Summary = alarm.Summary,
-                Trigger = trigger
+                Trigger = trigger,
+                Repeat = alarm.Repeat ?? 0
             });
         }
 

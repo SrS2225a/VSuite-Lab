@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using VSuiteLab.Converters;
 
 namespace VSuiteLab.Models;
 
@@ -13,8 +14,21 @@ public class CalDavAlarm
     public string? Description { get; set; }
     public string? Summary { get; set; }
     
-    public DateTimeOffset SelectedDate { get; set; } = DateTimeOffset.Now;
-    public TimeSpan SelectedTime { get; set; }
+    public DateTimeOffset? SelectedDate { get; set; } = null;
+    
+    [NotMapped]
+    public DateTimeOffset? AlarmDateOnly
+    {
+        get => TimeConverter.GetDateOnly(SelectedDate);
+        set => SelectedDate = TimeConverter.SetDateOnly(SelectedDate, value);
+    }
+
+    [NotMapped]
+    public TimeSpan? AlarmTimeOnly
+    {
+        get => TimeConverter.GetTimeOnly(SelectedDate);
+        set => SelectedDate = TimeConverter.SetTimeOnly(SelectedDate, value);
+    }
 
     public int? Repeat { get; set; }
 
