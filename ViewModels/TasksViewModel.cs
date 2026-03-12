@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -141,38 +142,6 @@ namespace VSuiteLab.ViewModels
             OnPropertyChanged();
         }
         
-        public IRelayCommand<CalDavTask> ShowDebugCommand => new RelayCommand<CalDavTask>(async task =>
-        {
-            if (task == null) return;
-
-            string debugInfo = $"Id: {task.Id}\n" +
-                               $"UriUrl: {task.uriUrl}\n" +
-                               $"Etag: {task.Etag}\n" +
-                               $"Uid: {task.Uid}\n" +
-                               $"Sequence: {task.Sequence}";
-
-            // Get the current main window
-            var mainWindow = (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-
-            if (mainWindow != null)
-            {
-                var dialog = new Window
-                {
-                    Title = "Debug Info",
-                    Width = 300,
-                    Height = 200,
-                    Content = new TextBlock
-                    {
-                        Text = debugInfo,
-                        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-                        Margin = new Avalonia.Thickness(10)
-                    }
-                };
-
-                await dialog.ShowDialog(mainWindow);
-            }
-        });
-        
         public ObservableCollection<CalDavTask> Notes { get; } = new();
         public ObservableCollection<DavConfig> DavInstances { get; } = new();
         
@@ -250,8 +219,6 @@ namespace VSuiteLab.ViewModels
 
             var appSettings = await _databaseService.ReadAllAsync<Settings>();
             DebugEnabled = appSettings.Value?.FirstOrDefault().DebugEnabled ?? false;
-            Console.WriteLine("debug enabled:");
-            Console.WriteLine(DebugEnabled);
             
             var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
                 query

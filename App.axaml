@@ -13,12 +13,13 @@
     
     <Application.Resources>
         <ResourceDictionary>
+            <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
+            <conv:NullToBoolConverter x:Key="NullToBoolConverter"/>
+            
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://VSuiteLab/Resources/LoadingSpinner.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-        <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
-        <conv:NullToBoolConverter x:Key="NullToBoolConverter"/>
     </Application.Resources>
 
     <Application.Styles>    
