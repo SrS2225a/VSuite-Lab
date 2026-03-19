@@ -72,13 +72,12 @@
 
                                                         <!-- TODO:
                                                         1. Fix the icons to be used correctly making them pop a bit out more
-                                                        2. The title should be able to wrap
                                                         3. Fix the cutting off in title context menu and start/due dates
                                                          -->
                                                         <TextBlock Text="{Binding Summary}"
                                                                    FontWeight="SemiBold"
                                                                    FontSize="13"
-                                                                   TextTrimming="CharacterEllipsis"/>
+                                                                   TextWrapping="Wrap"/>
 
                                                         <!-- Badges -->
                                                         <WrapPanel>

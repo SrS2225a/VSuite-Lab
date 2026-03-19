@@ -43,7 +43,7 @@ public class BaseSyncWorker
     /// <param name="config">The configuration containing DAV-related settings, such as connection details and credentials.</param>
     /// <param name="message">The banner message instance used to update the user interface with the progress of the synchronization.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests and stop the execution if requested.</param>
-    public async Task ExecuteAsync(DavConfig config, BannerMessage message, CancellationToken cancellationToken)
+    public async Task ExecuteAsync(DavConfig config, SyncProgress message, CancellationToken cancellationToken)
     {
         int stepIndex = 0;
         int maxIndex = 4;
@@ -53,19 +53,20 @@ public class BaseSyncWorker
             ICSUtils ICSUtils = new();
             stepIndex++;
             
-            await message.UpdateMessage("Connecting to server...", stepIndex, maxIndex);
+            message.Update("Connecting to server...", stepIndex, maxIndex);
             var clientResponse = await GetDavClientWithNetworkAsync(config);
             if (!clientResponse.Success)
             {
-                await message.UpdateMessageWithError(clientResponse.Message, stepIndex, maxIndex);
+                message.Update(clientResponse.Message, stepIndex, maxIndex);
+                message.Complete(false);
                 return;
             }
 
             var client = clientResponse.Value;
 
             stepIndex++;
-
-            await message.UpdateMessage("Checking for server changes...", stepIndex, maxIndex);
+            message.Update("Checking for server changes...", stepIndex, maxIndex);
+            
             var reportResponse = await DavMiddlewareService.SyncCollectionReportAsync(
                 config,
                 config.LastSyncToken,
@@ -74,7 +75,8 @@ public class BaseSyncWorker
 
             if (!reportResponse.Success)
             {
-                message.UpdateMessageWithError(reportResponse.Message, stepIndex, maxIndex);
+                message.Update(reportResponse.Message, stepIndex, maxIndex);
+                message.Complete(false);
                 return;
             }
 
@@ -83,7 +85,7 @@ public class BaseSyncWorker
             {
                 var syncResult = ICSUtils.ParseSyncCollectionResponse(reportResponse.Value, "VTODO");
 
-                await message.UpdateMessageWithError("Downloading tasks...", stepIndex, maxIndex);
+                message.Update("Downloading tasks...", stepIndex, maxIndex);
                 await PullVTodoItems(ICSUtils, client, syncResult, config, cancellationToken);
             }
 
@@ -93,15 +95,18 @@ public class BaseSyncWorker
             stepIndex++;
             if (await HasLocalChanges(config.Id))
             {
-                await message.UpdateMessage("Uploading tasks...", stepIndex, maxIndex);
+                message.Update("Uploading tasks...", stepIndex, maxIndex);
                 await PushVTodoLocalChanges(ICSUtils, client, config, cancellationToken);
             }
 
-            await message.ClearMessage();
+
+            message.Update("Completed", maxIndex, maxIndex);
+            message.Complete(true);
         }
         catch (Exception ex)
         {
-            await message.UpdateMessageWithError(ex.Message, 3, 4);
+            message.Update(ex.Message, 3, 4);
+            message.Complete(false);
         }
     }
 
@@ -134,7 +139,7 @@ public class BaseSyncWorker
     {
         await using var db = new DatabaseContext();
 
-        var dirtyItems = await db.Notes
+        var dirtyItems = await db.Tasks
             .Where(x =>
                 x.DavConfigId == config.Id &&
                 (x.IsDirty || x.IsDeleted))
@@ -161,7 +166,7 @@ public class BaseSyncWorker
                 {
                     await DavMiddlewareService.DeleteRemoteItem(client, item, token);
 
-                    db.Notes.Remove(item);
+                    db.Tasks.Remove(item);
                     return;
                 }
                 
@@ -201,7 +206,7 @@ public class BaseSyncWorker
     {
         await using var db = new DatabaseContext();
         
-        var existingNotes = await db.Notes
+        var existingNotes = await db.Tasks
             .Include(n => n.Alarms)
             .Include(n => n.Categories)
             .Include(n => n.Attendees)
@@ -213,7 +218,7 @@ public class BaseSyncWorker
 
         var existingByUri = existingNotes.ToDictionary(n => n.uriUrl);
 
-        var deleted = await db.Notes
+        var deleted = await db.Tasks
             .Where(n => syncResult.DeletedResources.Contains(n.uriUrl)
                         && n.DavConfigId == config.Id)
             .ToListAsync(token);
@@ -221,7 +226,7 @@ public class BaseSyncWorker
         // Delete any deleted resources
         if (deleted.Count > 0)
         {
-            db.Notes.RemoveRange(deleted);
+            db.Tasks.RemoveRange(deleted);
         }
 
         // Process changed/added resources
@@ -272,7 +277,7 @@ public class BaseSyncWorker
             }
             else
             {
-                db.Notes.Add(parsed);
+                db.Tasks.Add(parsed);
             }
         }
 

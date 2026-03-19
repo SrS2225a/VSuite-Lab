@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Messaging;
 using VSuiteLab.Models;
 
 namespace VSuiteLab.Services;
@@ -23,18 +24,27 @@ public class SyncService
     private CancellationTokenSource? _cts;
     private readonly BaseSyncWorker _syncWorker = new();
 
-    public async Task SyncAsync(DavConfig config, BannerMessage message)
+    public async Task SyncAsync(
+        DavConfig config,
+        Action<SyncProgress> onResult)
     {
         string key = GetKey(config);
 
-        if (_runningSyncs.ContainsKey(key))
+        if (!_runningSyncs.TryAdd(key, Task.CompletedTask))
             return;
-        
-        var task = RunSyncInteral(config, message);
-        _runningSyncs.TryAdd(key, task);
+
+        var progress = new SyncProgress
+        {
+            Config = config,
+            ServerName = config.Name,
+            Url = config.httpUrl
+        };
+
         try
         {
-            await task;
+            // 🔥 Notify UI immediately with the LIVE object
+            onResult?.Invoke(progress);
+            await _syncWorker.ExecuteAsync(config, progress, CancellationToken.None);
         }
         finally
         {
@@ -42,20 +52,13 @@ public class SyncService
         }
     }
 
-    public async Task SyncAllAsync(BannerMessage message)
+    public async Task SyncAllAsync(Action<SyncProgress> onResult)
     {
-        if (message is null)
-            throw new ArgumentNullException(nameof(message));
-
         var accounts = await _databaseService.ReadAllAsync<DavConfig>();
-        message.MaxIndex = accounts.Value.Count;
-        
-        foreach (var account in accounts.Value.Select((value, index) => new { value, index }))
-        {
-            message.CurrentIndex = account.index + 1;
-            message.ServerName = account.value.Name;
 
-            await SyncAsync(account.value, message);
+        foreach (var account in accounts.Value)
+        {
+            await SyncAsync(account, onResult);
         }
     }
 
@@ -80,11 +83,6 @@ public class SyncService
     {
         _cts?.Cancel();
         _timer = null;
-    }
-
-    private async Task RunSyncInteral(DavConfig config, BannerMessage message)
-    {
-        await _syncWorker.ExecuteAsync(config, message, CancellationToken.None);
     }
     
     private string GetKey(DavConfig config) => $"{config.httpUrl}:{config.username}";

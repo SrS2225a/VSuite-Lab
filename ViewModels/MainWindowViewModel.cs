@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -13,15 +16,50 @@ namespace VSuiteLab.ViewModels
     {
         public TasksViewModel TasksViewModel { get; } = new TasksViewModel();
         
-        [ObservableProperty] 
-        private BannerMessage _message = new BannerMessage();
+        public ObservableCollection<SyncProgress> SyncResults { get; } = new();
+
+        [ObservableProperty]
+        private SyncProgress? activeSync;
+        
 
         [RelayCommand]
         public async Task SyncCommand()
         {
             var syncService = new SyncService();
 
-            await syncService.SyncAllAsync(_message);
+            SyncResults.Clear();
+
+            await syncService.SyncAllAsync(result =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    Console.WriteLine(ActiveSync?.Message);
+                    ActiveSync = result;
+                    if (result.IsCompleted)
+                    {
+                        SyncResults.Add(result);
+                    }
+                });
+            });
+        }
+        
+        [RelayCommand]
+        private async Task RetrySyncAsync(SyncProgress result)
+        {
+            if (result?.Config == null)
+                return;
+
+            SyncResults.Clear();
+
+            var syncService = new SyncService();
+
+            await syncService.SyncAsync(result.Config, r =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    SyncResults.Add(r);
+                });
+            });
         }
 
         [RelayCommand]
@@ -34,5 +72,21 @@ namespace VSuiteLab.ViewModels
             }
         }
         
+        
+        private SyncProgress Clone(SyncProgress p)
+        {
+            return new SyncProgress
+            {
+                Message = p.Message,
+                IsError = p.IsError,
+                CurrentIndex = p.CurrentIndex,
+                MaxIndex = p.MaxIndex,
+                ServerName = p.ServerName,
+                Config = p.Config,
+                Url = p.Url,
+                Success = p.Success,
+                Timestamp = DateTime.Now
+            };
+        }
     }
 }

@@ -11,7 +11,7 @@ public class DatabaseContext : DbContext
     //public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { } 
     
     public DbSet<DavConfig> DavConfigs { get; set; }
-    public DbSet<CalDavTask> Notes { get; set; }
+    public DbSet<CalDavTask> Tasks { get; set; }
     public DbSet<Settings> Settings { get; set; }
     public DbSet<CalDavAlarm> Alarms { get; set; }
     public DbSet<CalDavCategory> Categories { get; set; }
