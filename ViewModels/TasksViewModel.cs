@@ -13,6 +13,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Messaging;
 using HeyRed.Mime;
 using VSuiteLab.Models;
 using VSuiteLab.Services;
@@ -198,6 +199,14 @@ namespace VSuiteLab.ViewModels
 
         public TasksViewModel()
         {
+            WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (r, m) =>
+            {
+                Dispatcher.UIThread.Post(async () =>
+                {
+                    await RefreshForInstance(m.Value);
+                });
+            });
+
             _syncService = new SyncService();
             _databaseService = new DatabaseService();
 
@@ -236,6 +245,30 @@ namespace VSuiteLab.ViewModels
             
             SelectedNote = new();
             // await _syncService.SyncAllAsync();
+            ApplyGrouping();
+        }
+
+        private async Task RefreshForInstance(DavConfig config)
+        {
+            var toRemove = Notes.Where(n => n.DavConfigId == config.Id).ToList();
+            foreach (var note in toRemove)
+                Notes.Remove(note);
+
+            // Reload only this instance's notes
+            var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
+                query
+                    .Where(n => n.DavConfigId == config.Id)
+                    .Include(n => n.Alarms)
+                    .Include(n => n.Categories)
+                    .Include(n => n.Attendees)
+                    .Include(n => n.Attachments)
+                    .Include(n => n.Comments)
+                    .AsSplitQuery()
+            );
+
+            foreach (var note in notes.Value)
+                Notes.Add(note);
+            
             ApplyGrouping();
         }
 
