@@ -45,27 +45,22 @@ public class BaseSyncWorker
     /// <param name="cancellationToken">A token to monitor for cancellation requests and stop the execution if requested.</param>
     public async Task ExecuteAsync(DavConfig config, SyncProgress message, CancellationToken cancellationToken)
     {
-        int stepIndex = 0;
-        int maxIndex = 4;
-        
         try
         {
             ICSUtils ICSUtils = new();
-            stepIndex++;
             
-            message.Update("Connecting to server...", stepIndex, maxIndex);
+            message.Update("Connecting to server...");
             var clientResponse = await GetDavClientWithNetworkAsync(config);
             if (!clientResponse.Success)
             {
-                message.Update(clientResponse.Message, stepIndex, maxIndex);
+                message.Update(clientResponse.Message);
                 message.Complete(false);
                 return;
             }
 
             var client = clientResponse.Value;
-
-            stepIndex++;
-            message.Update("Checking for server changes...", stepIndex, maxIndex);
+            
+            message.Update("Checking for server changes...");
             
             var reportResponse = await DavMiddlewareService.SyncCollectionReportAsync(
                 config,
@@ -75,37 +70,35 @@ public class BaseSyncWorker
 
             if (!reportResponse.Success)
             {
-                message.Update(reportResponse.Message, stepIndex, maxIndex);
+                message.Update(reportResponse.Message);
                 message.Complete(false);
                 return;
             }
-
-            stepIndex++;
+            
             if (config.SupportsVtodo)
             {
                 var syncResult = ICSUtils.ParseSyncCollectionResponse(reportResponse.Value, "VTODO");
 
-                message.Update("Downloading tasks...", stepIndex, maxIndex);
+                message.Update("Downloading tasks...");
                 await PullVTodoItems(ICSUtils, client, syncResult, config, cancellationToken);
             }
 
             // if (config.SupportsVjournal)
             //     await ProcessVJournalItems(ICSUtils, client, syncResult, config, cancellationToken);
-
-            stepIndex++;
+            
             if (await HasLocalChanges(config.Id))
             {
-                message.Update("Uploading tasks...", stepIndex, maxIndex);
+                message.Update("Uploading tasks...");
                 await PushVTodoLocalChanges(ICSUtils, client, config, cancellationToken);
             }
 
 
-            message.Update("Completed", maxIndex, maxIndex);
+            message.Update("Completed");
             message.Complete(true);
         }
         catch (Exception ex)
         {
-            message.Update(ex.Message, 3, 4);
+            message.Update(ex.Message);
             message.Complete(false);
         }
     }

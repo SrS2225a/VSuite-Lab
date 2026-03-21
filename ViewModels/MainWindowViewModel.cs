@@ -20,11 +20,17 @@ namespace VSuiteLab.ViewModels
 
         [ObservableProperty]
         private SyncProgress? activeSync;
+
+        [ObservableProperty]
+        private bool isSyncing;
         
 
         [RelayCommand]
         public async Task SyncCommand()
         {
+            if(IsSyncing) return;
+            IsSyncing = true;
+            
             var syncService = new SyncService();
 
             SyncResults.Clear();
@@ -41,6 +47,8 @@ namespace VSuiteLab.ViewModels
                     }
                 });
             });
+            
+            IsSyncing = false;
         }
         
         [RelayCommand]
