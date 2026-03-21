@@ -26,7 +26,7 @@ public class SyncService
 
     public async Task SyncAsync(
         DavConfig config,
-        Action<SyncProgress> onResult)
+        Action<SyncProgress> onResult, int CurrentIndex = 0, int MaxIndex = 0)
     {
         string key = GetKey(config);
 
@@ -37,12 +37,13 @@ public class SyncService
         {
             Config = config,
             ServerName = config.Name,
-            Url = config.httpUrl
+            Url = config.httpUrl,
+            CurrentIndex = CurrentIndex + 1,
+            MaxIndex = MaxIndex
         };
 
         try
         {
-            // 🔥 Notify UI immediately with the LIVE object
             onResult?.Invoke(progress);
             await _syncWorker.ExecuteAsync(config, progress, CancellationToken.None);
         }
@@ -55,10 +56,9 @@ public class SyncService
     public async Task SyncAllAsync(Action<SyncProgress> onResult)
     {
         var accounts = await _databaseService.ReadAllAsync<DavConfig>();
-
-        foreach (var account in accounts.Value)
+        foreach (var account in accounts.Value.Select((value, index) => new { value, index }))
         {
-            await SyncAsync(account, onResult);
+            await SyncAsync(account.value, onResult, account.index, accounts.Value.Count);
         }
     }
 

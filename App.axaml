@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:labs="using:Avalonia.Labs.Controls"
              xmlns:app="using:VSuiteLab"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:conv="clr-namespace:VSuiteLab.Converters"
              x:Class="VSuiteLab.App"
              RequestedThemeVariant="Default">
@@ -25,7 +26,7 @@
     <Application.Styles>    
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
         <FluentTheme />
+        <materialIcons:MaterialIconStyles />
         <labs:ControlThemes />
-
     </Application.Styles>
 </Application>

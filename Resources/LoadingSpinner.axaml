@@ -3,7 +3,7 @@
                     xmlns:vs="using:VSuiteLab.Resources">
 
   <Design.PreviewWith>
-    <Border Width="256" Height="256"
+    <Border Width="56" Height="56"
             Background="#333333">
 
       <vs:LoadingIndicator Foreground="Chartreuse"
@@ -16,8 +16,8 @@
   </Design.PreviewWith>
   
   <ControlTheme x:Key="DefaultLoadingIndicator" TargetType="vs:LoadingIndicator">
-    <Setter Property="Width" Value="32"/>
-    <Setter Property="Height" Value="32"/>
+    <Setter Property="Width" Value="16"/>
+    <Setter Property="Height" Value="16"/>
     <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}"/>
     <Setter Property="Template">
       <ControlTemplate>

@@ -4,6 +4,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
         xmlns:views="clr-namespace:VSuiteLab.Views"
+        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:resources="clr-namespace:VSuiteLab.Resources"
         x:Class="VSuiteLab.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Width="1100" Height="700"
@@ -20,7 +22,7 @@
             <!-- Toolbar / Tabs -->
             <Border DockPanel.Dock="Top" Padding="5,0,5,0"
                     Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                    Height="40">
+                    Height="43">
                 <Grid ColumnDefinitions="200,*,*,Auto">
 
                     <TextBox Grid.Column="0"
@@ -38,21 +40,22 @@
                     </TabControl>
 
                     <ToggleButton Grid.Column="2"
-                                  Content="{Binding ActiveSync.Message, TargetNullValue=Idle}"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center"
                                   Background="Transparent"
                                   BorderBrush="Transparent">
+                        
+                        <TextBlock Text="{Binding ActiveSync.Message, TargetNullValue=Idle}"
+                                   TextWrapping="Wrap" VerticalAlignment="Center" FontSize="10" />
 
                         <ToggleButton.Flyout>
                             <Flyout Placement="Bottom" ShowMode="Transient">
-                                <Border Width="400" MaxHeight="300" Padding="10">
+                                <Border Width="400" MaxHeight="300">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                                             <ItemsControl ItemsSource="{Binding SyncResults}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Border Padding="6"
-                                                                Margin="2"
+                                                        <Border Padding="5"
                                                                 Background="{Binding IsError}">
 
                                                             <StackPanel Spacing="4">
@@ -87,18 +90,18 @@
                     <!--            Text="{Binding Message.Message}"/> -->
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
-                        <Button Command="{Binding SyncCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <Image Width="20" Height="20"
-                                       Source="avares://VSuiteLab/Assets/Material_Symbols_Sharp/sync_desktop_.png" />
-                                <TextBlock Text=" Sync"></TextBlock>
+
+                        <Button Command="{Binding SyncCommand}" IsEnabled="{Binding !IsSyncing}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <resources:LoadingIndicator IsVisible="{Binding IsSyncing}" />
+                                <materialIcons:MaterialIcon Kind="RemoteDesktop" IsVisible="{Binding !IsSyncing}"/>
+                                <TextBlock Text="Sync" />
                             </StackPanel>
                         </Button>
                         <Button Command="{Binding OpenSettingsCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <Image Width="20" Height="20"
-                                       Source="avares://VSuiteLab/Assets/Material_Symbols_Sharp/settings_.png" />
-                                <TextBlock Text=" Settings"></TextBlock>
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <materialIcons:MaterialIcon Kind="Settings" />
+                                <TextBlock Text="Settings" />
                             </StackPanel>
                         </Button>
                     </StackPanel>

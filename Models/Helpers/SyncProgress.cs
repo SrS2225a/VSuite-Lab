@@ -18,11 +18,9 @@ public partial class SyncProgress : ObservableObject
     public string Url { get; set; } = "";
     public DateTime Timestamp { get; set; } = DateTime.Now;
 
-    public void Update(string msg, int current, int max, bool error = false)
+    public void Update(string msg, bool error = false)
     {
-        Message = msg;
-        CurrentIndex = current;
-        MaxIndex = max;
+        Message = $"Syncing {ServerName} {CurrentIndex} of {MaxIndex}\n" + msg;
         IsError = error;
     }
 
