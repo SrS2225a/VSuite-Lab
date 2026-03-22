@@ -26,7 +26,6 @@ namespace VSuiteLab.ViewModels
 {
     public partial class TasksViewModel : ViewModelBase
     {
-        private readonly SyncService _syncService;
         private readonly DatabaseService _databaseService;
         private readonly QueryService _queryService = new();
         
@@ -199,6 +198,10 @@ namespace VSuiteLab.ViewModels
 
         public TasksViewModel()
         {
+            _databaseService = new DatabaseService();
+            
+
+            // Keep old message handling
             WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (r, m) =>
             {
                 Dispatcher.UIThread.Post(async () =>
@@ -207,9 +210,7 @@ namespace VSuiteLab.ViewModels
                 });
             });
 
-            _syncService = new SyncService();
-            _databaseService = new DatabaseService();
-
+            // Initialize notes
             _ = InitializeAsync();
         }
 

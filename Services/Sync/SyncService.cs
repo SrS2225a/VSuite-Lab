@@ -3,21 +3,19 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia.Threading;
-using CommunityToolkit.Mvvm.Messaging;
 using VSuiteLab.Models;
 
 namespace VSuiteLab.Services;
 
 public class SyncService
 {
+    private Settings _settings;
     private readonly DatabaseService _databaseService;
 
     public SyncService()
     {
         _databaseService = new DatabaseService();
     }
-
     
     private readonly ConcurrentDictionary<string, Task> _runningSyncs = new();
     private PeriodicTimer? _timer;
@@ -62,27 +60,45 @@ public class SyncService
         }
     }
 
-    // public void StatPerodic(TimeSpan interval)
-    // {
-    //     if(_timer != null)
-    //         return;
-    //
-    //     _cts = new CancellationTokenSource();
-    //     _timer = new PeriodicTimer(interval);
-    //     
-    //     _ = Task.Run(async () =>
-    //     {
-    //         while (await _timer.WaitForNextTickAsync(_cts.Token))
-    //         {
-    //             await SyncAllAsync(TODO);
-    //         }
-    //     });
-    // }
+    public async Task StatPerodic(Action<SyncProgress> onResult)
+    {
+        if (_timer == null)
+        {
+            _settings = await GetSettingsAsync();
+
+            if (_settings.SyncOnChange)
+            {
+                await SyncAllAsync(onResult);
+            }
+
+            var interval = TimeSpan.FromSeconds(_settings.SyncAuto);
+            
+            _cts = new CancellationTokenSource(); 
+            _timer = new PeriodicTimer(interval);
+            
+            _ = Task.Run(async () =>
+            {
+                while (await _timer.WaitForNextTickAsync(_cts.Token))
+                {
+                    await SyncAllAsync(onResult);
+                }
+            });
+        }
+    }
     
     public void StopPeriodic()
     {
         _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+
         _timer = null;
+    }
+
+    private async Task<Settings> GetSettingsAsync()
+    {
+        var result = await _databaseService.ReadAllAsync<Settings>();
+        return result.Value.FirstOrDefault() ?? new Settings();
     }
     
     private string GetKey(DavConfig config) => $"{config.httpUrl}:{config.username}";

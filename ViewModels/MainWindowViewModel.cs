@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Avalonia;
@@ -15,7 +13,8 @@ namespace VSuiteLab.ViewModels
     public partial class MainWindowViewModel : ViewModelBase
     {
         public TasksViewModel TasksViewModel { get; } = new TasksViewModel();
-        
+        private SyncService? _syncService;
+
         public ObservableCollection<SyncProgress> SyncResults { get; } = new();
 
         [ObservableProperty]
@@ -30,16 +29,13 @@ namespace VSuiteLab.ViewModels
         {
             if(IsSyncing) return;
             IsSyncing = true;
-            
-            var syncService = new SyncService();
 
             SyncResults.Clear();
 
-            await syncService.SyncAllAsync(result =>
+            await _syncService.SyncAllAsync(result =>
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    Console.WriteLine(ActiveSync?.Message);
                     ActiveSync = result;
                     if (result.IsCompleted)
                     {
@@ -59,9 +55,7 @@ namespace VSuiteLab.ViewModels
 
             SyncResults.Clear();
 
-            var syncService = new SyncService();
-
-            await syncService.SyncAsync(result.Config, r =>
+            await _syncService.SyncAsync(result.Config, r =>
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
@@ -80,21 +74,24 @@ namespace VSuiteLab.ViewModels
             }
         }
         
-        
-        private SyncProgress Clone(SyncProgress p)
+        public MainWindowViewModel()
         {
-            return new SyncProgress
+            _syncService = new SyncService();
+            _ = StartAutoSync();
+        }
+
+        private async Task StartAutoSync()
+        {
+            await _syncService.StatPerodic(result =>
             {
-                Message = p.Message,
-                IsError = p.IsError,
-                CurrentIndex = p.CurrentIndex,
-                MaxIndex = p.MaxIndex,
-                ServerName = p.ServerName,
-                Config = p.Config,
-                Url = p.Url,
-                Success = p.Success,
-                Timestamp = DateTime.Now
-            };
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    ActiveSync = result;
+
+                    if (result.IsCompleted)
+                        SyncResults.Add(result);
+                });
+            });
         }
     }
 }
