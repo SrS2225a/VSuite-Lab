@@ -72,7 +72,6 @@
                                                     <StackPanel Spacing="6">
 
                                                         <!-- TODO:
-                                                        1. Fix the icons to be used correctly making them pop a bit out more
                                                         3. Fix the cutting off in title context menu and start/due dates
                                                          -->
                                                         <TextBlock Text="{Binding Summary}"

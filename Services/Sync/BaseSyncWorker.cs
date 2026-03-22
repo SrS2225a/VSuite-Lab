@@ -198,7 +198,7 @@ public class BaseSyncWorker
         CancellationToken token)
     {
         await using var db = new DatabaseContext();
-        
+
         var existingNotes = await db.Tasks
             .Include(n => n.Alarms)
             .Include(n => n.Categories)
@@ -276,7 +276,6 @@ public class BaseSyncWorker
 
         // Update last sync token
         config.LastSyncToken = syncResult.SyncToken;
-        db.DavConfigs.Update(config);
 
         // Save all changes in one batch
         await db.SaveChangesAsync();

@@ -8,7 +8,7 @@ namespace VSuiteLab.Models;
 public class CalDavAlarm
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     public string? Action { get; set; } = Ical.Net.AlarmAction.Display;
     public string? Description { get; set; }
