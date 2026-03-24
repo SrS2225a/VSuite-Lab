@@ -11,10 +11,14 @@ public class SyncService
 {
     private Settings _settings;
     private readonly DatabaseService _databaseService;
+    private readonly AlarmService _alarmService;
 
     public SyncService()
     {
         _databaseService = new DatabaseService();
+        _alarmService = new AlarmService();
+        
+        _ = _alarmService.InitializeAsync();
     }
     
     private readonly ConcurrentDictionary<string, Task> _runningSyncs = new();
@@ -47,6 +51,9 @@ public class SyncService
         }
         finally
         {
+            var alarmsResult = await _databaseService.ReadAllAsync<CalDavAlarm>(noTracking: true);
+            await _alarmService.SyncAlarmsAsync(alarmsResult.Value);
+            
             _runningSyncs.TryRemove(key, out _);
         }
     }

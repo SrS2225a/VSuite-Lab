@@ -25,22 +25,26 @@ public class DatabaseService
     
     public void DetachEntity<T>(T entity) where T : class => _db.Entry(entity).State = EntityState.Detached;
     
-    public async Task<StatusResponse<List<T>>> ReadAllAsync<T>(Func<IQueryable<T>, IQueryable<T>>? include = null) where T : class
+    public async Task<StatusResponse<List<T>>> ReadAllAsync<T>(
+        Func<IQueryable<T>, IQueryable<T>>? include = null,
+        bool noTracking = false) where T : class
     {
         try
         {
             IQueryable<T> query = _db.Set<T>();
+            if (include != null) query = include(query);
 
-            if (include != null)
-                query = include(query);
+            if (noTracking) query = query.AsNoTracking();
 
-            var result = await query.ToListAsync();
-            return StatusResponse<List<T>>.Ok(result);
-        } catch (Exception ex)
+            var data = await query.ToListAsync();
+            return StatusResponse<List<T>>.Ok(data);
+        }
+        catch (Exception ex)
         {
             return StatusResponse<List<T>>.Error(ex.Message);
         }
     }
+    
     public async Task<StatusResponse<bool>> ReadExistsWhereAsync<T>(Expression<Func<T, bool>> predicate) where T : class
     {
         try
