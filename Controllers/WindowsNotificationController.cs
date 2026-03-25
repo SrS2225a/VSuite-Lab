@@ -1,9 +1,5 @@
 using System.Threading.Tasks;
-#if WINDOWS
-using System.Threading.Tasks;
-using CommunityToolkit.WinUI.Notifications;
-using Windows.UI.Notifications;
-#endif
+using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace VSuiteLab.Services.NotificationController;
 
@@ -11,15 +7,11 @@ public class WindowsNotificationController : INotificationService
 {
     public Task ShowNotificationAsync(string title, string message)
     {
-        #if WINDOWS
-        var content = new ToastContentBuilder()
+        ToastContentBuilder toastContentBuilder = new ToastContentBuilder()
             .AddText(title)
-            .AddText(message)
-            .GetToastContent();
-
-        var toast = new ToastNotification(content.GetXml());
-
-        ToastNotificationManagerCompat.CreateToastNotifier().Show(toast);
+            .AddText(message);
+        #if WINDOWS
+        toastContentBuilder.Show();
         #endif
         return Task.CompletedTask;
     }
