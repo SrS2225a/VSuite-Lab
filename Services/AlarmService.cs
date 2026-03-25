@@ -31,7 +31,7 @@ public class AlarmService
         {
             var jobKey = new JobKey(alarm.Id.ToString());
 
-            var job = JobBuilder.Create<AlarmJob>()
+            var job = JobBuilder.Create<AlarmJobController>()
                 .WithIdentity(jobKey)
                 .UsingJobData("AlarmId", alarm.Id.ToString())
                 .UsingJobData("Summary", alarm.Summary ?? "")

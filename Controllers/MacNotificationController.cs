@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace VSuiteLab.Services.NotificationController;
 
-public class MacNotificationService : INotificationService
+public class MacNotificationController : INotificationService
 {
     public Task ShowNotificationAsync(string title, string message)
     {

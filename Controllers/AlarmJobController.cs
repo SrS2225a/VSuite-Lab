@@ -5,7 +5,7 @@ using Quartz;
 using VSuiteLab.Models;
 using VSuiteLab.Services.NotificationController;
 
-public class AlarmJob : IJob
+public class AlarmJobController : IJob
 {
     public async Task Execute(IJobExecutionContext context)
     {
