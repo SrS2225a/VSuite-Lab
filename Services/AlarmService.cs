@@ -22,16 +22,12 @@ public class AlarmService
     {
         if (_scheduler == null)
             return;
-
-        var valid = alarms
-            .Where(a => a.SelectedDate != null && !a.HasRan)
-            .ToList();
-
+        
         // ❌ Remove stale
         await _scheduler.Clear();
 
         // ➕ Add/update
-        foreach (var alarm in valid)
+        foreach (var alarm in alarms)
         {
             var jobKey = new JobKey(alarm.Id.ToString());
 
