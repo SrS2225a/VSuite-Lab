@@ -51,7 +51,7 @@ public class SyncService
         }
         finally
         {
-            var alarmsResult = await _databaseService.ReadAllAsync<CalDavAlarm>(noTracking: true);
+            var alarmsResult = await _databaseService.ReadAllAsync<CalDavAlarm>(q => q.Where(a => a.SelectedDate != null && !a.HasRan), true);
             await _alarmService.SyncAlarmsAsync(alarmsResult.Value);
             
             _runningSyncs.TryRemove(key, out _);
