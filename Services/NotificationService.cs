@@ -11,11 +11,11 @@ public class NotificationService : INotificationService
     public NotificationService()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            _impl = new LinuxNotificationService();
+            _impl = new LinuxNotificationController();
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            _impl = new WindowsNotificationService();
+            _impl = new WindowsNotificationController();
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            _impl = new MacNotificationService();
+            _impl = new MacNotificationController();
         else
             throw new PlatformNotSupportedException();
     }

@@ -18,7 +18,7 @@ public interface INotifications : IDBusObject
         int expire_timeout);
 }
 
-public class LinuxNotificationService : INotificationService
+public class LinuxNotificationController : INotificationService
 {
     private static readonly Connection Connection = Connection.Session;
 

@@ -7,7 +7,7 @@ using Windows.UI.Notifications;
 
 namespace VSuiteLab.Services.NotificationController;
 
-public class WindowsNotificationService : INotificationService
+public class WindowsNotificationController : INotificationService
 {
     public Task ShowNotificationAsync(string title, string message)
     {
