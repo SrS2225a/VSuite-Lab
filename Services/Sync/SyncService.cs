@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Messaging;
 using VSuiteLab.Models;
 
 namespace VSuiteLab.Services;
@@ -51,9 +52,17 @@ public class SyncService
         }
         finally
         {
-            var alarmsResult = await _databaseService.ReadAllAsync<CalDavAlarm>(q => q.Where(a => a.SelectedDate != null && !a.HasRan), true);
-            await _alarmService.SyncAlarmsAsync(alarmsResult.Value);
-            
+            if (progress.IsCompleted)
+            {
+                WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(config));
+
+
+                var alarmsResult =
+                    await _databaseService.ReadAllAsync<CalDavAlarm>(
+                        q => q.Where(a => a.SelectedDate != null && !a.HasRan), true);
+                await _alarmService.SyncAlarmsAsync(alarmsResult.Value);
+            }
+
             _runningSyncs.TryRemove(key, out _);
         }
     }
