@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -279,26 +280,17 @@ namespace VSuiteLab.ViewModels
             if(task == null)
                 return;
             
-            var sfd = new SaveFileDialog
-            {
-                DefaultExtension = "ics",
-                Filters = new List<FileDialogFilter>
-                {
-                    new FileDialogFilter { Name = "iCalendar", Extensions = { "ics" } }
-                },
-                InitialFileName = task.Uid + ".ics"
-            };
-            
             var ICSUtils = new ICSUtils();
             var IcsContent = ICSUtils.BuildVTodoICS(task);
             
-            var lifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
-            var path = await sfd.ShowAsync(lifetime?.MainWindow);
+            await FilePickerUtils.SaveFileDialog(task.Uid + ".ics", Encoding.UTF8.GetBytes(IcsContent), "ics");
+        }
 
-            if (!string.IsNullOrEmpty(path))
-            {
-                await File.WriteAllTextAsync(path, IcsContent);
-            }
+        [RelayCommand]
+        public async Task DownloadAttachmentCommand(CalDavAttachment alarm)
+        {
+            var fileExtension = alarm.Title.Split('.').LastOrDefault();
+            await FilePickerUtils.SaveFileDialog(alarm.Title, alarm.Uri, fileExtension);
         }
 
         [RelayCommand]
@@ -428,12 +420,7 @@ namespace VSuiteLab.ViewModels
             if(SelectedNote == null)
                 return;
             
-            var window = ((IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime).MainWindow;
-            var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = "Select file to attach",
-                AllowMultiple = true
-            });
+            var files = await FilePickerUtils.OpenFileDialog();
 
             foreach (var file in files)
             { 

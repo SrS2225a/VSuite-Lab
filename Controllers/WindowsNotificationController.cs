@@ -8,8 +8,8 @@ public class WindowsNotificationController : INotificationService
     public Task ShowNotificationAsync(string title, string message)
     {
         ToastContentBuilder toastContentBuilder = new ToastContentBuilder()
-            .AddText(title)
-            .AddText(message);
+            .AddText(title ?? "VSuiteLab")
+            .AddText(message ?? "No message");
         #if WINDOWS
         toastContentBuilder.Show();
         #endif

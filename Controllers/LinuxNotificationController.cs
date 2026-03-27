@@ -41,8 +41,8 @@ public class LinuxNotificationController : INotificationService
             appIdentify,
             0,
             appIdentify,
-            title,
-            message,
+            title ?? "VSuiteLab",
+            message ?? "No message",
             System.Array.Empty<string>(),
             hints,
             -1

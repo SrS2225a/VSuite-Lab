@@ -115,7 +115,7 @@ public class ICSUtils
        }
        foreach (var attachment in vTodo.Attachments)
        {
-           note.Attachments.Add(new CalDavAttachment {Uri = attachment.Data ?? Array.Empty<byte>(), ContentType = attachment.FormatType ?? string.Empty});
+           note.Attachments.Add(new CalDavAttachment {Uri = attachment.Data ?? Array.Empty<byte>(), Title = attachment.Parameters.Get("FILENAME"), ContentType = attachment.FormatType ?? string.Empty});
        }
        foreach (var comment in vTodo.Comments)
        {
@@ -212,11 +212,13 @@ public class ICSUtils
         {
             var icalAttachment = new Attachment(attachment.Uri)
             {
-                FormatType = attachment.ContentType
+                FormatType = attachment.ContentType,
             };
 
             icalAttachment.Parameters.Add("ENCODING", "BASE64");
+            icalAttachment.Parameters.Add("FILENAME", attachment.Title);
             icalAttachment.Parameters.Add("VALUE", "BINARY");
+            icalAttachment.Parameters.Add("X-LABEL", attachment.Title);
 
             vTodo.Attachments.Add(icalAttachment);
         }

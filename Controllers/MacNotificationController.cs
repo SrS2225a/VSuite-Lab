@@ -34,8 +34,8 @@ public class MacNotificationController : INotificationService
 
         var content = new UNMutableNotificationContent
         {
-            Title = title,
-            Body = message
+            Title = title ?? "VSuiteLab",
+            Body = message ?? "No message"
         };
 
         var request = UNNotificationRequest.FromIdentifier(
