@@ -50,9 +50,15 @@
                                                     
                                                     <StackPanel.ContextMenu>
                                                         <ContextMenu>
-                                                            <MenuItem Header="Download ICS"
-                                                                      Command="{Binding $parent[UserControl].DataContext.DownloadICSCommand}"
-                                                                      CommandParameter="{Binding}" />
+                                                            <MenuItem Command="{Binding $parent[UserControl].DataContext.DownloadICSCommand}"
+                                                                      CommandParameter="{Binding}">
+                                                                <MenuItem.Header>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                        <materialIcons:MaterialIcon Kind="Download" /> 
+                                                                        <TextBlock Text="Download ICS" FontSize="10"/>
+                                                                    </StackPanel>
+                                                                </MenuItem.Header>
+                                                            </MenuItem>
                                                         </ContextMenu>
                                                     </StackPanel.ContextMenu>
                                                     
@@ -474,7 +480,7 @@
                                 Background="{DynamicResource ThemeControlLowBrush}">
 
                             <StackPanel Spacing="12">
-
+                                <!-- Comments -->
                                 <TextBlock Text="Comments"
                                            FontWeight="SemiBold"
                                            FontSize="14" />
@@ -501,6 +507,7 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
+                                <!-- Attachments -->
                                 <TextBlock Text="Attachments"
                                            FontWeight="SemiBold"
                                            Margin="0,12,0,0"/>
@@ -517,6 +524,11 @@
                                                         Spacing="12">
                                                 <TextBlock Text="{Binding Title}"
                                                            Margin="0,2" />
+                                                
+                                                <Button Command="{Binding $parent[UserControl].DataContext.DownloadAttachmentCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <materialIcons:MaterialIcon Kind="Download" /> 
+                                                </Button>
                                                 
                                                 <Button Content="✕"
                                                         Command="{Binding $parent[ItemsControl].DataContext.RemoveAttachmentCommand}"
