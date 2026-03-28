@@ -5,6 +5,7 @@
              xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
              xmlns:models="clr-namespace:VSuiteLab.Models"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:resources="clr-namespace:VSuiteLab.Resources"
              x:DataType="vm:TasksViewModel"
              x:Class="VSuiteLab.Views.TasksView"
              mc:Ignorable="d">
@@ -254,12 +255,9 @@
                         </Grid>
 
                         <!-- Description -->
-                        <StackPanel>
-                            <TextBox Text="{Binding SelectedNote.Description}"
-                                     Watermark="Write your note…"
-                                     AcceptsReturn="True"
-                                     MinHeight="180" />
-                        </StackPanel>
+                        <resources:MarkdownEditor
+                            Text="{Binding SelectedNote.Description, Mode=TwoWay}"
+                            IsPreviewMode="{Binding IsPreviewMode}" />
                         
                         <StackPanel Spacing="10">
                             <Grid ColumnDefinitions="*,*,*"

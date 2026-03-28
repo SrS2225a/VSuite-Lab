@@ -159,6 +159,9 @@ namespace VSuiteLab.ViewModels
         [ObservableProperty]
         private ObservableCollection<GroupItemsCalDavTask> groupedNotes = new();
         
+        [ObservableProperty]
+        private bool isPreviewMode = true;
+        
         private void ApplyGrouping()
         {
             var parsed = QueryUtils.ParseQuery(SearchText);

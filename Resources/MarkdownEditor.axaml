@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:LiveMarkdown.Controls"
+             xmlns:markdown="clr-namespace:VSuiteLab.Resources"
+             x:Class="VSuiteLab.Resources.MarkdownEditor"
+             x:DataType="markdown:MarkdownEditor">
+
+    <Grid>
+
+        <!-- Editor -->
+        <TextBox Text="{Binding Text, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=markdown:MarkdownEditor}}"
+                 AcceptsReturn="True"
+                 MinHeight="180"
+                 IsVisible="{Binding !IsPreviewMode, RelativeSource={RelativeSource AncestorType=markdown:MarkdownEditor}}"/>
+        
+        <Border IsVisible="{Binding IsPreviewMode, RelativeSource={RelativeSource AncestorType=markdown:MarkdownEditor}}"
+                CornerRadius="4"
+                MinHeight="180"
+                Background="{DynamicResource ThemeControlLowBrush}"
+                BorderBrush="{DynamicResource TextControlBorderBrushPointerOver}"
+                BorderThickness="2">
+            
+            <!-- Markdown renderer originally from https://github.com/Z1EMN1AK/LiveMarkdown (with rendering improvements). Thank you! -->
+            <controls:MarkdownView Text="{Binding Text, RelativeSource={RelativeSource AncestorType=markdown:MarkdownEditor}, Mode=TwoWay}"/>
+
+        </Border>
+
+        <!-- Toggle -->
+        <ToggleSwitch IsChecked="{Binding IsPreviewMode, RelativeSource={RelativeSource AncestorType=markdown:MarkdownEditor}}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Top"
+                      Margin="0,6,0,0"
+                      ZIndex="10"
+                      OnContent="" OffContent="" />
+
+    </Grid>
+</UserControl>

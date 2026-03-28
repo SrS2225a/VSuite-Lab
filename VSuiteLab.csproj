@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.11" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.4.1" />
     <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.11" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
     <PackageReference Include="Avalonia.Labs.Controls" Version="11.3.1" />
@@ -25,11 +26,12 @@
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="AvaloniaMath" Version="2.1.0" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.0-beta3" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
     <PackageReference Include="CommunityToolkit.WinUI.Notifications" Version="7.1.2" />
     <PackageReference Include="Ical.Net" Version="5.2.1" />
-    <PackageReference Include="Markdig" Version="0.44.0" />
+    <PackageReference Include="Markdig" Version="1.1.2" />
     <PackageReference Include="Material.Icons.Avalonia" Version="3.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.23">
       <PrivateAssets>all</PrivateAssets>
@@ -49,6 +51,10 @@
     </Compile>
     <Compile Update="Views\Windows\MainWindow.axaml.cs">
       <DependentUpon>MainWindow.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Resources\LiveMarkdown\MarkdownEditor.axaml.cs">
+      <DependentUpon>MarkdownEditor.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
