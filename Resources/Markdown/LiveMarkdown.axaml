@@ -1,0 +1,247 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:LiveMarkdown.Controls;assembly=LiveMarkdown"
+        xmlns:edit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+        xmlns:math="clr-namespace:AvaloniaMath.Controls;assembly=AvaloniaMath"
+        xmlns:controls="clr-namespace:LiveMarkdown.Controls">
+    
+    <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+    
+    <!-- Color Variables -->
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+
+                <!-- DARK -->
+                <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="MdBg">#0D1117</Color>
+                    <Color x:Key="MdSurface">#161B22</Color>
+                    <Color x:Key="MdSurfaceAlt">#1C2128</Color>
+
+                    <Color x:Key="MdBorder">#30363D</Color>
+                    <Color x:Key="MdMuted">#8B949E</Color>
+
+                    <Color x:Key="MdText">#E6EDF3</Color>
+                    <Color x:Key="MdAccent">#58A6FF</Color>
+                    <Color x:Key="MdAccentSoft">#2F81F7</Color>
+
+                    <Color x:Key="MdCodeBg">#161B22</Color>
+                    <Color x:Key="MdInlineCodeBg">#1C2128</Color>
+                    <Color x:Key="MdHighlight">#FFD866</Color>
+                </ResourceDictionary>
+
+                <!-- LIGHT -->
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="MdBg">#FFFFFF</Color>
+                    <Color x:Key="MdSurface">#F6F8FA</Color>
+                    <Color x:Key="MdSurfaceAlt">#EAECEF</Color>
+
+                    <Color x:Key="MdBorder">#D0D7DE</Color>
+                    <Color x:Key="MdMuted">#57606A</Color>
+
+                    <Color x:Key="MdText">#1F2328</Color>
+                    <Color x:Key="MdAccent">#0969DA</Color>
+                    <Color x:Key="MdAccentSoft">#218BFF</Color>
+
+                    <Color x:Key="MdCodeBg">#F6F8FA</Color>
+                    <Color x:Key="MdInlineCodeBg">#EAECEF</Color>
+                    <Color x:Key="MdHighlight">#B35900</Color>
+                </ResourceDictionary>
+
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- 🔁 Shared brushes (IMPORTANT: DynamicResource) -->
+            <SolidColorBrush x:Key="MdBgBrush" Color="{DynamicResource MdBg}"/>
+            <SolidColorBrush x:Key="MdSurfaceBrush" Color="{DynamicResource MdSurface}"/>
+            <SolidColorBrush x:Key="MdSurfaceAltBrush" Color="{DynamicResource MdSurfaceAlt}"/>
+
+            <SolidColorBrush x:Key="MdBorderBrush" Color="{DynamicResource MdBorder}"/>
+            <SolidColorBrush x:Key="MdMutedBrush" Color="{DynamicResource MdMuted}"/>
+            <SolidColorBrush x:Key="MdTextBrush" Color="{DynamicResource MdText}"/>
+            <SolidColorBrush x:Key="MdAccentBrush" Color="{DynamicResource MdAccent}"/>
+            <SolidColorBrush x:Key="MdAccentSoftBrush" Color="{DynamicResource MdAccentSoft}"/>
+
+            <SolidColorBrush x:Key="MdCodeBrush" Color="{DynamicResource MdCodeBg}"/>
+            <SolidColorBrush x:Key="MdInlineCodeBrush" Color="{DynamicResource MdInlineCodeBg}"/>
+            <SolidColorBrush x:Key="MdHighlightBrush" Color="{DynamicResource MdHighlight}"/>
+
+        </ResourceDictionary>
+
+    </Styles.Resources>
+
+
+    <!-- Template for MarkdownView -->
+    <Style Selector="controls|MarkdownView">
+        <Setter Property="ContentForeground" Value="{DynamicResource MdTextBrush}" />
+        <Setter Property="LiveContentForeground" Value="{DynamicResource MdAccentBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:MarkdownView">
+                    <ScrollViewer>
+                        <!-- all generated controls land here -->
+                        <Border
+                            Padding="8, 2"
+                            Background="Transparent">
+                            <ScrollViewer>
+                                <!-- all generated controls land here -->
+                                <StackPanel x:Name="PART_ContentHost"
+                                            Orientation="Vertical" />
+                            </ScrollViewer>
+                        </Border>
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Lazy placeholder style -->
+    <Style Selector="Border.md-lazy-placeholder">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="MinHeight" Value="20" />
+    </Style>
+
+    <!-- Headings -->
+    <Style Selector="TextBlock.md-heading-1">
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource MdTextBrush}"/>
+        <Setter Property="Margin" Value="0,16,0,8" />
+    </Style>
+
+    <Style Selector="TextBlock.md-heading-2">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource MdTextBrush}"/>
+        <Setter Property="Margin" Value="0,12,0,6" />
+    </Style>
+
+    <Style Selector="TextBlock.md-heading-3">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource MdTextBrush}"/>
+        <Setter Property="Margin" Value="0,10,0,4" />
+    </Style>
+
+    <Style Selector="TextBlock.md-heading-4">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        
+        <Setter Property="Margin" Value="0,8,0,4" />
+    </Style>
+
+    <Style Selector="TextBlock.md-heading-5">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,6,0,4" />
+    </Style>
+
+    <Style Selector="TextBlock.md-heading-6">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,4,0,4" />
+    </Style>
+
+    <!-- Regular paragraphs -->
+    <Style Selector="TextBlock.md-paragraph">
+        <Setter Property="Foreground" Value="{StaticResource MdTextBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="Margin" Value="0,6,0,12"/>
+        <!-- you can add Foreground, LineHeight etc. here -->
+    </Style>
+
+    <!-- Quotes -->
+    <Style Selector="Border.md-quote">
+        <Setter Property="Background" Value="{StaticResource MdSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource MdAccentSoftBrush}"/>
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Margin" Value="0,6,0,12"/>
+    </Style>
+
+    <!-- Horizontal rules (HR) -->
+    <Style Selector="Border.md-hr">
+        <Setter Property="BorderBrush" Value="{StaticResource MdBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Margin" Value="0,12"/>
+    </Style>
+
+    <!-- Tables -->
+    <Style Selector="Grid.md-table">
+        <Setter Property="Margin" Value="0,4,0,12" />
+    </Style>
+
+    <Style Selector="Border.md-table-header">
+        <Setter Property="Background" Value="{StaticResource MdSurfaceAltBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource MdBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="4, 0" />
+    </Style>
+
+    <Style Selector="Border.md-table-cell">
+        <Setter Property="Background" Value="{StaticResource MdSurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource MdBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="4, 0" />
+    </Style>
+
+    <!-- Task list (checkboxes) -->
+    <Style Selector="Run.md-task-checkbox">
+        <Setter Property="Foreground" Value="{StaticResource MdAccentBrush}"/>
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <!-- LaTeX blocks (FormulaBlock) -->
+    <Style Selector="math|FormulaBlock.md-math-block">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="Foreground" Value="{StaticResource MdTextBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Margin" Value="0,8,0,12" />
+        <!-- you can add e.g. background for formulas -->
+    </Style>
+
+    <!-- Inline LaTeX (FormulaBlock in InlineUIContainer) -->
+    <Style Selector="math|FormulaBlock.md-math-inline">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Margin" Value="0,0,0,0" />
+    </Style>
+
+    <!-- Code blocks – AvaloniaEdit.TextEditor -->
+    <Style Selector="edit|TextEditor.md-code-block">
+        <Setter Property="Foreground" Value="{StaticResource MdTextBrush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="FontFamily" Value="Consolas, Courier New, monospace" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <!-- Optional: Border container for code block -->
+    <Style Selector="Border.md-code-container">
+        <Setter Property="Background" Value="{StaticResource MdCodeBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource MdBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="Margin" Value="0,4,0,12" />
+    </Style>
+
+    <!-- Inline links (Button + TextBlock) -->
+    <Style Selector="Button.md-link">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusAdorner" Value="{x:Null}" /> <!-- optional: hides default focus if you don't want it -->
+    </Style>
+
+    <Style Selector="TextBlock.md-link-text">
+        <Setter Property="Foreground" Value="{StaticResource MdAccentBrush}"/>
+        <Setter Property="TextDecorations" Value="Underline" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <!-- Highlight for last word animation -->
+    <Style Selector="Run.md-highlight">
+        <Setter Property="Foreground" Value="{StaticResource MdHighlightBrush}"/>
+    </Style>
+
+</Styles>
