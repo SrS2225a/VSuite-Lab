@@ -52,6 +52,7 @@ public class SyncService
         }
         finally
         {
+            onResult?.Invoke(progress);
             if (progress.IsCompleted)
             {
                 WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(config));

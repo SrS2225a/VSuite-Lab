@@ -59,7 +59,10 @@ namespace VSuiteLab.ViewModels
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    SyncResults.Add(r);
+                    if (r.IsCompleted)
+                    {
+                        SyncResults.Add(r);
+                    }
                 });
             });
         }
