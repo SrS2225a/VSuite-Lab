@@ -2,116 +2,107 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
         xmlns:views="clr-namespace:VSuiteLab.Views"
+        xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
-        xmlns:resources="clr-namespace:VSuiteLab.Resources"
         x:Class="VSuiteLab.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Width="1100" Height="700"
         mc:Ignorable="d"
         Title="VSuite Lab">
+
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
 
-    <Grid>
+    <DockPanel>
 
-        <!-- Main content layer -->
-        <DockPanel>
-            <!-- Toolbar / Tabs -->
-            <Border DockPanel.Dock="Top" Padding="5,0,5,0"
-                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                    Height="43">
-                <Grid ColumnDefinitions="200,*,*,Auto">
+        <!-- Top toolbar with TabControl -->
+        <Border DockPanel.Dock="Top" Padding="5,0,5,0"
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                Height="43">
+            <Grid ColumnDefinitions="200,*,*,Auto">
 
-                    <TextBox Grid.Column="0"
-                             Height="32"
-                             Text="{Binding TasksViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             Watermark="{Binding SelectedItem.(TabItem.Header), ElementName=MainTabs, StringFormat=Search {0}}" />
+                <TextBox Grid.Column="0"
+                         Height="32"
+                         Text="{Binding CurrentSearchContext.SearchText, Mode=TwoWay}"
+                         Watermark="{Binding SelectedItem.(TabItem.Header), ElementName=MainTabs, StringFormat=Search {0}}" />
 
-                    <TabControl Grid.Column="1"
-                                Background="Transparent"
-                                TabStripPlacement="Top"
-                                x:Name="MainTabs">
-                        <TabItem Header="Journals" />
-                        <TabItem Header="Notes" />
-                        <TabItem Header="Tasks" />
-                    </TabControl>
+                <!-- Tabs -->
+                <TabControl Grid.Column="1"
+                            x:Name="MainTabs"
+                            SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
+                    <TabItem Header="Journals"/>
+                    <TabItem Header="Notes" />
+                    <TabItem Header="Tasks"/>
+                </TabControl>
+                
+                <ToggleButton Grid.Column="2"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Background="Transparent"
+                              BorderBrush="Transparent">
+                    
+                    <TextBlock Text="{Binding ActiveSync.Message, TargetNullValue=Idle}"
+                               TextWrapping="Wrap" VerticalAlignment="Center" FontSize="10" />
 
-                    <ToggleButton Grid.Column="2"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Background="Transparent"
-                                  BorderBrush="Transparent">
-                        
-                        <TextBlock Text="{Binding ActiveSync.Message, TargetNullValue=Idle}"
-                                   TextWrapping="Wrap" VerticalAlignment="Center" FontSize="10" />
+                    <ToggleButton.Flyout>
+                        <Flyout Placement="Bottom" ShowMode="Transient">
+                            <Border Width="400" MaxHeight="300">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding SyncResults}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Padding="5"
+                                                            Background="{Binding IsError}">
 
-                        <ToggleButton.Flyout>
-                            <Flyout Placement="Bottom" ShowMode="Transient">
-                                <Border Width="400" MaxHeight="300">
-                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                            <ItemsControl ItemsSource="{Binding SyncResults}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border Padding="5"
-                                                                Background="{Binding IsError}">
-
-                                                            <StackPanel Spacing="4">
-                                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                    <TextBlock Text="{Binding ServerName}" FontWeight="Bold"/>
-                                                                    <TextBlock Text="{Binding Timestamp}" FontSize="10"/>
-                                                                </StackPanel>
-                                                                
-                                                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap"/>
-                                                                
-                                                                <Button Content="Retry"
-                                                                        Command="{Binding $parent[views:MainWindow].DataContext.RetrySyncCommand}"
-                                                                        CommandParameter="{Binding}" />
+                                                        <StackPanel Spacing="4">
+                                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                <TextBlock Text="{Binding ServerName}" FontWeight="Bold"/>
+                                                                <TextBlock Text="{Binding Timestamp}" FontSize="10"/>
                                                             </StackPanel>
+                                                            
+                                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap"/>
+                                                            
+                                                            <Button Content="Retry"
+                                                                    Command="{Binding $parent[views:MainWindow].DataContext.RetrySyncCommand}"
+                                                                    CommandParameter="{Binding}" />
+                                                        </StackPanel>
 
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </ScrollViewer>
-                                </Border>
-                            </Flyout>
-                        </ToggleButton.Flyout>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                            </Border>
+                        </Flyout>
+                    </ToggleButton.Flyout>
 
-                    </ToggleButton>
+                </ToggleButton>
 
-                    <!-- <TextBlock Grid.Column="2"  -->
-                    <!--            TextAlignment="Center"  -->
-                    <!--            Foreground="{DynamicResource SystemControlDescriptionTextForegroundBrush}"  -->
-                    <!--            VerticalAlignment="Center" -->
-                    <!--            TextWrapping="Wrap" -->
-                    <!--            Text="{Binding Message.Message}"/> -->
+                <!-- Buttons -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
+                    <Button Command="{Binding SyncCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <materialIcons:MaterialIcon Kind="RemoteDesktop"/>
+                            <TextBlock Text="Sync"/>
+                        </StackPanel>
+                    </Button>
 
-                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
+                    <Button Command="{Binding OpenSettingsCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <materialIcons:MaterialIcon Kind="Settings"/>
+                            <TextBlock Text="Settings"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
 
-                        <Button Command="{Binding SyncCommand}" IsEnabled="{Binding !IsSyncing}">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <resources:LoadingIndicator IsVisible="{Binding IsSyncing}" />
-                                <materialIcons:MaterialIcon Kind="RemoteDesktop" IsVisible="{Binding !IsSyncing}"/>
-                                <TextBlock Text="Sync" />
-                            </StackPanel>
-                        </Button>
-                        <Button Command="{Binding OpenSettingsCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <materialIcons:MaterialIcon Kind="Settings" />
-                                <TextBlock Text="Settings" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+            </Grid>
+        </Border>
 
-                </Grid>
-            </Border>
+        <!-- Main content -->
+        <ContentControl DockPanel.Dock="Bottom"
+                        Content="{Binding SelectedTabContent}"/>
 
-            <ContentControl>
-                <views:TasksView DataContext="{Binding TasksViewModel}" />
-            </ContentControl>
-        </DockPanel>
-    </Grid>
+    </DockPanel>
 </Window>
