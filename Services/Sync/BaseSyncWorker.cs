@@ -275,8 +275,11 @@ public class BaseSyncWorker
         }
 
         // Update last sync token
-        config.LastSyncToken = syncResult.SyncToken;
-        db.DavConfigs.Update(config);
+        await db.DavConfigs
+            .Where(c => c.Id == config.Id)
+            .ExecuteUpdateAsync(s => s
+                    .SetProperty(c => c.LastSyncToken, syncResult.SyncToken),
+                token);
 
         // Save all changes in one batch
         await db.SaveChangesAsync();
