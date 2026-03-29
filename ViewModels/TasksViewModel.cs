@@ -25,7 +25,7 @@ using TodoStatus = VSuiteLab.Models.TodoStatus;
 
 namespace VSuiteLab.ViewModels
 {
-    public partial class TasksViewModel : ViewModelBase
+    public partial class TasksViewModel : ViewModelBase, IViewModelSearchableContext
     {
         private readonly DatabaseService _databaseService;
         private readonly QueryService _queryService = new();

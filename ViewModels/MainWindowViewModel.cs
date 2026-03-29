@@ -1,6 +1,10 @@
+using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,7 +16,10 @@ namespace VSuiteLab.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
+        public JournalsViewModel JournalsViewModel { get; } = new JournalsViewModel();
         public TasksViewModel TasksViewModel { get; } = new TasksViewModel();
+        public NotesViewModel NotesViewModel { get; } = new NotesViewModel();
+        
         private SyncService? _syncService;
 
         public ObservableCollection<SyncProgress> SyncResults { get; } = new();
@@ -37,7 +44,7 @@ namespace VSuiteLab.ViewModels
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     ActiveSync = result;
-                    if (result.IsCompleted)
+                    if (result is { IsCompleted: true, Success: false })
                     {
                         SyncResults.Add(result);
                     }
@@ -55,13 +62,13 @@ namespace VSuiteLab.ViewModels
 
             SyncResults.Clear();
 
-            await _syncService.SyncAsync(result.Config, r =>
+            await _syncService.SyncAsync(result.Config, e =>
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    if (r.IsCompleted)
+                    if (e is { IsCompleted: true, Success: false })
                     {
-                        SyncResults.Add(r);
+                        SyncResults.Add(e);
                     }
                 });
             });
@@ -80,6 +87,10 @@ namespace VSuiteLab.ViewModels
         public MainWindowViewModel()
         {
             _syncService = new SyncService();
+            
+            SelectedTabIndex = 0;
+            UpdateSelectedTabContent();
+            
             _ = StartAutoSync();
         }
 
@@ -91,10 +102,71 @@ namespace VSuiteLab.ViewModels
                 {
                     ActiveSync = result;
 
-                    if (result.IsCompleted)
+                    if (result is { IsCompleted: true, Success: false })
                         SyncResults.Add(result);
                 });
             });
+        }
+        
+        
+        public IViewModelSearchableContext? CurrentSearchContext
+        {
+            get
+            {
+                return SelectedTabIndex switch
+                {
+                    0 => JournalsViewModel as IViewModelSearchableContext,
+                    1 => NotesViewModel as IViewModelSearchableContext,
+                    2 => TasksViewModel as IViewModelSearchableContext,
+                    _ => null
+                };
+            }
+        }
+        
+        private int _selectedTabIndex;
+        public int SelectedTabIndex
+        {
+            get => _selectedTabIndex;
+            set
+            {
+                if (_selectedTabIndex != value)
+                {
+                    _selectedTabIndex = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CurrentSearchContext));
+                    UpdateSelectedTabContent();
+                }
+            }
+        }
+
+        private object? _selectedTabContent;
+        public object? SelectedTabContent
+        {
+            get => _selectedTabContent;
+            set
+            {
+                _selectedTabContent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public void UpdateSelectedTabContent()
+        {
+            switch (SelectedTabIndex)
+            {
+                case 0:
+                    SelectedTabContent = new JournalsView();
+                    break;
+                case 1:
+                    SelectedTabContent = new NotesView();
+                    break;
+                case 2:
+                    SelectedTabContent = new TasksView() { DataContext = TasksViewModel };
+                    break;
+                default:
+                    SelectedTabContent = null;
+                    break;
+            }
         }
     }
 }
