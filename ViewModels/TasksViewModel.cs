@@ -25,7 +25,7 @@ using TodoStatus = VSuiteLab.Models.TodoStatus;
 
 namespace VSuiteLab.ViewModels
 {
-    public partial class TasksViewModel : ViewModelBase, IViewModelSearchableContext
+    public partial class TasksViewModel : CalDavItemViewModel<CalDavTask>
     {
         private readonly DatabaseService _databaseService;
         private readonly QueryService _queryService = new();
@@ -143,7 +143,7 @@ namespace VSuiteLab.ViewModels
             OnPropertyChanged();
         }
         
-        public ObservableCollection<CalDavTask> Notes { get; } = new();
+        public ObservableCollection<CalDavTask> Tasks { get; } = new();
         public ObservableCollection<DavConfig> DavInstances { get; } = new();
         
         [ObservableProperty] private DavConfig? selectedDavInstance;
@@ -165,7 +165,7 @@ namespace VSuiteLab.ViewModels
         private void ApplyGrouping()
         {
             var parsed = QueryUtils.ParseQuery(SearchText);
-            var filtered = _queryService.ApplyQuery(Notes, parsed.Filters, parsed.Sorts);
+            var filtered = _queryService.ApplyQuery(Tasks, parsed.Filters, parsed.Sorts);
             var grouped = _queryService.ApplyGrouping(filtered, parsed.Groups);
                 
             var newGroups = new ObservableCollection<GroupItemsCalDavTask>(
@@ -245,7 +245,7 @@ namespace VSuiteLab.ViewModels
             );
             foreach (var note in notes.Value)
             {
-                Notes.Add(note);
+                Tasks.Add(note);
             }
             
             SelectedNote = new();
@@ -255,9 +255,9 @@ namespace VSuiteLab.ViewModels
 
         private async Task RefreshForInstance(DavConfig config)
         {
-            var toRemove = Notes.Where(n => n.DavConfigId == config.Id).ToList();
+            var toRemove = Tasks.Where(n => n.DavConfigId == config.Id).ToList();
             foreach (var note in toRemove)
-                Notes.Remove(note);
+                Tasks.Remove(note);
 
             // Reload only this instance's notes
             var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
@@ -272,7 +272,7 @@ namespace VSuiteLab.ViewModels
             );
 
             foreach (var note in notes.Value)
-                Notes.Add(note);
+                Tasks.Add(note);
             
             ApplyGrouping();
         }
@@ -304,13 +304,13 @@ namespace VSuiteLab.ViewModels
                 var fullUri = new Uri(
                     new Uri(selectedDavInstance.httpUrl),
                     $"{SelectedNote.Id}.ics");
-                SelectedNote.uriUrl = fullUri.ToString();
+                SelectedNote.Uri = fullUri.ToString();
                 SelectedNote.DavConfigId = selectedDavInstance.Id;
                 SelectedNote.Uid = Guid.NewGuid().ToString();
                 SelectedNote.IsDirty = true;
                 await _databaseService.CreateAsync(SelectedNote);
                 
-                Notes.Add(SelectedNote);
+                Tasks.Add(SelectedNote);
                 SelectedNote = new();
             }
         }
@@ -340,7 +340,7 @@ namespace VSuiteLab.ViewModels
                 SelectedNote.IsDirty = true;
                 await _databaseService.UpdateAsync(SelectedNote);
 
-                Notes.Remove(SelectedNote);
+                Tasks.Remove(SelectedNote);
                 SelectedNote = new();
             }
         }

@@ -32,7 +32,8 @@ public class CalDavAlarm
 
     public int? Repeat { get; set; }
 
-    public Guid CalDavNoteId { get; set; }
+    public Guid CalDavTaskId { get; set; }
+    public CalDavTask? CalDavTask { get; set; }
 
     public bool HasRan { get; set; } = false;
 }

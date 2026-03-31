@@ -11,5 +11,12 @@ public class CalDavAttachment
     public string Title { get; set; }
     public string ContentType { get; set; } = string.Empty;
 
-    public Guid CalDavNoteId { get; set; }
+    public Guid? CalDavTaskId { get; set; }
+    public CalDavTask? CalDavTask { get; set; }
+
+    public Guid? CalDavJournalId { get; set; }
+    public CalDavJournal? CalDavJournal { get; set; }
+
+    public Guid? CalDavNoteId { get; set; }
+    public CalDavNote? CalDavNote { get; set; }
 }
