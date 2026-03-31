@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -10,7 +9,6 @@ using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
 using VSuiteLab.Models;
-using VSuiteLab.Converters;
 
 namespace VSuiteLab.Utils;
 
@@ -26,15 +24,28 @@ public class ICSUtils
     /// </returns>
     public async Task<string> DownloadICS(HttpClient client, string uri)
     {
-        using (HttpResponseMessage response = await client.GetAsync(uri))
-        using (Stream streamToReadFrom = await response.Content.ReadAsStreamAsync())
-        {
-            streamToReadFrom.Position = 0;
-            streamToReadFrom.Seek(0, SeekOrigin.Begin);
-            var reader = new StreamReader(streamToReadFrom);
-            return await reader.ReadToEndAsync();
-        }
+        using var response = await client.GetAsync(uri);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
     }
+
+    public string BuildICS(CalDavItem item)
+    {
+        return item.ItemType switch
+        {
+            CalDavItemType.VTodo => BuildVTodoICS((CalDavTask)item),
+            CalDavItemType.VJournal => BuildVJournalICS((CalDavJournal)item),
+            CalDavItemType.Note => BuildVJournalNoteICS((CalDavNote)item),
+            _ => throw new NotImplementedException()
+        };
+    } 
+    
+    public CalDavItem ParseICS(string ics, bool vType)
+    {
+        var calendar = Calendar.Load(ics);
+        return vType ? ParseICSVJournal(calendar) : ParseICSVTodo(calendar);
+    }
+    
 
     /// <summary>
     /// Parses the provided ICS content and converts it into a CalDavTask instance.
@@ -43,86 +54,86 @@ public class ICSUtils
     /// <returns>
     /// A <see cref="CalDavTask"/> object that contains the parsed details of the VTODO item.
     /// </returns>
-    public CalDavTask ParseICSVTodo(string ics)
+    private CalDavTask ParseICSVTodo(Calendar ics)
     {
         var note = new CalDavTask();
-
-        var calendar = Calendar.Load(ics);
-        var vTodo = calendar?.Todos.FirstOrDefault();
-        if (vTodo == null) return note;
+        
+        var vTodo = ics?.Todos.FirstOrDefault();
+        if (vTodo is null)
+            return new CalDavTask();
        
-       note.Uid = vTodo.Uid ?? Guid.NewGuid().ToString();
-       note.LastModified = vTodo.LastModified?.Value;
-       note.StartDate = vTodo.Start?.Value;
-       note.DueDate = vTodo.Due?.Value;
-       note.CompletedDate = vTodo.Completed?.Value;
-       note.Priority = vTodo.Priority;
-       note.Classification = vTodo.Class ?? string.Empty;
-       note.Sequence =  vTodo.Sequence;
+        note.Uid = vTodo.Uid ?? Guid.NewGuid().ToString();
+        note.LastModified = vTodo.LastModified?.Value;
+        note.StartDate = vTodo.Start?.Value;
+        note.DueDate = vTodo.Due?.Value;
+        note.CompletedDate = vTodo.Completed?.Value;
+        note.Priority = vTodo.Priority;
+        note.Classification = vTodo.Class ?? string.Empty;
+        note.Sequence =  vTodo.Sequence;
        
-       note.Summary = vTodo.Summary ?? string.Empty;
-       note.Description = vTodo.Description ?? string.Empty;
-       note.Status = vTodo.Status switch
-       {
-           Ical.Net.TodoStatus.Completed => Models.TodoStatus.Completed,
-           Ical.Net.TodoStatus.InProcess => Models.TodoStatus.InProgress,
-           Ical.Net.TodoStatus.Cancelled => Models.TodoStatus.Cancelled,
-           _ => Models.TodoStatus.NeedsAction
-       };
-       note.Location = vTodo.Location ?? string.Empty;
-       note.Url = vTodo.Url?.ToString() ?? string.Empty;
+        note.Summary = vTodo.Summary ?? string.Empty;
+        note.Description = vTodo.Description ?? string.Empty;
+        note.Status = vTodo.Status switch
+        {
+            Ical.Net.TodoStatus.Completed => Models.TodoStatus.Completed,
+            Ical.Net.TodoStatus.InProcess => Models.TodoStatus.InProgress,
+            Ical.Net.TodoStatus.Cancelled => Models.TodoStatus.Cancelled,
+            _ => Models.TodoStatus.NeedsAction
+        };
+        note.Location = vTodo.Location ?? string.Empty;
+        note.Url = vTodo.Url?.ToString() ?? string.Empty;
 
-       note.Contact = vTodo.Organizer?.CommonName ?? string.Empty;
+        note.Contact = vTodo.Organizer?.CommonName ?? string.Empty;
 
-       foreach (var attendee in vTodo.Attendees)
-       {
-           note.Attendees.Add(new CalDavAttendee
-           {
-               Name = attendee.CommonName ?? string.Empty, Email = attendee.Members.ToString(), Role = attendee.Role ?? string.Empty
-           });
-       }
-       foreach (var category in vTodo.Categories)
-       {
-           note.Categories.Add(new CalDavCategory { Value = category});
-       }
-       foreach (var alarm in vTodo.Alarms)
-       {
-           DateTimeOffset? triggerDate = null;
+        foreach (var attendee in vTodo.Attendees)
+        {
+            note.Attendees.Add(new CalDavAttendee
+            {
+                Name = attendee.CommonName ?? string.Empty, Email = attendee.Members.ToString(), Role = attendee.Role ?? string.Empty
+            });
+        }
+        foreach (var category in vTodo.Categories)
+        {
+            note.Categories.Add(new CalDavCategory { Value = category});
+        }
+        foreach (var alarm in vTodo.Alarms)
+        {
+            DateTimeOffset? triggerDate = null;
 
-           if (alarm.Trigger?.DateTime != null)
-           {
-               triggerDate = alarm.Trigger.DateTime.AsUtc;
-           }
-           else if (alarm.Trigger?.Duration != null)
-           {
-               var reference = vTodo.Start?.Value ?? DateTime.UtcNow;
-               var duration = alarm.Trigger.Duration.Value.ToTimeSpan(new CalDateTime(reference));
-               var triggerTime = reference + duration;
-               triggerDate = new DateTimeOffset(triggerTime, TimeSpan.Zero);
-           }
+            if (alarm.Trigger?.DateTime != null)
+            {
+                triggerDate = alarm.Trigger.DateTime.AsUtc;
+            }
+            else if (alarm.Trigger?.Duration != null)
+            {
+                var reference = vTodo.Start?.Value ?? DateTime.UtcNow;
+                var duration = alarm.Trigger.Duration.Value.ToTimeSpan(new CalDateTime(reference));
+                var triggerTime = reference + duration;
+                triggerDate = new DateTimeOffset(triggerTime, TimeSpan.Zero);
+            }
 
-           if (triggerDate.HasValue)
-           {
-               note.Alarms.Add(new CalDavAlarm
-               {
-                   Action = alarm.Action,
-                   Description = alarm.Description ?? string.Empty,
-                   Summary = alarm.Summary ?? string.Empty,
-                   SelectedDate = triggerDate,
-                   Repeat = alarm.Repeat
-               });
-           }
-       }
-       foreach (var attachment in vTodo.Attachments)
-       {
-           note.Attachments.Add(new CalDavAttachment {Uri = attachment.Data ?? Array.Empty<byte>(), Title = attachment.Parameters.Get("FILENAME"), ContentType = attachment.FormatType ?? string.Empty});
-       }
-       foreach (var comment in vTodo.Comments)
-       {
-           note.Comments.Add(new CalDavComment {Value = comment});
-       }
+            if (triggerDate.HasValue)
+            {
+                note.Alarms.Add(new CalDavAlarm
+                {
+                    Action = alarm.Action,
+                    Description = alarm.Description ?? string.Empty,
+                    Summary = alarm.Summary ?? string.Empty,
+                    SelectedDate = triggerDate,
+                    Repeat = alarm.Repeat
+                });
+            }
+        }
+        foreach (var attachment in vTodo.Attachments)
+        {
+            note.Attachments.Add(new CalDavAttachment {Uri = attachment.Data ?? Array.Empty<byte>(), Title = attachment.Parameters.Get("FILENAME"), ContentType = attachment.FormatType ?? string.Empty});
+        }
+        foreach (var comment in vTodo.Comments)
+        {
+            note.Comments.Add(new CalDavComment {Value = comment});
+        }
        
-       return note;
+        return note;
     }
 
     /// <summary>
@@ -232,6 +243,100 @@ public class ICSUtils
         return serializer.SerializeToString(vTodoCalendar);
     }
     
+    
+    private string BuildVJournalICS(CalDavJournal item)
+    {
+        var calendar = new Calendar();
+
+        var journal = new Journal
+        {
+            Uid = item.Uid ?? Guid.NewGuid().ToString(),
+            Summary = item.Summary,
+            Description = item.Description,
+            DtStamp = new CalDateTime(DateTime.UtcNow),
+            DtStart = new CalDateTime(item.PublishedDate?.UtcDateTime ?? DateTime.UtcNow),
+            LastModified = new CalDateTime(item.LastModified?.UtcDateTime ?? DateTime.UtcNow),
+        };
+        
+        
+        if (!string.IsNullOrWhiteSpace(item.Contact))
+            journal.Organizer = new Organizer()
+            {
+                CommonName = item.Contact,
+
+            };
+
+        if (!string.IsNullOrWhiteSpace(item.Classification))
+            journal.Class = item.Classification;
+        
+        if (!string.IsNullOrWhiteSpace(item.Url)) journal.Url = new Uri(item.Url);
+        
+        
+        ApplyCommonJournalFields(journal, item);
+
+        calendar.Journals.Add(journal);
+
+        return new CalendarSerializer().SerializeToString(calendar);
+    }
+
+    private string BuildVJournalNoteICS(CalDavNote item)
+    {
+        var calendar = new Calendar();
+
+        var journal = new Journal
+        {
+            Uid = item.Uid ?? Guid.NewGuid().ToString(),
+            Summary = item.Summary,
+            Description = item.Description,
+            LastModified = new CalDateTime(item.LastModified?.UtcDateTime ?? DateTime.UtcNow),
+        };
+        
+        ApplyCommonJournalFields(journal, item);
+        
+        calendar.Journals.Add(journal);
+
+        return new CalendarSerializer().SerializeToString(calendar);
+    }
+
+    private void ApplyCommonJournalFields<T>(Journal journal, T item)
+        where T : CalDavItem
+    {
+        if (item is not CalDavJournal && item is not CalDavNote)
+            return;
+
+        dynamic target = item;
+
+        foreach (var c in target.Categories)
+            journal.Categories.Add(c.Value);
+
+        foreach (var c in target.Comments)
+            journal.Comments.Add(c.Value);
+
+        foreach (var a in target.Attachments)
+        {
+            var att = new Attachment(a.Uri)
+            {
+                FormatType = a.ContentType
+            };
+
+            if (!string.IsNullOrWhiteSpace(a.Title))
+                att.Parameters.Add("FILENAME", a.Title);
+
+            journal.Attachments.Add(att);
+        }
+
+        foreach (var a in target.Attendees)
+        {
+            if (string.IsNullOrWhiteSpace(a.Email)) continue;
+
+            journal.Attendees.Add(new Attendee(new Uri($"mailto:{a.Email}"))
+            {
+                CommonName = a.Name,
+                Role = a.Role
+            });
+        }
+    }
+    
     /// <summary>
     /// Builds the XML request body for a sync collection request.
     /// </summary>
@@ -321,4 +426,82 @@ public class ICSUtils
 
         return result;
     }
+    
+    private void PopulateCommonJournalFields(
+        Journal j,
+        dynamic target) // works for both Journal + Note
+    {
+        foreach (var cat in j.Categories)
+            target.Categories.Add(new CalDavCategory { Value = cat });
+
+        foreach (var c in j.Comments)
+            target.Comments.Add(new CalDavComment { Value = c });
+
+        foreach (var a in j.Attachments)
+        {
+            target.Attachments.Add(new CalDavAttachment
+            {
+                Uri = a.Data ?? Array.Empty<byte>(),
+                Title = a.Parameters.Get("FILENAME"),
+                ContentType = a.FormatType ?? string.Empty
+            });
+        }
+
+        foreach (var a in j.Attendees)
+        {
+            target.Attendees.Add(new CalDavAttendee
+            {
+                Name = a.CommonName ?? string.Empty,
+                Email = a.Value?.ToString(),
+                Role = a.Role ?? string.Empty
+            });
+        }
+    }
+    
+    private CalDavItem ParseICSVJournal(Calendar ics)
+    {
+        var vJournal = ics?.Journals.FirstOrDefault();
+        if (vJournal is null)
+            return new CalDavJournal();
+
+        return vJournal.DtStart != null
+            ? ParseVJournalCalDavJournal(vJournal)
+            : ParseVJournalCalDavNote(vJournal);
+    }
+    
+        
+    private CalDavJournal ParseVJournalCalDavJournal(Journal j)
+    {
+        var journal = new CalDavJournal
+        {
+            Uid = j.Uid ?? Guid.NewGuid().ToString(),
+            Summary = j.Summary ?? string.Empty,
+            Description = j.Description ?? string.Empty,
+            PublishedDate = j.DtStart?.Value,
+            LastModified = j.LastModified?.Value,
+            Url = j.Url?.ToString() ?? string.Empty,
+            Classification = j.Class ?? string.Empty
+        };
+        
+        PopulateCommonJournalFields(j, journal);
+
+        return journal;
+    }
+    
+    private CalDavNote ParseVJournalCalDavNote(Journal j)
+    {
+        var note = new CalDavNote
+        {
+            Uid = j.Uid ?? Guid.NewGuid().ToString(),
+            Summary = j.Summary ?? string.Empty,
+            Description = j.Description ?? string.Empty,
+            LastModified = j.LastModified?.Value
+        };
+
+        PopulateCommonJournalFields(j, note);
+
+        return note;
+    }
+    
+
 }

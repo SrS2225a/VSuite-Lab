@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -208,13 +207,13 @@ public class DavMiddlewareService
         DatabaseContext db,
         ICSUtils icsUtils,
         HttpClient client,
-        CalDavTask item,
+        CalDavItem item,
         CancellationToken token = default)
     {
         item.Sequence++;
-        var icsContent = icsUtils.BuildVTodoICS(item);
+        var icsContent = icsUtils.BuildICS(item);
 
-        using var request = new HttpRequestMessage(HttpMethod.Put, item.uriUrl)
+        using var request = new HttpRequestMessage(HttpMethod.Put, item.Uri)
         {
             Content = new StringContent(icsContent, Encoding.UTF8, "text/calendar")
         };
@@ -238,7 +237,7 @@ public class DavMiddlewareService
             item.Etag = response.Headers.ETag.Tag;
 
         if (response.Headers.Location != null)
-            item.uriUrl = new Uri(client.BaseAddress!, response.Headers.Location.ToString()).ToString();
+            item.Uri = new Uri(client.BaseAddress!, response.Headers.Location.ToString()).ToString();
 
         item.IsDirty = false;
     }
@@ -256,46 +255,47 @@ public class DavMiddlewareService
     private static async Task ResolveConflict(
         DatabaseContext db,
         HttpClient client,
-        CalDavTask localItem,
+        CalDavItem localItem,
         ICSUtils icsUtils,
         CancellationToken token)
     {
         var settings = db.Settings.FirstOrDefault();
-        
-        using var response = await client.GetAsync(localItem.uriUrl, token);
+
+        using var response = await client.GetAsync(localItem.Uri, token);
         response.EnsureSuccessStatusCode();
 
         var remoteIcs = await response.Content.ReadAsStringAsync(token);
-        var parsed = icsUtils.ParseICSVTodo(remoteIcs);
         
+        var isVTodo = localItem.ItemType != CalDavItemType.VTodo;
+        
+        var parsed = icsUtils.ParseICS(remoteIcs, isVTodo);
+
         switch (settings.ConflictStrategy)
         {
             case ConflictStrategy.PreferServer:
                 SolveConflictRemoteWins(db, parsed, localItem, response);
                 return;
+
             case ConflictStrategy.PreferClient:
-                SolveConflictLocalWins(localItem, icsUtils, client, response);
+                await SolveConflictLocalWins(localItem, icsUtils, client, response);
                 return;
+
             default:
                 if (localItem.LastModified > parsed.LastModified)
-                {
                     await SolveConflictLocalWins(localItem, icsUtils, client, response);
-                }
                 else
-                {
                     SolveConflictRemoteWins(db, parsed, localItem, response);
-                }
                 return;
         }
     }
     
-    private static async Task SolveConflictLocalWins(CalDavTask localItem, ICSUtils icsUtils, HttpClient client,
+    private static async Task SolveConflictLocalWins(CalDavItem localItem, ICSUtils icsUtils, HttpClient client,
         HttpResponseMessage response)
     {
         // Local wins -> overwrite remote tracked entity
         var remoteETag = response.Headers.ETag?.Tag;
-        var ics = icsUtils.BuildVTodoICS(localItem);
-        using var retry = new HttpRequestMessage(HttpMethod.Put, localItem.uriUrl)
+        var ics = icsUtils.BuildICS(localItem);
+        using var retry = new HttpRequestMessage(HttpMethod.Put, localItem.Uri)
         {
             Content = new StringContent(
                 ics,
@@ -312,7 +312,7 @@ public class DavMiddlewareService
         localItem.Etag = retryResponse.Headers.ETag?.Tag;
     }
 
-    private static void SolveConflictRemoteWins(DatabaseContext db, CalDavTask parsed, CalDavTask localItem, HttpResponseMessage response)
+    private static void SolveConflictRemoteWins(DatabaseContext db, CalDavItem parsed, CalDavItem localItem, HttpResponseMessage response)
     {
         // Remote wins -> overwrite local tracked entity
         parsed.Id = localItem.Id;
@@ -322,30 +322,15 @@ public class DavMiddlewareService
 
         // Update scalar properties
         db.Entry(localItem).CurrentValues.SetValues(parsed);
-        
-        localItem.Comments.Clear();
-        foreach (var c in parsed.Comments) localItem.Comments.Add(c);
-
-        localItem.Categories.Clear();
-        foreach (var c in parsed.Categories) localItem.Categories.Add(c);
-
-        localItem.Alarms.Clear();
-        foreach (var a in parsed.Alarms) localItem.Alarms.Add(a);
-
-        localItem.Attendees.Clear();
-        foreach (var a in parsed.Attendees) localItem.Attendees.Add(a);
-
-        localItem.Attachments.Clear();
-        foreach (var a in parsed.Attachments) localItem.Attachments.Add(a);
     }
 
     public static async Task DeleteRemoteItem(
         HttpClient client,
-        CalDavTask item,
+        CalDavItem item,
         CancellationToken token = default)
     {
         // Delete remote item
-        using var request = new HttpRequestMessage(HttpMethod.Delete, item.uriUrl);
+        using var request = new HttpRequestMessage(HttpMethod.Delete, item.Uri);
         using var response = await client.SendAsync(request, token);
         response.EnsureSuccessStatusCode();
     }
