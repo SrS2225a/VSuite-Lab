@@ -249,6 +249,7 @@ namespace VSuiteLab.ViewModels
             
             var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
                 query
+                    .Include(n => n.DavConfig)
                     .Include(n => n.Alarms)
                     .Include(n => n.Categories)
                     .Include(n => n.Attendees)
@@ -264,6 +265,8 @@ namespace VSuiteLab.ViewModels
 
         private async Task RefreshForInstance(DavConfig config)
         {
+            GroupedNotes.Clear();
+            
             var toRemove = Tasks.Where(n => n.DavConfigId == config.Id).ToList();
             foreach (var note in toRemove)
                 Tasks.Remove(note);
@@ -272,6 +275,7 @@ namespace VSuiteLab.ViewModels
             var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
                 query
                     .Where(n => n.DavConfigId == config.Id)
+                    .Include(n => n.DavConfig)
                     .Include(n => n.Alarms)
                     .Include(n => n.Categories)
                     .Include(n => n.Attendees)
