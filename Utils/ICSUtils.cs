@@ -63,7 +63,7 @@ public class ICSUtils
             return new CalDavTask();
        
         note.Uid = vTodo.Uid ?? Guid.NewGuid().ToString();
-        note.LastModified = vTodo.LastModified?.Value;
+        note.LastModified = vTodo.LastModified?.AsUtc;
         note.StartDate = vTodo.Start?.Value;
         note.DueDate = vTodo.Due?.Value;
         note.CompletedDate = vTodo.Completed?.Value;

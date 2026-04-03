@@ -11,19 +11,6 @@ namespace VSuiteLab.Services;
 
 public class DatabaseService
 {
-    private readonly DatabaseContext _db;
-
-    public DatabaseService()
-    {
-        _db = new DatabaseContext();
-    }
-    
-    public void Dispose()
-    {
-        _db.Dispose();
-    }
-    
-    public void DetachEntity<T>(T entity) where T : class => _db.Entry(entity).State = EntityState.Detached;
     
     public async Task<StatusResponse<List<T>>> ReadAllAsync<T>(
         Func<IQueryable<T>, IQueryable<T>>? include = null,
@@ -31,6 +18,8 @@ public class DatabaseService
     {
         try
         {
+            await using var _db = new DatabaseContext();
+            
             IQueryable<T> query = _db.Set<T>();
             if (include != null) query = include(query);
 
@@ -49,6 +38,8 @@ public class DatabaseService
     {
         try
         {
+            await using var _db = new DatabaseContext();
+            
             var data = await _db.Set<T>().AnyAsync(predicate);
             return StatusResponse<bool>.Ok(data);
         } catch (Exception ex)
@@ -61,6 +52,8 @@ public class DatabaseService
     {
         try
         {
+            await using var _db = new DatabaseContext();
+            
             var data = await _db.Set<T>().Where(predicate).ToListAsync();
             return StatusResponse<List<T>>.Ok(data);
         }
@@ -74,6 +67,8 @@ public class DatabaseService
     {
         try
         {
+            await using var _db = new DatabaseContext();
+            
             _db.Set<T>().Add(entity);
             await _db.SaveChangesAsync();
 
@@ -89,6 +84,8 @@ public class DatabaseService
     {
         try
         {
+            await using var _db = new DatabaseContext();
+            
             _db.Set<T>().Update(entity);
             await _db.SaveChangesAsync();
 
@@ -104,6 +101,8 @@ public class DatabaseService
     {
         try
         {
+            await using var _db = new DatabaseContext();
+            
             _db.Set<T>().Remove(entity);
             await _db.SaveChangesAsync();
 
@@ -120,6 +119,8 @@ public class DatabaseService
     {
         try
         {
+            await using var _db = new DatabaseContext();
+            
             var entities = await _db.Set<T>()
                 .Where(predicate)
                 .ToListAsync();
@@ -137,10 +138,5 @@ public class DatabaseService
         {
             return StatusResponse<int>.Error(ex.Message);
         }
-    }
-    
-    public async Task SaveChangesAsync()
-    {
-        await _db.SaveChangesAsync();
     }
 }

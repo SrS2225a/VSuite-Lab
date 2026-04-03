@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using VSuiteLab.Models;
 using VSuiteLab.Services;
 using VSuiteLab.Views;
@@ -72,6 +73,7 @@ namespace VSuiteLab.ViewModels
                     }
                 });
             });
+            WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(result.Config));
         }
 
         [RelayCommand]

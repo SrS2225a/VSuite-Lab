@@ -56,8 +56,7 @@ public class SyncService
             if (progress.IsCompleted)
             {
                 WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(config));
-
-
+                
                 var alarmsResult =
                     await _databaseService.ReadAllAsync<CalDavAlarm>(
                         q => q.Where(a => a.SelectedDate != null && !a.HasRan), true);

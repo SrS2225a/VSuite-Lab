@@ -180,18 +180,40 @@ public class DavMiddlewareService
         HttpClient client,
         ICSUtils ICSUtils)
     {
-        var reportXml = ICSUtils.BuildSyncCollectionXml(syncToken);
+        async Task<HttpResponseMessage> SendReport(string? token)
+        {
+            var xml = ICSUtils.BuildSyncCollectionXml(token);
 
-        var request = new HttpRequestMessage(new HttpMethod("REPORT"), config.httpUrl);
-        request.Content = new StringContent(reportXml, Encoding.UTF8, "application/xml");
-        var response = await client.SendAsync(request);
+            var request = new HttpRequestMessage(new HttpMethod("REPORT"), config.httpUrl)
+            {
+                Content = new StringContent(xml, Encoding.UTF8, "application/xml")
+            };
+
+            return await client.SendAsync(request);
+        }
+        
+        var response = await SendReport(syncToken);
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Detect invalid sync-token and retry without it
+        if (response.StatusCode == HttpStatusCode.Forbidden &&
+            content.Contains("<valid-sync-token"))
+        {
+            var retryResponse = await SendReport(null);
+
+            if (!retryResponse.IsSuccessStatusCode)
+                return StatusResponse<XDocument>.Error($"REPORT failed: {response.StatusCode}");
+
+            var retryXml = await retryResponse.Content.ReadAsStringAsync();
+            var retryDoc = XDocument.Parse(retryXml);
+
+            return StatusResponse<XDocument>.Ok(retryDoc);
+        }
 
         if (!response.IsSuccessStatusCode)
-            return StatusResponse<XDocument>.Error("REPORT failed");
-        
-        var xml = await response.Content.ReadAsStringAsync();
-        var doc = XDocument.Parse(xml);
+            return StatusResponse<XDocument>.Error($"REPORT failed: {response.StatusCode}");
 
+        var doc = XDocument.Parse(content);
         return StatusResponse<XDocument>.Ok(doc);
     }
 
@@ -210,6 +232,9 @@ public class DavMiddlewareService
         CalDavItem item,
         CancellationToken token = default)
     {
+        if(string.IsNullOrWhiteSpace(item.Uri))
+            return;
+        
         item.Sequence++;
         var icsContent = icsUtils.BuildICS(item);
 
@@ -217,22 +242,22 @@ public class DavMiddlewareService
         {
             Content = new StringContent(icsContent, Encoding.UTF8, "text/calendar")
         };
-
+        
         if (!string.IsNullOrWhiteSpace(item.Etag))
             request.Headers.TryAddWithoutValidation("If-Match", item.Etag);
         else
             request.Headers.TryAddWithoutValidation("If-None-Match", "*");
 
-        using var response = await client.SendAsync(request, token);
+        var response = await client.SendAsync(request, token);
 
-        if (response.StatusCode == HttpStatusCode.PreconditionFailed || response.StatusCode == HttpStatusCode.Conflict)
+        if (response.StatusCode == HttpStatusCode.PreconditionFailed ||
+            response.StatusCode == HttpStatusCode.Conflict)
         {
             await ResolveConflict(db, client, item, icsUtils, token);
             return;
         }
-
-        response.EnsureSuccessStatusCode();
-
+        
+        
         if (response.Headers.ETag != null)
             item.Etag = response.Headers.ETag.Tag;
 
@@ -270,6 +295,9 @@ public class DavMiddlewareService
         
         var parsed = icsUtils.ParseICS(remoteIcs, isVTodo);
 
+        var localUtc = localItem.LastModified?.ToUniversalTime();
+        var remoteUtc = parsed.LastModified?.ToUniversalTime();
+
         switch (settings.ConflictStrategy)
         {
             case ConflictStrategy.PreferServer:
@@ -281,7 +309,7 @@ public class DavMiddlewareService
                 return;
 
             default:
-                if (localItem.LastModified > parsed.LastModified)
+                if (localUtc > remoteUtc)
                     await SolveConflictLocalWins(localItem, icsUtils, client, response);
                 else
                     SolveConflictRemoteWins(db, parsed, localItem, response);
@@ -329,6 +357,8 @@ public class DavMiddlewareService
         CalDavItem item,
         CancellationToken token = default)
     {
+        if(string.IsNullOrWhiteSpace(item.Uri))
+            return;
         // Delete remote item
         using var request = new HttpRequestMessage(HttpMethod.Delete, item.Uri);
         using var response = await client.SendAsync(request, token);

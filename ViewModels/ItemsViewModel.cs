@@ -42,7 +42,7 @@ public abstract partial class CalDavItemViewModel<T> : ViewModelBase where T : C
         SelectedItem.IsDirty = true;
         SelectedItem.DavConfigId = SelectedDavInstance.Id;
 
-        await _databaseService.SaveChangesAsync();
+        await _databaseService.UpdateAsync(SelectedItem);
         SelectedItem = new T();
     }
 

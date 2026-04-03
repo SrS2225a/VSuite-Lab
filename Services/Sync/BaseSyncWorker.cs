@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using VSuiteLab.Models;
 using VSuiteLab.Utils;
@@ -41,17 +43,10 @@ public class BaseSyncWorker
         return StatusResponse<HttpClient>.Ok(client);
     }
 
-    /// <summary>
-    /// Executes the synchronization process by connecting to the server
-    /// </summary>
-    /// <param name="config">The configuration containing DAV-related settings, such as connection details and credentials.</param>
-    /// <param name="message">The banner message instance used to update the user interface with the progress of the synchronization.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests and stop the execution if requested.</param>
     public async Task ExecuteAsync(DavConfig config, SyncProgress message, CancellationToken cancellationToken)
     {
         try
         {
-
             message.Update("Connecting to server...");
             var clientResponse = await GetDavClientWithNetworkAsync(config);
             if (!clientResponse.Success)
@@ -62,9 +57,85 @@ public class BaseSyncWorker
             }
 
             var client = clientResponse.Value;
+            var pushActions = new List<Func<Task>>();
+            var pullActions = new List<Func<XDocument, Task>>();
+
+            if (config.SupportsVtodo)
+            {
+                pushActions.Add(async () =>
+                {
+                    if (await HasLocalChanges<CalDavTask>(config.Id))
+                    {
+                        message.Update("Pushing tasks...");
+                        await PushLocalChanges<CalDavTask>(
+                            db => db.Tasks,
+                            _icsUtils,
+                            client,
+                            config,
+                            cancellationToken);
+                    }
+                });
+
+                pullActions.Add(async report =>
+                {
+                    var syncResult = _icsUtils.ParseSyncCollectionResponse(report, "VTODO");
+
+                    message.Update("Downloading tasks...");
+                    await PullVTodoItems(
+                        _icsUtils,
+                        client,
+                        syncResult,
+                        config,
+                        cancellationToken);
+                });
+            }
+
+            if (config.SupportsVjournal)
+            {
+                pushActions.Add(async () =>
+                {
+                    if (await HasLocalChanges<CalDavJournal>(config.Id))
+                    {
+                        message.Update("Pushing journals...");
+                        await PushLocalChanges<CalDavJournal>(
+                            db => db.Journals,
+                            _icsUtils,
+                            client,
+                            config,
+                            cancellationToken);
+                    }
+
+                    if (await HasLocalChanges<CalDavNote>(config.Id))
+                    {
+                        message.Update("Pushing notes...");
+                        await PushLocalChanges<CalDavNote>(
+                            db => db.Notes,
+                            _icsUtils,
+                            client,
+                            config,
+                            cancellationToken);
+                    }
+                });
+
+                pullActions.Add(async report =>
+                {
+                    var syncResult = _icsUtils.ParseSyncCollectionResponse(report, "VJOURNAL");
+
+                    message.Update("Downloading journals...");
+                    await PullVJournalItems(
+                        _icsUtils,
+                        client,
+                        syncResult,
+                        config,
+                        cancellationToken);
+                });
+            }
+
+            message.Update("Pushing local changes...");
+            foreach (var action in pushActions)
+                await action();
 
             message.Update("Checking for server changes...");
-
             var reportResponse = await DavMiddlewareService.SyncCollectionReportAsync(
                 config,
                 config.LastSyncToken,
@@ -77,60 +148,13 @@ public class BaseSyncWorker
                 return;
             }
 
-            if (config.SupportsVtodo)
-            {
-                var syncResult = _icsUtils.ParseSyncCollectionResponse(reportResponse.Value, "VTODO");
-
-                message.Update("Downloading tasks...");
-                await PullVTodoItems(_icsUtils, client, syncResult, config, cancellationToken);
-
-                if (await HasLocalChanges<CalDavTask>(config.Id))
-                {
-                    message.Update("Pushing tasks...");
-                    await PushLocalChanges<CalDavTask>(
-                        db => db.Tasks,
-                        _icsUtils,
-                        client,
-                        config,
-                        cancellationToken);
-                }
-            }
-
-            if (config.SupportsVjournal)
-            {
-                var syncResult = _icsUtils.ParseSyncCollectionResponse(reportResponse.Value, "VJOURNAL");
-
-                message.Update("Downloading journals...");
-                await PullVJournalItems(_icsUtils, client, syncResult, config, cancellationToken);
-
-                message.Update("Pushing journals...");
-                if (await HasLocalChanges<CalDavJournal>(config.Id))
-                {
-
-                    await PushLocalChanges<CalDavJournal>(
-                        db => db.Journals,
-                        _icsUtils,
-                        client,
-                        config,
-                        cancellationToken);
-                }
-
-                if (await HasLocalChanges<CalDavNote>(config.Id))
-                {
-                    await PushLocalChanges<CalDavNote>(
-                        db => db.Notes,
-                        _icsUtils,
-                        client,
-                        config,
-                        cancellationToken);
-                }
-            }
-
+            var report = reportResponse.Value;
+            foreach (var action in pullActions)
+                await action(report);
 
             message.Update("Completed");
             message.Complete(true);
-        }
-        catch (Exception ex)
+        } catch (Exception ex)
         {
             message.Update(ex.Message);
             message.Complete(false);
@@ -238,7 +262,9 @@ public class BaseSyncWorker
             .Where(n => n.DavConfigId == config.Id)
             .ToListAsync(token);
 
-        var existingByUri = existingNotes.ToDictionary(n => n.Uri);
+        var existingByUri = existingNotes
+            .GroupBy(n => n.Uri)
+            .ToDictionary(g => g.Key, g => g.First());
         
         var deletedSet = syncResult.DeletedResources.ToHashSet();
         db.Tasks.RemoveRange(existingNotes.Where(x => deletedSet.Contains(x.Uri) && x.DavConfigId == config.Id));

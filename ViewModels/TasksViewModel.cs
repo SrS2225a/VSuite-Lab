@@ -143,7 +143,16 @@ namespace VSuiteLab.ViewModels
             OnPropertyChanged();
         }
         
-        public ObservableCollection<CalDavTask> Tasks { get; } = new();
+        private ObservableCollection<CalDavTask> _tasks = new();
+        public ObservableCollection<CalDavTask> Tasks
+        {
+            get => _tasks;
+            set
+            {
+                _tasks = value;
+                OnPropertyChanged();
+            }
+        }
         public ObservableCollection<DavConfig> DavInstances { get; } = new();
         
         [ObservableProperty] private DavConfig? selectedDavInstance;
@@ -165,18 +174,22 @@ namespace VSuiteLab.ViewModels
         private void ApplyGrouping()
         {
             var parsed = QueryUtils.ParseQuery(SearchText);
-            var filtered = _queryService.ApplyQuery(Tasks, parsed.Filters, parsed.Sorts);
-            var grouped = _queryService.ApplyGrouping(filtered, parsed.Groups);
-                
-            var newGroups = new ObservableCollection<GroupItemsCalDavTask>(
+
+            var filtered = _queryService
+                .ApplyQuery(Tasks, parsed.Filters, parsed.Sorts)
+                .ToList();
+
+            var grouped = _queryService
+                .ApplyGrouping(filtered, parsed.Groups)
+                .ToList();
+
+            GroupedNotes = new ObservableCollection<GroupItemsCalDavTask>(
                 grouped.Select(g => new GroupItemsCalDavTask
                 {
                     Key = g.Key,
-                    Items = new ObservableCollection<CalDavTask>(g.Items)
+                    Items = new ObservableCollection<CalDavTask>(g.Items.ToList())
                 })
             );
-
-            GroupedNotes = newGroups;
         }
 
         partial void OnSearchTextChanged(string value)
@@ -191,9 +204,9 @@ namespace VSuiteLab.ViewModels
                 SelectedDavInstance = null;
                 return;
             }
-            
+
             SelectedDavInstance = DavInstances.FirstOrDefault(d => d.Id == value.DavConfigId);
-            
+
             OnPropertyChanged(nameof(StartDateOnly));
             OnPropertyChanged(nameof(StartTimeOnly));
             OnPropertyChanged(nameof(DueDateOnly));
@@ -240,16 +253,12 @@ namespace VSuiteLab.ViewModels
                     .Include(n => n.Categories)
                     .Include(n => n.Attendees)
                     .Include(n => n.Attachments)
-                    .Include(n => n.Comments)
-                    .AsSplitQuery()
+                    .Include(n => n.Comments), true
             );
-            foreach (var note in notes.Value)
-            {
-                Tasks.Add(note);
-            }
+            
+            Tasks = new ObservableCollection<CalDavTask>(notes.Value);
             
             SelectedNote = new();
-            // await _syncService.SyncAllAsync();
             ApplyGrouping();
         }
 
@@ -311,8 +320,9 @@ namespace VSuiteLab.ViewModels
                 await _databaseService.CreateAsync(SelectedNote);
                 
                 Tasks.Add(SelectedNote);
-                SelectedNote = new();
             }
+            
+            SelectedNote = new();
         }
 
 
@@ -322,15 +332,13 @@ namespace VSuiteLab.ViewModels
             if (SelectedNote != null && selectedDavInstance != null)
             {
                 SelectedNote.IsDirty = true;
-                SelectedNote.LastModified = DateTime.Now.ToUniversalTime();
+                SelectedNote.LastModified = DateTime.UtcNow;
 
-                await _databaseService.SaveChangesAsync();
-                
-                // Reset selected note
+                await _databaseService.UpdateAsync(SelectedNote);
+
                 SelectedNote = new();
             }
         }
-
         [RelayCommand]
         private async Task DeleteNote()
         {
