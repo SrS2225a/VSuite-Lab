@@ -31,6 +31,22 @@ namespace VSuiteLab.ViewModels
         [ObservableProperty]
         private bool isSyncing;
         
+        private string _searchText = string.Empty;
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                if (_searchText != value)
+                {
+                    _searchText = value;
+                    OnPropertyChanged();
+
+                    if (CurrentSearchContext != null)
+                        CurrentSearchContext.SearchText = value;
+                }
+            }
+        }
 
         [RelayCommand]
         public async Task SyncCommand()
@@ -136,6 +152,10 @@ namespace VSuiteLab.ViewModels
                     _selectedTabIndex = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(CurrentSearchContext));
+                    
+                    if (CurrentSearchContext != null)
+                        CurrentSearchContext.SearchText = SearchText;
+                    
                     UpdateSelectedTabContent();
                 }
             }
@@ -157,7 +177,7 @@ namespace VSuiteLab.ViewModels
             switch (SelectedTabIndex)
             {
                 case 0:
-                    SelectedTabContent = new JournalsView();
+                    SelectedTabContent = new JournalsView() {DataContext = JournalsViewModel};
                     break;
                 case 1:
                     SelectedTabContent = new NotesView();

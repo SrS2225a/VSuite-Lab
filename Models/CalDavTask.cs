@@ -16,7 +16,7 @@ public partial class CalDavTask : CalDavItem
     [ObservableProperty] private DateTimeOffset? completedDate;
     [ObservableProperty] private string url = string.Empty;
     [ObservableProperty] private string contact = string.Empty;
-    [ObservableProperty] private string classification = string.Empty;
+    [ObservableProperty] private string? classification = string.Empty;
 
     public ObservableCollection<CalDavAlarm> Alarms { get; set; } = new();
     public ObservableCollection<CalDavCategory> Categories { get; set; } = new();

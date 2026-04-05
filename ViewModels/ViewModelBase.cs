@@ -10,17 +10,4 @@ namespace VSuiteLab.ViewModels
     public class ViewModelBase : ObservableObject
     {
     }
-
-    public class GroupItemsCalDavTask : ObservableObject
-    {
-        private object? _key;
-        public object? Key { get => _key; set => SetProperty(ref _key, value); }
-
-        private ObservableCollection<CalDavTask> _items = new();
-        public ObservableCollection<CalDavTask> Items
-        {
-            get => _items;
-            set => SetProperty(ref _items, value);
-        }
-    }
 }

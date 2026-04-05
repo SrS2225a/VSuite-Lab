@@ -23,14 +23,5 @@ public abstract partial class CalDavItem : ObservableObject
     [ObservableProperty] private bool isDirty;
     [ObservableProperty] private bool isDeleted;
 
-    [ObservableProperty] private CalDavItemType itemType = CalDavItemType.VTodo;
-
     public virtual bool HasDate => false; // override in subclasses if needed
-}
-
-public enum CalDavItemType
-{
-    VTodo,
-    VJournal,
-    Note
 }

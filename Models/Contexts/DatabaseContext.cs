@@ -29,12 +29,23 @@ public class DatabaseContext : DbContext
         .WithMany(d => d.Tasks)
         .HasForeignKey(n => n.DavConfigId)
         .OnDelete(DeleteBehavior.Cascade);
-
-    // Alarm (TASK ONLY)
+    
     modelBuilder.Entity<CalDavAlarm>()
         .HasOne(a => a.CalDavTask)
         .WithMany(t => t.Alarms)
         .HasForeignKey(a => a.CalDavTaskId)
+        .OnDelete(DeleteBehavior.Cascade);
+    
+    modelBuilder.Entity<CalDavAlarm>()
+        .HasOne(a => a.CalDavJournal)
+        .WithMany(t => t.Alarms)
+        .HasForeignKey(a => a.CalDavJournalId)
+        .OnDelete(DeleteBehavior.Cascade);
+    
+    modelBuilder.Entity<CalDavAlarm>()
+        .HasOne(a => a.CalDavNote)
+        .WithMany(t => t.Alarms)
+        .HasForeignKey(a => a.CalDavNoteId)
         .OnDelete(DeleteBehavior.Cascade);
 
     // Category

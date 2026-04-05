@@ -52,6 +52,7 @@ public class SyncService
         }
         finally
         {
+            // callback to UI
             onResult?.Invoke(progress);
             if (progress.IsCompleted)
             {
