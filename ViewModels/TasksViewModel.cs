@@ -21,11 +21,12 @@ using VSuiteLab.Services;
 using VSuiteLab.Converters;
 using Microsoft.EntityFrameworkCore;
 using VSuiteLab.Utils;
+using VSuiteLab.Views;
 using TodoStatus = VSuiteLab.Models.TodoStatus;
 
 namespace VSuiteLab.ViewModels
 {
-    public partial class TasksViewModel : CalDavItemViewModel<CalDavTask>
+    public partial class TasksViewModel : CalDavItemViewModel<CalDavTask>, IViewModelSearchableContext
     {
         private readonly DatabaseService _databaseService;
         private readonly QueryService _queryService = new();
@@ -176,7 +177,7 @@ namespace VSuiteLab.ViewModels
             var parsed = QueryUtils.ParseQuery(SearchText);
 
             var filtered = _queryService
-                .ApplyQuery(Tasks, parsed.Filters, parsed.Sorts)
+                .ApplyQuery(Tasks.Where(j => !j.IsDeleted), parsed.Filters, parsed.Sorts)
                 .ToList();
 
             var grouped = _queryService
@@ -217,7 +218,6 @@ namespace VSuiteLab.ViewModels
         {
             _databaseService = new DatabaseService();
             
-
             // Keep old message handling
             WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (r, m) =>
             {
@@ -257,7 +257,7 @@ namespace VSuiteLab.ViewModels
                     .Include(n => n.Comments), true
             );
             
-            Tasks = new ObservableCollection<CalDavTask>(notes.Value);
+            if (notes.Value != null) Tasks = new ObservableCollection<CalDavTask>(notes.Value);
             
             SelectedNote = new();
             ApplyGrouping();
@@ -297,7 +297,7 @@ namespace VSuiteLab.ViewModels
                 return;
             
             var ICSUtils = new ICSUtils();
-            var IcsContent = ICSUtils.BuildVTodoICS(task);
+            var IcsContent = ICSUtils.BuildICS(task);
             
             await FilePickerUtils.SaveFileDialog(task.Uid + ".ics", Encoding.UTF8.GetBytes(IcsContent), "ics");
         }
@@ -324,9 +324,11 @@ namespace VSuiteLab.ViewModels
                 await _databaseService.CreateAsync(SelectedNote);
                 
                 Tasks.Add(SelectedNote);
+                
+                SelectedNote = new();
+                
+                ApplyGrouping();
             }
-            
-            SelectedNote = new();
         }
 
 
@@ -354,6 +356,8 @@ namespace VSuiteLab.ViewModels
 
                 Tasks.Remove(SelectedNote);
                 SelectedNote = new();
+                
+                ApplyGrouping();
             }
         }
         

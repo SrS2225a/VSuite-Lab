@@ -290,10 +290,7 @@ public class DavMiddlewareService
         response.EnsureSuccessStatusCode();
 
         var remoteIcs = await response.Content.ReadAsStringAsync(token);
-        
-        var isVTodo = localItem.ItemType != CalDavItemType.VTodo;
-        
-        var parsed = icsUtils.ParseICS(remoteIcs, isVTodo);
+        var parsed = icsUtils.ParseICS(remoteIcs);
 
         var localUtc = localItem.LastModified?.ToUniversalTime();
         var remoteUtc = parsed.LastModified?.ToUniversalTime();
@@ -362,6 +359,5 @@ public class DavMiddlewareService
         // Delete remote item
         using var request = new HttpRequestMessage(HttpMethod.Delete, item.Uri);
         using var response = await client.SendAsync(request, token);
-        response.EnsureSuccessStatusCode();
     }
 }

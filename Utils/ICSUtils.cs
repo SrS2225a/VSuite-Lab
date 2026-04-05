@@ -31,19 +31,26 @@ public class ICSUtils
 
     public string BuildICS(CalDavItem item)
     {
-        return item.ItemType switch
+        return item switch
         {
-            CalDavItemType.VTodo => BuildVTodoICS((CalDavTask)item),
-            CalDavItemType.VJournal => BuildVJournalICS((CalDavJournal)item),
-            CalDavItemType.Note => BuildVJournalNoteICS((CalDavNote)item),
-            _ => throw new NotImplementedException()
+            CalDavTask task       => BuildVTodoICS(task),
+            CalDavJournal journal => BuildVJournalICS(journal),
+            CalDavNote note       => BuildVJournalNoteICS(note),
+            _ => throw new NotSupportedException($"Unsupported type: {item.GetType().Name}")
         };
-    } 
+    }
     
-    public CalDavItem ParseICS(string ics, bool vType)
+    public CalDavItem? ParseICS(string ics)
     {
         var calendar = Calendar.Load(ics);
-        return vType ? ParseICSVJournal(calendar) : ParseICSVTodo(calendar);
+
+        if (calendar.Todos?.Any() == true)
+            return ParseICSVTodo(calendar);
+
+        if (calendar.Journals?.Any() == true)
+            return ParseICSVJournal(calendar);
+
+        return null;
     }
     
 
@@ -143,7 +150,7 @@ public class ICSUtils
     /// <returns>
     /// A string representing the serialized iCalendar VTODO object.
     /// </returns>
-    public string BuildVTodoICS(CalDavTask item)
+    private string BuildVTodoICS(CalDavTask item)
     {
         var vTodoCalendar = new Calendar();
 
@@ -257,6 +264,13 @@ public class ICSUtils
             DtStart = new CalDateTime(item.PublishedDate?.UtcDateTime ?? DateTime.UtcNow),
             LastModified = new CalDateTime(item.LastModified?.UtcDateTime ?? DateTime.UtcNow),
         };
+        journal.Status = item.Status switch
+        {
+            Models.TodoStatus.Completed => Ical.Net.TodoStatus.Completed,
+            Models.TodoStatus.InProgress => Ical.Net.TodoStatus.InProcess,
+            Models.TodoStatus.Cancelled => Ical.Net.TodoStatus.Cancelled,
+            _ => Ical.Net.TodoStatus.NeedsAction
+        };
         
         
         if (!string.IsNullOrWhiteSpace(item.Contact))
@@ -270,6 +284,9 @@ public class ICSUtils
             journal.Class = item.Classification;
         
         if (!string.IsNullOrWhiteSpace(item.Url)) journal.Url = new Uri(item.Url);
+        
+        foreach (var attendee in item.Attendees)
+            journal.Attendees.Add(new Attendee(new Uri($"mailto:{attendee.Email}")) { CommonName = attendee.Name, Role = attendee.Role });
         
         
         ApplyCommonJournalFields(journal, item);
@@ -289,6 +306,14 @@ public class ICSUtils
             Summary = item.Summary,
             Description = item.Description,
             LastModified = new CalDateTime(item.LastModified?.UtcDateTime ?? DateTime.UtcNow),
+            
+        };
+        journal.Status = item.Status switch
+        {
+            Models.TodoStatus.Completed => Ical.Net.TodoStatus.Completed,
+            Models.TodoStatus.InProgress => Ical.Net.TodoStatus.InProcess,
+            Models.TodoStatus.Cancelled => Ical.Net.TodoStatus.Cancelled,
+            _ => Ical.Net.TodoStatus.NeedsAction
         };
         
         ApplyCommonJournalFields(journal, item);
@@ -305,6 +330,18 @@ public class ICSUtils
             return;
 
         dynamic target = item;
+        
+        if (!string.IsNullOrWhiteSpace(target.Contact))
+            journal.Organizer = new Organizer()
+            {
+                CommonName = target.Contact,
+
+            };
+
+        if (!string.IsNullOrWhiteSpace(target.Classification))
+            journal.Class = target.classification;
+        
+        if (!string.IsNullOrWhiteSpace(target.Url)) journal.Url = new Uri(target.Url);
 
         foreach (var c in target.Categories)
             journal.Categories.Add(c.Value);
@@ -333,6 +370,26 @@ public class ICSUtils
             {
                 CommonName = a.Name,
                 Role = a.Role
+            });
+        }
+        
+        foreach (var alarm in target.Alarms)
+        {
+            if (!alarm.SelectedDate.HasValue) continue;
+
+            var trigger = new Trigger
+            {
+                DateTime = new CalDateTime(alarm.SelectedDate.Value.DateTime),
+            };
+            trigger.Parameters.Add("VALUE", "DATE-TIME");
+
+            journal.Alarms.Add(new Alarm
+            {
+                Action = alarm.Action,
+                Description = alarm.Description,
+                Summary = alarm.Summary,
+                Trigger = trigger,
+                Repeat = alarm.Repeat ?? 0
             });
         }
     }
@@ -456,6 +513,45 @@ public class ICSUtils
                 Role = a.Role ?? string.Empty
             });
         }
+
+        foreach (var alarm in j.Alarms)
+        {
+            DateTimeOffset? triggerDate = null;
+            if (alarm.Trigger?.DateTime != null)
+            {
+                triggerDate = alarm.Trigger.DateTime.AsUtc;
+            }
+            else if (alarm.Trigger?.Duration != null)
+            {
+                var reference = j.DtStart?.Value ?? DateTime.UtcNow;
+                var duration = alarm.Trigger.Duration.Value.ToTimeSpan(new CalDateTime(reference));
+                var triggerTime = reference + duration;
+                triggerDate = new DateTimeOffset(triggerTime, TimeSpan.Zero);
+            }
+            if (triggerDate.HasValue)
+            {
+                target.Alarms.Add(new CalDavAlarm
+                {
+                    Action = alarm.Action,
+                    Description = alarm.Description ?? string.Empty,
+                    Summary = alarm.Summary ?? string.Empty,
+                    SelectedDate = triggerDate,
+                    Repeat = alarm.Repeat
+                });
+            }
+        }
+        
+        if (!string.IsNullOrWhiteSpace(target.Contact))
+            j.Organizer = new Organizer()
+            {
+                CommonName = target.Contact,
+
+            };
+
+        if (!string.IsNullOrWhiteSpace(target.Classification))
+            j.Class = target.Classification;
+        
+        if (!string.IsNullOrWhiteSpace(target.Url)) j.Url = new Uri(target.Url);
     }
     
     private CalDavItem ParseICSVJournal(Calendar ics)
@@ -480,7 +576,14 @@ public class ICSUtils
             PublishedDate = j.DtStart?.Value,
             LastModified = j.LastModified?.Value,
             Url = j.Url?.ToString() ?? string.Empty,
-            Classification = j.Class ?? string.Empty
+            Classification = j.Class ?? string.Empty,
+        };
+        journal.Status = j.Status switch
+        {
+            Ical.Net.TodoStatus.Completed => Models.TodoStatus.Completed,
+            Ical.Net.TodoStatus.InProcess => Models.TodoStatus.InProgress,
+            Ical.Net.TodoStatus.Cancelled => Models.TodoStatus.Cancelled,
+            _ => Models.TodoStatus.NeedsAction
         };
         
         PopulateCommonJournalFields(j, journal);
@@ -495,9 +598,18 @@ public class ICSUtils
             Uid = j.Uid ?? Guid.NewGuid().ToString(),
             Summary = j.Summary ?? string.Empty,
             Description = j.Description ?? string.Empty,
-            LastModified = j.LastModified?.Value
+            LastModified = j.LastModified?.Value,
+            Url = j.Url?.ToString() ?? string.Empty,
+            Classification = j.Class ?? string.Empty,
         };
-
+        note.Status = j.Status switch
+        {
+            Ical.Net.TodoStatus.Completed => Models.TodoStatus.Completed,
+            Ical.Net.TodoStatus.InProcess => Models.TodoStatus.InProgress,
+            Ical.Net.TodoStatus.Cancelled => Models.TodoStatus.Cancelled,
+            _ => Models.TodoStatus.NeedsAction
+        };
+        
         PopulateCommonJournalFields(j, note);
 
         return note;

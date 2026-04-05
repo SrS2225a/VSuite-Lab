@@ -195,10 +195,15 @@ public class BaseSyncWorker
 
         var dbSet = setSelector(db);
 
-        var dirtyItems = await dbSet
-            .Where(x => x.DavConfigId == config.Id &&
-                        (x.IsDirty || x.IsDeleted))
-            .ToListAsync(token);
+        var query = dbSet
+            .Include(e => EF.Property<object>(e, "Categories"))
+            .Include(e => EF.Property<object>(e, "Attachments"))
+            .Include(e => EF.Property<object>(e, "Comments"))
+            .Include(e => EF.Property<object>(e, "Alarms"))
+            .Include(e => EF.Property<object>(e, "Attendees"))
+            .Where(x => x.DavConfigId == config.Id && (x.IsDirty || x.IsDeleted));
+
+        var dirtyItems = await query.ToListAsync(token);
 
         if (dirtyItems.Count == 0)
             return;
@@ -278,7 +283,7 @@ public class BaseSyncWorker
             var remoteETag = resource.Etag;
 
             var ics = await icsUtils.DownloadICS(client, remoteUri);
-            var parsed = icsUtils.ParseICS(ics, false);
+            var parsed = icsUtils.ParseICS(ics);
 
             parsed.Etag = remoteETag;
             parsed.Uri = remoteUri;
@@ -345,7 +350,7 @@ public class BaseSyncWorker
             var remoteETag = resource.Etag;
 
             var ics = await icsUtils.DownloadICS(client, remoteUri);
-            var parsedItem = icsUtils.ParseICS(ics, true);
+            var parsedItem = icsUtils.ParseICS(ics);
 
             if (parsedItem == null) continue;
 

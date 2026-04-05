@@ -6,6 +6,7 @@ namespace VSuiteLab.Models;
 
 public partial class CalDavNote : CalDavItem
 {
+    [ObservableProperty] private TodoStatus status = TodoStatus.NeedsAction;
     [ObservableProperty] private string classification = string.Empty;
     [ObservableProperty] private string url = string.Empty;
     [ObservableProperty] private string contact = string.Empty;
@@ -14,6 +15,7 @@ public partial class CalDavNote : CalDavItem
     public ObservableCollection<CalDavAttachment> Attachments { get; set; } = new();
     public ObservableCollection<CalDavComment> Comments { get; set; } = new();
     public ObservableCollection<CalDavAttendee> Attendees { get; set; } = new();
+    public ObservableCollection<CalDavAlarm> Alarms { get; set; } = new();
 
     public override bool HasDate => false;
 }

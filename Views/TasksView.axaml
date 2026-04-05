@@ -6,11 +6,12 @@
              xmlns:models="clr-namespace:VSuiteLab.Models"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:resources="clr-namespace:VSuiteLab.Resources"
+             xmlns:views="clr-namespace:VSuiteLab.Views"
              x:DataType="vm:TasksViewModel"
              x:Class="VSuiteLab.Views.TasksView"
              mc:Ignorable="d">
 
-    <Grid ColumnDefinitions="340,*" RowDefinitions="Auto,*">
+    <Grid ColumnDefinitions="320,*" RowDefinitions="Auto,*">
         
         <!-- Sidebar -->
         <Border Grid.Row="1"
@@ -19,7 +20,7 @@
 
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="8">
-                    <Button Content="Save New" Command="{Binding SaveNewNoteCommand}" />
+                    <Button Content="New" Command="{Binding SaveNewNoteCommand}" />
                     <Button Content="Update" Command="{Binding SaveNoteCommand}" />
                     <Button Content="Delete" Command="{Binding DeleteNoteCommand}"/>
                 </StackPanel>
@@ -27,7 +28,7 @@
                 <ScrollViewer>
                     <ItemsControl ItemsSource="{Binding GroupedNotes}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:GroupItemsCalDavTask">
+                            <DataTemplate x:DataType="views:GroupItemsCalDavTask">
                                 <StackPanel Spacing="8" Margin="6">
 
                                     <!-- Group Header -->
