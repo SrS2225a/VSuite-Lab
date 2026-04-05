@@ -11,6 +11,12 @@ namespace VSuiteLab.Utils;
 
 public class FilePickerUtils
 {
+    /// <summary>
+    /// Save file dialog
+    /// </summary>
+    /// <param name="fileName">The name of the file to save</param>
+    /// <param name="data">The raw stream data to save</param>
+    /// <param name="extension">The file extension to use</param>
     public static async Task SaveFileDialog(string fileName, byte[] data, string? extension = null)
     {
         var mimeType = MimeTypesMap.GetMimeType(fileName);
@@ -31,6 +37,11 @@ public class FilePickerUtils
             await File.WriteAllBytesAsync(path, data);
         }
     }
+    
+    /// <summary>
+    /// Open file dialog
+    /// </summary>
+    /// <returns>A list of selected files</returns>   
 
     public static async Task<IReadOnlyList<IStorageFile>> OpenFileDialog()
     {

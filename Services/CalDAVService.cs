@@ -14,6 +14,12 @@ public class CalDAVService
         _databaseService = new DatabaseService();
     }
     
+    
+    /// <summary>
+    /// Adds a new mount to the database
+    /// </summary>
+    /// <param name="davConfig"></param>
+    /// <returns> A <see cref="StatusResponse{String}"/> containing the result of the operation. </returns>
     public async Task<StatusResponse<string>> addMount(DavConfig davConfig)
     {
         var client = DavMiddlewareService.getDavClient(davConfig);
