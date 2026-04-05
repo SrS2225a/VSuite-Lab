@@ -28,7 +28,13 @@ public class ICSUtils
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
     }
-
+    
+    
+    /// <summary>
+    /// Builds the ICS (iCalendar) content for the specified CalDavItem.
+    /// </summary>
+    /// <param name="item">The CalDavItem instance to build the ICS content for.</param>
+    /// <returns> A <see cref="Task{String}"/> containing the ICS content as a string. </returns>
     public string BuildICS(CalDavItem item)
     {
         return item switch
@@ -40,6 +46,11 @@ public class ICSUtils
         };
     }
     
+    /// <summary>
+    ///  Parses the provided ICS content and returns a CalDavItem instance.
+    /// </summary>
+    /// <param name="ics">The raw ICS content to parse as a string.</param>
+    /// <returns> A <see cref="Task{CalDavItem}"/> containing the parsed CalDavItem instance. </returns>
     public CalDavItem? ParseICS(string ics)
     {
         var calendar = Calendar.Load(ics);
@@ -53,14 +64,7 @@ public class ICSUtils
         return null;
     }
     
-
-    /// <summary>
-    /// Parses the provided ICS content and converts it into a CalDavTask instance.
-    /// </summary>
-    /// <param name="ics">The raw ICS content representing a VTODO item.</param>
-    /// <returns>
-    /// A <see cref="CalDavTask"/> object that contains the parsed details of the VTODO item.
-    /// </returns>
+    
     private CalDavTask ParseICSVTodo(Calendar ics)
     {
         var note = new CalDavTask();
@@ -143,13 +147,7 @@ public class ICSUtils
         return note;
     }
 
-    /// <summary>
-    /// Builds and serializes an iCalendar VTODO (task) object from the specified CalDavTask instance.
-    /// </summary>
-    /// <param name="item">An instance of <see cref="CalDavTask"/> containing the task details to be converted into VTODO format.</param>
-    /// <returns>
-    /// A string representing the serialized iCalendar VTODO object.
-    /// </returns>
+
     private string BuildVTodoICS(CalDavTask item)
     {
         var vTodoCalendar = new Calendar();

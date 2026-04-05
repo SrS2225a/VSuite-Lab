@@ -13,17 +13,23 @@ using VSuiteLab.Utils;
 
 namespace VSuiteLab.Services;
 
+/// <summary>
+/// Serves as a foundational class for handling data synchronization between a local database
+/// and a remote DAV server. This class is responsible for overseeing the communication with the
+/// server, managing synchronization processes, and coordinating the push of local changes as well as
+/// the pull of updates from the server.
+/// </summary>
 public class BaseSyncWorker
 {
     private readonly ICSUtils _icsUtils = new();
     private readonly DatabaseService _databaseService = new();
-    
+
     public BaseSyncWorker()
     {
         _databaseService = new DatabaseService();
         _icsUtils = new ICSUtils();
     }
-    
+
     /// <summary>
     /// Creates and returns an HttpClient instance for DAV-related operations if a network connection is available.
     /// </summary>
@@ -42,6 +48,13 @@ public class BaseSyncWorker
         var client = DavMiddlewareService.getDavClient(config);
         return StatusResponse<HttpClient>.Ok(client);
     }
+    
+    /// <summary>
+    /// Executes the synchronization process for a given DAV configuration.
+    /// </summary>
+    /// <param name="config">The DAV configuration containing connection details and credentials.</param>
+    /// <param name="message">A <see cref="SyncProgress"/> instance to update with progress information.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while awaiting the tasks.</param>
 
     public async Task ExecuteAsync(DavConfig config, SyncProgress message, CancellationToken cancellationToken)
     {
@@ -164,7 +177,9 @@ public class BaseSyncWorker
     /// <summary>
     /// Determines if there are any local changes for the specified configuration
     /// </summary>
-    /// <param name="configId">The Dav configuration to check for local changes.</param>
+    /// <typeparam name="T">The type of the entity to check for local changes.</typeparam>
+    /// <param name="configId">The ID of the configuration to check for local changes.</param>
+    /// <returns>A <see cref="Task{Boolean}"/> indicating whether there are any local changes.</returns>
     private async Task<bool> HasLocalChanges<T>(Guid configId)
         where T : CalDavItem
     {
@@ -179,6 +194,8 @@ public class BaseSyncWorker
     /// <summary>
     /// Pushes any VTODO local changes to the server
     /// </summary>
+    /// <typeparam name="T">The type of the entity to push.</typeparam>
+    /// <param name="setSelector">A function that selects the DbSet for the specified entity type.</param>
     /// <param name="icsUtils">Utility class for handling ICS data generation and parsing.</param>
     /// <param name="client">The HTTP client used to interact with the remote server.</param>
     /// <param name="config">The DAV configuration containing connection details and credentials.</param>
@@ -323,6 +340,15 @@ public class BaseSyncWorker
         await db.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Pulls any VJOURNAL remote changes from the server
+    /// </summary>
+    /// <param name="icsUtils">Utility class for handling ICS data generation and parsing.</param>
+    /// <param name="client">The HTTP client used to interact with the remote server.</param>
+    /// <param name="syncResult">The result of the synchronization report containing  parsed synchronization token,
+    /// a list of changed resources, and a list of deleted resources.</param>
+    /// <param name="config">The DAV configuration containing connection details and credentials.</param>
+    /// <param name="token">A cancellation token to observe while awaiting the tasks.</param>
     private async Task PullVJournalItems(
         ICSUtils icsUtils,
         HttpClient client,

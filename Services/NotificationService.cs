@@ -20,5 +20,11 @@ public class NotificationService : INotificationService
             throw new PlatformNotSupportedException();
     }
     
+    
+    /// <summary>
+    ///  Shows a notification on the current platform
+    /// </summary>
+    /// <param name="title">The title of the notification</param>
+    /// <param name="message">The message of the notification</param>
     public Task ShowNotificationAsync(string title, string message) => _impl.ShowNotificationAsync(title, message);
 }

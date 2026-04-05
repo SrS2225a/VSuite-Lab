@@ -18,6 +18,11 @@ public class AlarmService
         await _scheduler.Start();
     }
 
+    
+    /// <summary>
+    /// Syncs the alarm list with the scheduler
+    /// </summary>
+    /// <param name="alarms">The list of alarms to sync</param>
     public async Task SyncAlarmsAsync(IEnumerable<CalDavAlarm> alarms)
     {
         if (_scheduler == null)
