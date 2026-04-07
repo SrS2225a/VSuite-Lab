@@ -578,7 +578,7 @@ namespace LiveMarkdown.Controls
 
                         tb.Inlines.Add(new Run
                         {
-                            Text = marker + " ",
+                            Text = marker,
                             FontWeight = FontWeight.Bold
                         });
                         
@@ -905,7 +905,7 @@ namespace LiveMarkdown.Controls
                 var first = GetFirstCharOfInline(next);
                 if (first.HasValue && !char.IsWhiteSpace(first.Value))
                 {
-                    inlines.Add(new Run { Text = " " });
+                    inlines.Add(new Run { Text = "" });
                 }
             }
         }

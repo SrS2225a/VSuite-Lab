@@ -42,7 +42,7 @@
 
                                     <!-- Journal list -->
                                     <ListBox ItemsSource="{Binding Items}"
-                                             SelectedItem="{Binding $parent[UserControl].DataContext.SelectedJournal, Mode=TwoWay}"
+                                             SelectedItem="{Binding $parent[UserControl].DataContext.SelectedJournal}"
                                              BorderThickness="0"
                                              Background="Transparent">
 

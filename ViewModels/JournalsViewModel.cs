@@ -19,7 +19,7 @@ using VSuiteLab.Views;
 
 namespace VSuiteLab.ViewModels;
 
-public partial class JournalsViewModel : CalDavItemViewModel<CalDavJournal>, IViewModelSearchableContext
+public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableContext
 {
     private readonly DatabaseService _databaseService;
     private readonly QueryService _queryService = new();
@@ -210,7 +210,8 @@ public partial class JournalsViewModel : CalDavItemViewModel<CalDavJournal>, IVi
             
             Journals.Add(SelectedJournal);
 
-            SelectedJournal = new();
+            SelectedJournal = null;
+            Dispatcher.UIThread.Post(() => SelectedJournal = new CalDavJournal());
             
             ApplyGrouping();
         }
@@ -225,7 +226,8 @@ public partial class JournalsViewModel : CalDavItemViewModel<CalDavJournal>, IVi
             SelectedJournal.LastModified = DateTime.UtcNow;
 
             await _databaseService.UpdateAsync(SelectedJournal);
-            SelectedJournal = new();
+            SelectedJournal = null;
+            Dispatcher.UIThread.Post(() => SelectedJournal = new CalDavJournal());
         }
     }
 
@@ -240,7 +242,8 @@ public partial class JournalsViewModel : CalDavItemViewModel<CalDavJournal>, IVi
             await _databaseService.UpdateAsync(SelectedJournal);
 
             Journals.Remove(SelectedJournal);
-            SelectedJournal = new();
+            SelectedJournal = null;
+            Dispatcher.UIThread.Post(() => SelectedJournal = new CalDavJournal());
             
             ApplyGrouping();
         }
