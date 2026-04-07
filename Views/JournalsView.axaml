@@ -225,7 +225,7 @@
                                                Opacity="0.6"/>
                                     <ComboBox Grid.Row="1"
                                               HorizontalAlignment="Stretch"
-                                              ItemsSource="{Binding TodoStatuses}"
+                                              ItemsSource="{Binding JounralStatuses}"
                                               DisplayMemberBinding="{Binding Label}"
                                               SelectedValueBinding="{Binding Value}"
                                               SelectedValue="{Binding SelectedJournal.Status}" />

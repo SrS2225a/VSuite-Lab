@@ -24,13 +24,12 @@ public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableCon
     private readonly DatabaseService _databaseService;
     private readonly QueryService _queryService = new();
     
-    public IEnumerable<EnumOption<TodoStatus>> TodoStatuses =>
+    public IEnumerable<EnumOption<JournalStatus>> JounralStatuses =>
         new[]
         {
-            new EnumOption<TodoStatus>(TodoStatus.NeedsAction, "Needs Action"),
-            new EnumOption<TodoStatus>(TodoStatus.InProgress, "In Progress"),
-            new EnumOption<TodoStatus>(TodoStatus.Completed, "Completed"),
-            new EnumOption<TodoStatus>(TodoStatus.Cancelled, "Canceled")
+            new EnumOption<JournalStatus>(JournalStatus.Draft, "Draft"),
+            new EnumOption<JournalStatus>(JournalStatus.Final, "Final"),
+            new EnumOption<JournalStatus>(JournalStatus.Cancelled, "Cancelled")
         };
     
     public IEnumerable<EnumOption<string>> Classifications => new[]

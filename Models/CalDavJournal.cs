@@ -6,7 +6,7 @@ namespace VSuiteLab.Models;
 
 public partial class CalDavJournal : CalDavItem
 {
-    [ObservableProperty] private TodoStatus status = TodoStatus.NeedsAction;
+    [ObservableProperty] private JournalStatus status = JournalStatus.Draft;
     [ObservableProperty] private string? classification = string.Empty;
     [ObservableProperty] private string url = string.Empty;
     [ObservableProperty] private string contact = string.Empty;
@@ -20,4 +20,11 @@ public partial class CalDavJournal : CalDavItem
     public ObservableCollection<CalDavAlarm> Alarms { get; set; } = new();
 
     public override bool HasDate => PublishedDate.HasValue;
+}
+
+public enum JournalStatus
+{
+    Draft,
+    Final,
+    Cancelled
 }

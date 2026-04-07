@@ -6,7 +6,7 @@ namespace VSuiteLab.Models;
 
 public partial class CalDavNote : CalDavItem
 {
-    [ObservableProperty] private TodoStatus status = TodoStatus.NeedsAction;
+    [ObservableProperty] private JournalStatus status = JournalStatus.Draft;
     [ObservableProperty] private string classification = string.Empty;
     [ObservableProperty] private string url = string.Empty;
     [ObservableProperty] private string contact = string.Empty;

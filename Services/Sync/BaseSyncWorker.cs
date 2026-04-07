@@ -55,11 +55,11 @@ public class BaseSyncWorker
     /// <param name="config">The DAV configuration containing connection details and credentials.</param>
     /// <param name="message">A <see cref="SyncProgress"/> instance to update with progress information.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while awaiting the tasks.</param>
-
     public async Task ExecuteAsync(DavConfig config, SyncProgress message, CancellationToken cancellationToken)
     {
         try
         {
+            // main sync loop
             message.Update("Connecting to server...");
             var clientResponse = await GetDavClientWithNetworkAsync(config);
             if (!clientResponse.Success)
@@ -298,22 +298,24 @@ public class BaseSyncWorker
 
             var remoteUri = new Uri(client.BaseAddress!, resource.Uri).ToString();
             var remoteETag = resource.Etag;
+            
+            existingByUri.TryGetValue(remoteUri, out var existing);
+            
+            if (existing?.Etag == remoteETag || string.IsNullOrEmpty(remoteUri))
+                continue;
 
             var ics = await icsUtils.DownloadICS(client, remoteUri);
             var parsed = icsUtils.ParseICS(ics);
-
+            
+            if (parsed is not CalDavTask task)
+                continue;
+            
             parsed.Etag = remoteETag;
             parsed.Uri = remoteUri;
             parsed.DavConfigId = config.Id;
-
-            if (parsed is not CalDavTask task) continue;
-            if (existingByUri.TryGetValue(remoteUri, out var existing))
+            
+            if (existing != null)
             {
-                if (existing.Etag == remoteETag)
-                {
-                    continue;
-                }
-
                 parsed.Id = existing.Id;
                 db.Entry(existing).CurrentValues.SetValues(parsed);
 
@@ -323,7 +325,7 @@ public class BaseSyncWorker
                 existing.Attendees = new ObservableCollection<CalDavAttendee>(task.Attendees);
                 existing.Attachments = new ObservableCollection<CalDavAttachment>(task.Attachments);
             }
-            else if(!string.IsNullOrEmpty(task.Uri))
+            else
             {
                 db.Tasks.Add(task);
             }
@@ -374,9 +376,16 @@ public class BaseSyncWorker
 
             var remoteUri = new Uri(client.BaseAddress!, resource.Uri).ToString();
             var remoteETag = resource.Etag;
+            
+            if ((journalsByUri.TryGetValue(remoteUri, out var existingJournal) && existingJournal.Etag == remoteETag) ||
+                (notesByUri.TryGetValue(remoteUri, out var existingNote) && existingNote.Etag == remoteETag) || string.IsNullOrEmpty(remoteUri))
+            {
+                continue;
+            }
 
             var ics = await icsUtils.DownloadICS(client, remoteUri);
             var parsedItem = icsUtils.ParseICS(ics);
+            
 
             if (parsedItem == null) continue;
 
@@ -386,26 +395,24 @@ public class BaseSyncWorker
 
             if (parsedItem is CalDavJournal journal)
             {
-                if (journalsByUri.TryGetValue(remoteUri, out var existing))
+                if (existingJournal != null)
                 {
-                    if (existing.Etag == remoteETag) continue;
-                    journal.Id = existing.Id;
-                    db.Entry(existing).CurrentValues.SetValues(journal);
+                    journal.Id = existingJournal.Id;
+                    db.Entry(existingJournal).CurrentValues.SetValues(journal);
                 }
-                else if(!string.IsNullOrEmpty(journal.Uri))
+                else
                 {
                     db.Journals.Add(journal);
                 }
             }
             else if (parsedItem is CalDavNote note)
             {
-                if (notesByUri.TryGetValue(remoteUri, out var existing))
+                if (existingNote != null)
                 {
-                    if (existing.Etag == remoteETag) continue;
-                    note.Id = existing.Id;
-                    db.Entry(existing).CurrentValues.SetValues(note);
+                    note.Id = existingNote.Id;
+                    db.Entry(existingNote).CurrentValues.SetValues(note);
                 }
-                else if(!string.IsNullOrEmpty(note.Uri))
+                else
                 {
                     db.Notes.Add(note);
                 }
