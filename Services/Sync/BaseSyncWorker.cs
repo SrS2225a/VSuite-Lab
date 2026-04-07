@@ -323,7 +323,7 @@ public class BaseSyncWorker
                 existing.Attendees = new ObservableCollection<CalDavAttendee>(task.Attendees);
                 existing.Attachments = new ObservableCollection<CalDavAttachment>(task.Attachments);
             }
-            else
+            else if(!string.IsNullOrEmpty(task.Uri))
             {
                 db.Tasks.Add(task);
             }
@@ -392,7 +392,7 @@ public class BaseSyncWorker
                     journal.Id = existing.Id;
                     db.Entry(existing).CurrentValues.SetValues(journal);
                 }
-                else
+                else if(!string.IsNullOrEmpty(journal.Uri))
                 {
                     db.Journals.Add(journal);
                 }
@@ -405,7 +405,7 @@ public class BaseSyncWorker
                     note.Id = existing.Id;
                     db.Entry(existing).CurrentValues.SetValues(note);
                 }
-                else
+                else if(!string.IsNullOrEmpty(note.Uri))
                 {
                     db.Notes.Add(note);
                 }

@@ -26,7 +26,7 @@ using TodoStatus = VSuiteLab.Models.TodoStatus;
 
 namespace VSuiteLab.ViewModels
 {
-    public partial class TasksViewModel : CalDavItemViewModel<CalDavTask>, IViewModelSearchableContext
+    public partial class TasksViewModel : ViewModelBase, IViewModelSearchableContext
     {
         private readonly DatabaseService _databaseService;
         private readonly QueryService _queryService = new();
@@ -324,8 +324,8 @@ namespace VSuiteLab.ViewModels
                 await _databaseService.CreateAsync(SelectedNote);
                 
                 Tasks.Add(SelectedNote);
-                
-                SelectedNote = new();
+                SelectedNote = null;
+                Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
                 
                 ApplyGrouping();
             }
@@ -341,8 +341,8 @@ namespace VSuiteLab.ViewModels
                 SelectedNote.LastModified = DateTime.UtcNow;
 
                 await _databaseService.UpdateAsync(SelectedNote);
-
-                SelectedNote = new();
+                SelectedNote = null;
+                Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
             }
         }
         [RelayCommand]
@@ -355,7 +355,8 @@ namespace VSuiteLab.ViewModels
                 await _databaseService.UpdateAsync(SelectedNote);
 
                 Tasks.Remove(SelectedNote);
-                SelectedNote = new();
+                SelectedNote = null;
+                Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
                 
                 ApplyGrouping();
             }
