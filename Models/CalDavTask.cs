@@ -10,7 +10,6 @@ public partial class CalDavTask : CalDavItem
     [ObservableProperty] private TodoStatus status = TodoStatus.NeedsAction;
     [ObservableProperty] private string location = string.Empty;
     [ObservableProperty] private int priority;
-    // [ObservableProperty] private DateTimeOffset? lastModified = DateTimeOffset.Now;
     [ObservableProperty] private DateTimeOffset? dueDate;
     [ObservableProperty] private DateTimeOffset? startDate;
     [ObservableProperty] private DateTimeOffset? completedDate;

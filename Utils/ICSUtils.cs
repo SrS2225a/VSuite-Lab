@@ -264,10 +264,10 @@ public class ICSUtils
         };
         journal.Status = item.Status switch
         {
-            Models.TodoStatus.Completed => Ical.Net.TodoStatus.Completed,
-            Models.TodoStatus.InProgress => Ical.Net.TodoStatus.InProcess,
-            Models.TodoStatus.Cancelled => Ical.Net.TodoStatus.Cancelled,
-            _ => Ical.Net.TodoStatus.NeedsAction
+            Models.JournalStatus.Final => Ical.Net.JournalStatus.Final,
+            Models.JournalStatus.Draft => Ical.Net.JournalStatus.Draft,
+            Models.JournalStatus.Cancelled => Ical.Net.JournalStatus.Cancelled,
+            _ => Ical.Net.JournalStatus.Draft
         };
         
         
@@ -308,10 +308,10 @@ public class ICSUtils
         };
         journal.Status = item.Status switch
         {
-            Models.TodoStatus.Completed => Ical.Net.TodoStatus.Completed,
-            Models.TodoStatus.InProgress => Ical.Net.TodoStatus.InProcess,
-            Models.TodoStatus.Cancelled => Ical.Net.TodoStatus.Cancelled,
-            _ => Ical.Net.TodoStatus.NeedsAction
+            Models.JournalStatus.Final => Ical.Net.JournalStatus.Final,
+            Models.JournalStatus.Draft => Ical.Net.JournalStatus.Draft,
+            Models.JournalStatus.Cancelled => Ical.Net.JournalStatus.Cancelled,
+            _ => Ical.Net.JournalStatus.Draft
         };
         
         ApplyCommonJournalFields(journal, item);
@@ -486,6 +486,13 @@ public class ICSUtils
         Journal j,
         dynamic target) // works for both Journal + Note
     {
+        target.Status = j.Status switch
+        {
+            Ical.Net.JournalStatus.Final => Models.JournalStatus.Final,
+            Ical.Net.JournalStatus.Draft => Models.JournalStatus.Draft,
+            Ical.Net.JournalStatus.Cancelled => Models.JournalStatus.Cancelled,
+            _ => Models.JournalStatus.Draft
+        };
         foreach (var cat in j.Categories)
             target.Categories.Add(new CalDavCategory { Value = cat });
 
@@ -576,13 +583,6 @@ public class ICSUtils
             Url = j.Url?.ToString() ?? string.Empty,
             Classification = j.Class ?? string.Empty,
         };
-        journal.Status = j.Status switch
-        {
-            Ical.Net.TodoStatus.Completed => Models.TodoStatus.Completed,
-            Ical.Net.TodoStatus.InProcess => Models.TodoStatus.InProgress,
-            Ical.Net.TodoStatus.Cancelled => Models.TodoStatus.Cancelled,
-            _ => Models.TodoStatus.NeedsAction
-        };
         
         PopulateCommonJournalFields(j, journal);
 
@@ -599,13 +599,6 @@ public class ICSUtils
             LastModified = j.LastModified?.Value,
             Url = j.Url?.ToString() ?? string.Empty,
             Classification = j.Class ?? string.Empty,
-        };
-        note.Status = j.Status switch
-        {
-            Ical.Net.TodoStatus.Completed => Models.TodoStatus.Completed,
-            Ical.Net.TodoStatus.InProcess => Models.TodoStatus.InProgress,
-            Ical.Net.TodoStatus.Cancelled => Models.TodoStatus.Cancelled,
-            _ => Models.TodoStatus.NeedsAction
         };
         
         PopulateCommonJournalFields(j, note);

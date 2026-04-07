@@ -31,6 +31,7 @@ public class SyncService
         DavConfig config,
         Action<SyncProgress> onResult, int CurrentIndex = 0, int MaxIndex = 0)
     {
+        // main sync entry point
         string key = GetKey(config);
 
         if (!_runningSyncs.TryAdd(key, Task.CompletedTask))
