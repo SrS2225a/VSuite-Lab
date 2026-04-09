@@ -38,6 +38,7 @@
                 </TabControl>
                 
                 <ToggleButton Grid.Column="2"
+                              IsEnabled="{Binding HasSyncErrors}"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
                               Background="Transparent"

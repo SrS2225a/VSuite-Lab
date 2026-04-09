@@ -109,21 +109,6 @@ public class SyncSettingsViewModel : ObservableObject
         }
     }
 
-
-    /* ---------------------------
-     * Retry policy
-     * --------------------------- */
-
-    public int MaxRetry
-    {
-        get => _settings.MaxRetry;
-        set
-        {
-            _settings.MaxRetry = Math.Clamp(value, 0, 10);
-            OnPropertyChanged();
-        }
-    }
-
     /* ---------------------------
      * Immediate sync
      * --------------------------- */

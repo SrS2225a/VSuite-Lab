@@ -299,9 +299,7 @@ public class BaseSyncWorker
             var remoteUri = new Uri(client.BaseAddress!, resource.Uri).ToString();
             var remoteETag = resource.Etag;
             
-            existingByUri.TryGetValue(remoteUri, out var existing);
-            
-            if (existing?.Etag == remoteETag || string.IsNullOrEmpty(remoteUri))
+            if ((existingByUri.TryGetValue(remoteUri, out var existing) && existing.Etag == remoteETag) || string.IsNullOrEmpty(remoteUri))
                 continue;
 
             var ics = await icsUtils.DownloadICS(client, remoteUri);

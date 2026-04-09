@@ -55,14 +55,18 @@ public class SyncService
         {
             // callback to UI
             onResult?.Invoke(progress);
-            if (progress.IsCompleted)
+            if (progress.Success)
             {
                 WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(config));
-                
-                var alarmsResult =
-                    await _databaseService.ReadAllAsync<CalDavAlarm>(
-                        q => q.Where(a => a.SelectedDate != null && !a.HasRan), true);
-                await _alarmService.SyncAlarmsAsync(alarmsResult.Value);
+
+                if (CurrentIndex == MaxIndex - 1)
+                {
+                    // likely the last sync, sync alarms
+                    var alarmsResult =
+                        await _databaseService.ReadAllAsync<CalDavAlarm>(
+                            q => q.Where(a => a.SelectedDate != null && !a.HasRan), true);
+                    await _alarmService.SyncAlarmsAsync(alarmsResult.Value);
+                }
             }
 
             _runningSyncs.TryRemove(key, out _);
@@ -78,14 +82,15 @@ public class SyncService
         }
     }
 
-    public async Task StatPerodic(Action<SyncProgress> onResult)
+    public async Task StatPerodic(Action<SyncProgress> onResult, Action? onStart = null)
     {
         if (_timer == null)
         {
             _settings = await GetSettingsAsync();
 
-            if (_settings.SyncOnChange)
+            if (_settings is { SyncOnChange: true, SyncAuto: > 0 })
             {
+                onStart?.Invoke();
                 await SyncAllAsync(onResult);
             }
 
@@ -98,6 +103,7 @@ public class SyncService
             {
                 while (await _timer.WaitForNextTickAsync(_cts.Token))
                 {
+                    onStart?.Invoke();
                     await SyncAllAsync(onResult);
                 }
             });
