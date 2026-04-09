@@ -23,6 +23,9 @@ namespace VSuiteLab.ViewModels
         public NotesViewModel NotesViewModel { get; } = new NotesViewModel();
         
         private SyncService? _syncService;
+        private DatabaseService? _databaseService;
+        
+        public ObservableCollection<DavConfig> DavInstances { get; } = new();
 
         public ObservableCollection<SyncProgress> SyncResults { get; } = new();
         
@@ -87,6 +90,7 @@ namespace VSuiteLab.ViewModels
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
+                    ActiveSync = e;
                     if (e is { IsCompleted: true, Success: false })
                     {
                         SyncResults.Add(e);
@@ -95,6 +99,26 @@ namespace VSuiteLab.ViewModels
                 });
             });
             WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(result.Config));
+        }
+
+        [RelayCommand]
+        public async Task SyncDavItem(DavConfig config)
+        {
+            SyncResults.Clear();
+
+            await _syncService.SyncAsync(config, e =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    ActiveSync = e;
+                    if (e is { IsCompleted: true, Success: false })
+                    {
+                        SyncResults.Add(e);
+                        OnPropertyChanged(nameof(HasSyncErrors));
+                    }
+                });
+            }, MaxIndex:1);
+            WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(config));
         }
 
         [RelayCommand]
@@ -109,12 +133,24 @@ namespace VSuiteLab.ViewModels
         
         public MainWindowViewModel()
         {
+            _databaseService = new DatabaseService();
             _syncService = new SyncService();
+
+            _ = LoadMains();
             
             SelectedTabIndex = 0;
             UpdateSelectedTabContent();
             
             _ = StartAutoSync();
+        }
+
+        private async Task LoadMains()
+        {
+            var instances = await _databaseService.ReadAllAsync<DavConfig>();
+            foreach(var instance in instances.Value.OrderBy(i => i.Name))
+            {
+                DavInstances.Add(instance);
+            }
         }
 
         private async Task StartAutoSync()
