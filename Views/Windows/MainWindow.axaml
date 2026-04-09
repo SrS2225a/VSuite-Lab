@@ -5,6 +5,7 @@
         xmlns:views="clr-namespace:VSuiteLab.Views"
         xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:models="clr-namespace:VSuiteLab.Models"
         x:Class="VSuiteLab.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Width="1100" Height="700"
@@ -83,12 +84,26 @@
 
                 <!-- Buttons -->
                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
-                    <Button Command="{Binding SyncCommand}">
+                    <SplitButton Command="{Binding SyncCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <materialIcons:MaterialIcon Kind="RemoteDesktop"/>
                             <TextBlock Text="Sync"/>
                         </StackPanel>
-                    </Button>
+                        <SplitButton.Flyout>
+                            <Flyout>
+                                <ItemsControl ItemsSource="{Binding DavInstances}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:DavConfig">
+                                            <Button Command="{Binding $parent[views:MainWindow].DataContext.SyncDavItem}" 
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="{Binding Name}" Foreground="{Binding Color}" FontWeight="Bold" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Flyout>
+                        </SplitButton.Flyout>
+                    </SplitButton>
 
                     <Button Command="{Binding OpenSettingsCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
