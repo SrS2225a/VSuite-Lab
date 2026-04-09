@@ -14,7 +14,7 @@
                    Opacity="0.6"
                    TextWrapping="Wrap">
             Automatic sync will periodically synchronize your journals, notes, and tasks with the
-            server. Setting the interval to 0 disables automatic sync entirely.
+            server.
         </TextBlock>
 
         <Border Padding="10"
@@ -47,19 +47,6 @@
                         ItemsSource="{Binding TimeUnits}"
                         SelectedItem="{Binding SelectedUnit}" />
                 </Grid>
-
-                <!-- Max retries -->
-                <TextBlock Grid.Row="1"
-                           Text="Max retries"
-                           Opacity="0.7"
-                           VerticalAlignment="Center"/>
-
-                <NumericUpDown Grid.Row="1"
-                               Grid.Column="1"
-                               Minimum="0"
-                               Maximum="10"
-                               Value="{Binding MaxRetry}"/>
-
             </Grid>
         </Border>
 

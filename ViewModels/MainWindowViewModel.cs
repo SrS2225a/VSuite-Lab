@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia;
@@ -24,7 +25,9 @@ namespace VSuiteLab.ViewModels
         private SyncService? _syncService;
 
         public ObservableCollection<SyncProgress> SyncResults { get; } = new();
-
+        
+        public bool HasSyncErrors => SyncResults.Any(x => !x.Success);
+        
         [ObservableProperty]
         private SyncProgress? activeSync;
 
@@ -64,6 +67,7 @@ namespace VSuiteLab.ViewModels
                     if (result is { IsCompleted: true, Success: false })
                     {
                         SyncResults.Add(result);
+                        OnPropertyChanged(nameof(HasSyncErrors));
                     }
                 });
             });
@@ -86,6 +90,7 @@ namespace VSuiteLab.ViewModels
                     if (e is { IsCompleted: true, Success: false })
                     {
                         SyncResults.Add(e);
+                        OnPropertyChanged(nameof(HasSyncErrors));
                     }
                 });
             });
@@ -114,16 +119,27 @@ namespace VSuiteLab.ViewModels
 
         private async Task StartAutoSync()
         {
-            await _syncService.StatPerodic(result =>
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            await _syncService.StatPerodic(
+                result =>
                 {
-                    ActiveSync = result;
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        ActiveSync = result;
 
-                    if (result is { IsCompleted: true, Success: false })
-                        SyncResults.Add(result);
+                        if (result is { IsCompleted: true, Success: false })
+                        {
+                            SyncResults.Add(result);
+                            OnPropertyChanged(nameof(HasSyncErrors));
+                        }
+                    });
+                },
+                () =>
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        SyncResults.Clear();
+                    });
                 });
-            });
         }
         
         

@@ -64,7 +64,142 @@ public class ICSUtils
         return null;
     }
     
+    private void PopulateCommonFields(
+        RecurringComponent j,
+        dynamic item) // works for both Journal + Note
+    {
+        if (item is not CalDavJournal && item is not CalDavNote && item is not CalDavTask)
+            return;
+
+        dynamic target = item;
+        
+        foreach (var cat in j.Categories)
+            target.Categories.Add(new CalDavCategory { Value = cat });
+
+        foreach (var c in j.Comments)
+            target.Comments.Add(new CalDavComment { Value = c });
+
+        foreach (var a in j.Attachments)
+        {
+            target.Attachments.Add(new CalDavAttachment
+            {
+                Uri = a.Data ?? Array.Empty<byte>(),
+                Title = a.Parameters.Get("FILENAME"),
+                ContentType = a.FormatType ?? string.Empty
+            });
+        }
+
+        foreach (var a in j.Attendees)
+        {
+            target.Attendees.Add(new CalDavAttendee
+            {
+                Name = a.CommonName ?? string.Empty,
+                Email = a.Value?.ToString(),
+                Role = a.Role ?? string.Empty
+            });
+        }
+
+        foreach (var alarm in j.Alarms)
+        {
+            DateTimeOffset? triggerDate = null;
+            if (alarm.Trigger?.DateTime != null)
+            {
+                triggerDate = alarm.Trigger.DateTime.AsUtc;
+            }
+            else if (alarm.Trigger?.Duration != null)
+            {
+                var reference = j.DtStart?.Value ?? DateTime.UtcNow;
+                var duration = alarm.Trigger.Duration.Value.ToTimeSpan(new CalDateTime(reference));
+                var triggerTime = reference + duration;
+                triggerDate = new DateTimeOffset(triggerTime, TimeSpan.Zero);
+            }
+            if (triggerDate.HasValue)
+            {
+                target.Alarms.Add(new CalDavAlarm
+                {
+                    Action = alarm.Action,
+                    Description = alarm.Description ?? string.Empty,
+                    Summary = alarm.Summary ?? string.Empty,
+                    SelectedDate = triggerDate,
+                    Repeat = alarm.Repeat
+                });
+            }
+        }
+        
+        if (!string.IsNullOrWhiteSpace(target.Contact))
+            j.Organizer = new Organizer()
+            {
+                CommonName = target.Contact,
+
+            };
+
+        if (!string.IsNullOrWhiteSpace(target.Classification))
+            j.Class = target.Classification;
+        
+        if (!string.IsNullOrWhiteSpace(target.Url)) j.Url = new Uri(target.Url);
+    }
     
+    private CalDavItem ParseICSVJournal(Calendar ics)
+    {
+        var vJournal = ics?.Journals.FirstOrDefault();
+        if (vJournal is null)
+            return new CalDavJournal();
+
+        return vJournal.DtStart != null
+            ? ParseVJournalCalDavJournal(vJournal)
+            : ParseVJournalCalDavNote(vJournal);
+    }
+    
+        
+    private CalDavJournal ParseVJournalCalDavJournal(Journal j)
+    {
+        var journal = new CalDavJournal
+        {
+            Uid = j.Uid ?? Guid.NewGuid().ToString(),
+            Summary = j.Summary ?? string.Empty,
+            Description = j.Description ?? string.Empty,
+            PublishedDate = j.DtStart?.Value,
+            LastModified = j.LastModified?.Value,
+            Url = j.Url?.ToString() ?? string.Empty,
+            Classification = j.Class ?? string.Empty,
+            Status = j.Status switch
+            {
+                Ical.Net.JournalStatus.Final => Models.JournalStatus.Final,
+                Ical.Net.JournalStatus.Draft => Models.JournalStatus.Draft,
+                Ical.Net.JournalStatus.Cancelled => Models.JournalStatus.Cancelled,
+                _ => Models.JournalStatus.Draft
+            }
+        };
+        
+        PopulateCommonFields(j, journal);
+
+        return journal;
+    }
+
+    private CalDavNote ParseVJournalCalDavNote(Journal j)
+    {
+        var note = new CalDavNote
+        {
+            Uid = j.Uid ?? Guid.NewGuid().ToString(),
+            Summary = j.Summary ?? string.Empty,
+            Description = j.Description ?? string.Empty,
+            LastModified = j.LastModified?.Value,
+            Url = j.Url?.ToString() ?? string.Empty,
+            Classification = j.Class ?? string.Empty,
+            Status = j.Status switch
+            {
+                Ical.Net.JournalStatus.Final => Models.JournalStatus.Final,
+                Ical.Net.JournalStatus.Draft => Models.JournalStatus.Draft,
+                Ical.Net.JournalStatus.Cancelled => Models.JournalStatus.Cancelled,
+                _ => Models.JournalStatus.Draft
+            }
+        };
+
+        PopulateCommonFields(j, note);
+
+        return note;
+    }
+
     private CalDavTask ParseICSVTodo(Calendar ics)
     {
         var note = new CalDavTask();
@@ -177,70 +312,8 @@ public class ICSUtils
             DtStamp = new CalDateTime(DateTime.UtcNow),
             Sequence = item.Sequence
         };
-
-        if (!string.IsNullOrWhiteSpace(item.Contact))
-            vTodo.Organizer = new Organizer()
-            {
-                CommonName = item.Contact,
-
-            };
-
-        if (!string.IsNullOrWhiteSpace(item.Classification))
-            vTodo.Class = item.Classification;
-
-        if (!string.IsNullOrWhiteSpace(item.Location))
-            vTodo.Location = item.Location;
         
-        if (!string.IsNullOrWhiteSpace(item.Url)) vTodo.Url = new Uri(item.Url);
-        
-        if (item.Status == Models.TodoStatus.Completed)
-        {
-            vTodo.Completed = new CalDateTime(item.CompletedDate?.UtcDateTime ?? DateTime.UtcNow);
-        }
-
-        foreach (var attendee in item.Attendees)
-            vTodo.Attendees.Add(new Attendee(new Uri($"mailto:{attendee.Email}")) { CommonName = attendee.Name, Role = attendee.Role });
-
-        foreach (var category in item.Categories)
-            vTodo.Categories.Add(category.Value);
-
-        foreach (var alarm in item.Alarms)
-        {
-            if (!alarm.SelectedDate.HasValue) continue;
-
-            var trigger = new Trigger
-            {
-                DateTime = new CalDateTime(alarm.SelectedDate.Value.DateTime),
-            };
-            trigger.Parameters.Add("VALUE", "DATE-TIME");
-
-            vTodo.Alarms.Add(new Alarm
-            {
-                Action = alarm.Action,
-                Description = alarm.Description,
-                Summary = alarm.Summary,
-                Trigger = trigger,
-                Repeat = alarm.Repeat ?? 0
-            });
-        }
-
-        foreach (var attachment in item.Attachments)
-        {
-            var icalAttachment = new Attachment(attachment.Uri)
-            {
-                FormatType = attachment.ContentType,
-            };
-
-            icalAttachment.Parameters.Add("ENCODING", "BASE64");
-            icalAttachment.Parameters.Add("FILENAME", attachment.Title);
-            icalAttachment.Parameters.Add("VALUE", "BINARY");
-            icalAttachment.Parameters.Add("X-LABEL", attachment.Title);
-
-            vTodo.Attachments.Add(icalAttachment);
-        }
-
-        foreach (var comment in item.Comments)
-            vTodo.Comments.Add(comment.Value);
+        ApplyCommonFields(vTodo, item);
 
         vTodoCalendar.Todos.Add(vTodo);
 
@@ -261,33 +334,17 @@ public class ICSUtils
             DtStamp = new CalDateTime(DateTime.UtcNow),
             DtStart = new CalDateTime(item.PublishedDate?.UtcDateTime ?? DateTime.UtcNow),
             LastModified = new CalDateTime(item.LastModified?.UtcDateTime ?? DateTime.UtcNow),
-        };
-        journal.Status = item.Status switch
-        {
-            Models.JournalStatus.Final => Ical.Net.JournalStatus.Final,
-            Models.JournalStatus.Draft => Ical.Net.JournalStatus.Draft,
-            Models.JournalStatus.Cancelled => Ical.Net.JournalStatus.Cancelled,
-            _ => Ical.Net.JournalStatus.Draft
-        };
-        
-        
-        if (!string.IsNullOrWhiteSpace(item.Contact))
-            journal.Organizer = new Organizer()
+            Status = item.Status switch
             {
-                CommonName = item.Contact,
-
-            };
-
-        if (!string.IsNullOrWhiteSpace(item.Classification))
-            journal.Class = item.Classification;
+                Models.JournalStatus.Final => Ical.Net.JournalStatus.Final,
+                Models.JournalStatus.Draft => Ical.Net.JournalStatus.Draft,
+                Models.JournalStatus.Cancelled => Ical.Net.JournalStatus.Cancelled,
+                _ => Ical.Net.JournalStatus.Draft
+            },
+            Sequence = item.Sequence
+        };
         
-        if (!string.IsNullOrWhiteSpace(item.Url)) journal.Url = new Uri(item.Url);
-        
-        foreach (var attendee in item.Attendees)
-            journal.Attendees.Add(new Attendee(new Uri($"mailto:{attendee.Email}")) { CommonName = attendee.Name, Role = attendee.Role });
-        
-        
-        ApplyCommonJournalFields(journal, item);
+        ApplyCommonFields(journal, item);
 
         calendar.Journals.Add(journal);
 
@@ -304,67 +361,74 @@ public class ICSUtils
             Summary = item.Summary,
             Description = item.Description,
             LastModified = new CalDateTime(item.LastModified?.UtcDateTime ?? DateTime.UtcNow),
-            
-        };
-        journal.Status = item.Status switch
-        {
-            Models.JournalStatus.Final => Ical.Net.JournalStatus.Final,
-            Models.JournalStatus.Draft => Ical.Net.JournalStatus.Draft,
-            Models.JournalStatus.Cancelled => Ical.Net.JournalStatus.Cancelled,
-            _ => Ical.Net.JournalStatus.Draft
+            Status = item.Status switch
+            {
+                Models.JournalStatus.Final => Ical.Net.JournalStatus.Final,
+                Models.JournalStatus.Draft => Ical.Net.JournalStatus.Draft,
+                Models.JournalStatus.Cancelled => Ical.Net.JournalStatus.Cancelled,
+                _ => Ical.Net.JournalStatus.Draft
+            },
+            Sequence = item.Sequence
         };
         
-        ApplyCommonJournalFields(journal, item);
+        ApplyCommonFields(journal, item);
         
         calendar.Journals.Add(journal);
 
         return new CalendarSerializer().SerializeToString(calendar);
     }
 
-    private void ApplyCommonJournalFields<T>(Journal journal, T item)
-        where T : CalDavItem
+    private void ApplyCommonFields(RecurringComponent component, CalDavItem item)
     {
-        if (item is not CalDavJournal && item is not CalDavNote)
+        if (item is not CalDavJournal && item is not CalDavNote && item is not CalDavTask)
             return;
 
         dynamic target = item;
         
         if (!string.IsNullOrWhiteSpace(target.Contact))
-            journal.Organizer = new Organizer()
+            component.Organizer = new Organizer()
             {
                 CommonName = target.Contact,
 
             };
 
         if (!string.IsNullOrWhiteSpace(target.Classification))
-            journal.Class = target.classification;
+            component.Class = target.Classification;
         
-        if (!string.IsNullOrWhiteSpace(target.Url)) journal.Url = new Uri(target.Url);
+        if (!string.IsNullOrWhiteSpace(target.Url)) component.Url = new Uri(target.Url);
 
         foreach (var c in target.Categories)
-            journal.Categories.Add(c.Value);
+            component.Categories.Add(c.Value);
 
         foreach (var c in target.Comments)
-            journal.Comments.Add(c.Value);
+            component.Comments.Add(c.Value);
 
         foreach (var a in target.Attachments)
         {
+            if (string.IsNullOrWhiteSpace(a.Uri)) continue;
+
             var att = new Attachment(a.Uri)
             {
                 FormatType = a.ContentType
             };
+            
+            att.Parameters.Add("ENCODING", "BASE64");
+            att.Parameters.Add("VALUE", "BINARY");
 
             if (!string.IsNullOrWhiteSpace(a.Title))
+            {
                 att.Parameters.Add("FILENAME", a.Title);
+                att.Parameters.Add("X-LABEL", a.Title);
+            }
 
-            journal.Attachments.Add(att);
+            component.Attachments.Add(att);
         }
 
         foreach (var a in target.Attendees)
         {
             if (string.IsNullOrWhiteSpace(a.Email)) continue;
 
-            journal.Attendees.Add(new Attendee(new Uri($"mailto:{a.Email}"))
+            component.Attendees.Add(new Attendee(new Uri($"mailto:{a.Email}"))
             {
                 CommonName = a.Name,
                 Role = a.Role
@@ -381,7 +445,7 @@ public class ICSUtils
             };
             trigger.Parameters.Add("VALUE", "DATE-TIME");
 
-            journal.Alarms.Add(new Alarm
+            component.Alarms.Add(new Alarm
             {
                 Action = alarm.Action,
                 Description = alarm.Description,
@@ -481,130 +545,4 @@ public class ICSUtils
 
         return result;
     }
-    
-    private void PopulateCommonJournalFields(
-        Journal j,
-        dynamic target) // works for both Journal + Note
-    {
-        target.Status = j.Status switch
-        {
-            Ical.Net.JournalStatus.Final => Models.JournalStatus.Final,
-            Ical.Net.JournalStatus.Draft => Models.JournalStatus.Draft,
-            Ical.Net.JournalStatus.Cancelled => Models.JournalStatus.Cancelled,
-            _ => Models.JournalStatus.Draft
-        };
-        foreach (var cat in j.Categories)
-            target.Categories.Add(new CalDavCategory { Value = cat });
-
-        foreach (var c in j.Comments)
-            target.Comments.Add(new CalDavComment { Value = c });
-
-        foreach (var a in j.Attachments)
-        {
-            target.Attachments.Add(new CalDavAttachment
-            {
-                Uri = a.Data ?? Array.Empty<byte>(),
-                Title = a.Parameters.Get("FILENAME"),
-                ContentType = a.FormatType ?? string.Empty
-            });
-        }
-
-        foreach (var a in j.Attendees)
-        {
-            target.Attendees.Add(new CalDavAttendee
-            {
-                Name = a.CommonName ?? string.Empty,
-                Email = a.Value?.ToString(),
-                Role = a.Role ?? string.Empty
-            });
-        }
-
-        foreach (var alarm in j.Alarms)
-        {
-            DateTimeOffset? triggerDate = null;
-            if (alarm.Trigger?.DateTime != null)
-            {
-                triggerDate = alarm.Trigger.DateTime.AsUtc;
-            }
-            else if (alarm.Trigger?.Duration != null)
-            {
-                var reference = j.DtStart?.Value ?? DateTime.UtcNow;
-                var duration = alarm.Trigger.Duration.Value.ToTimeSpan(new CalDateTime(reference));
-                var triggerTime = reference + duration;
-                triggerDate = new DateTimeOffset(triggerTime, TimeSpan.Zero);
-            }
-            if (triggerDate.HasValue)
-            {
-                target.Alarms.Add(new CalDavAlarm
-                {
-                    Action = alarm.Action,
-                    Description = alarm.Description ?? string.Empty,
-                    Summary = alarm.Summary ?? string.Empty,
-                    SelectedDate = triggerDate,
-                    Repeat = alarm.Repeat
-                });
-            }
-        }
-        
-        if (!string.IsNullOrWhiteSpace(target.Contact))
-            j.Organizer = new Organizer()
-            {
-                CommonName = target.Contact,
-
-            };
-
-        if (!string.IsNullOrWhiteSpace(target.Classification))
-            j.Class = target.Classification;
-        
-        if (!string.IsNullOrWhiteSpace(target.Url)) j.Url = new Uri(target.Url);
-    }
-    
-    private CalDavItem ParseICSVJournal(Calendar ics)
-    {
-        var vJournal = ics?.Journals.FirstOrDefault();
-        if (vJournal is null)
-            return new CalDavJournal();
-
-        return vJournal.DtStart != null
-            ? ParseVJournalCalDavJournal(vJournal)
-            : ParseVJournalCalDavNote(vJournal);
-    }
-    
-        
-    private CalDavJournal ParseVJournalCalDavJournal(Journal j)
-    {
-        var journal = new CalDavJournal
-        {
-            Uid = j.Uid ?? Guid.NewGuid().ToString(),
-            Summary = j.Summary ?? string.Empty,
-            Description = j.Description ?? string.Empty,
-            PublishedDate = j.DtStart?.Value,
-            LastModified = j.LastModified?.Value,
-            Url = j.Url?.ToString() ?? string.Empty,
-            Classification = j.Class ?? string.Empty,
-        };
-        
-        PopulateCommonJournalFields(j, journal);
-
-        return journal;
-    }
-    
-    private CalDavNote ParseVJournalCalDavNote(Journal j)
-    {
-        var note = new CalDavNote
-        {
-            Uid = j.Uid ?? Guid.NewGuid().ToString(),
-            Summary = j.Summary ?? string.Empty,
-            Description = j.Description ?? string.Empty,
-            LastModified = j.LastModified?.Value,
-            Url = j.Url?.ToString() ?? string.Empty,
-            Classification = j.Class ?? string.Empty,
-        };
-        
-        PopulateCommonJournalFields(j, note);
-
-        return note;
-    }
-    
-
 }
