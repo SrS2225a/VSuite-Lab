@@ -19,22 +19,27 @@ public class FilePickerUtils
     /// <param name="extension">The file extension to use</param>
     public static async Task SaveFileDialog(string fileName, byte[] data, string? extension = null)
     {
-        var mimeType = MimeTypesMap.GetMimeType(fileName);
-        var sfd = new SaveFileDialog
+        var window = ((IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!).MainWindow!;
+    
+        var file = await window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
+            SuggestedFileName = fileName,
             DefaultExtension = extension,
-            Filters = new List<FileDialogFilter>
-            {
-                new FileDialogFilter { Name = mimeType, Extensions = { extension } }
-            },
-            InitialFileName = fileName
-        };
-        var lifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
-        var path = await sfd.ShowAsync(lifetime?.MainWindow);
-        
-        if (!string.IsNullOrEmpty(path))
+            FileTypeChoices = extension != null
+                ? new List<FilePickerFileType>
+                {
+                    new FilePickerFileType(fileName)
+                    {
+                        Patterns = new[] { $"*.{extension}" }
+                    }
+                }
+                : null
+        });
+
+        if (file != null)
         {
-            await File.WriteAllBytesAsync(path, data);
+            await using var stream = await file.OpenWriteAsync();
+            await stream.WriteAsync(data);
         }
     }
     

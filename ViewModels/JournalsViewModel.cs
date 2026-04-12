@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,16 +14,19 @@ using HeyRed.Mime;
 using Microsoft.EntityFrameworkCore;
 using VSuiteLab.Converters;
 using VSuiteLab.Models;
+using VSuiteLab.Models.Contexts;
 using VSuiteLab.Services;
 using VSuiteLab.Utils;
 using VSuiteLab.Views;
 
 namespace VSuiteLab.ViewModels;
 
-public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableContext
+public partial class JournalsViewModel : ViewModelBase
 {
     private readonly DatabaseService _databaseService;
     private readonly QueryService _queryService = new();
+
+    private SearchQueryBuilder QueryBuilder { get; }
     
     public IEnumerable<EnumOption<JournalStatus>> JounralStatuses =>
         new[]
@@ -55,9 +59,6 @@ public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableCon
         
     [ObservableProperty] 
     private CalDavJournal? selectedJournal;
-        
-    [ObservableProperty]
-    private string _searchText = string.Empty;
 
     [ObservableProperty] private bool _debugEnabled = false; 
         
@@ -67,16 +68,26 @@ public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableCon
     [ObservableProperty]
     private bool isPreviewMode = true;
     
+    private void Refresh()
+    {
+        ApplyGrouping();
+    }
+    
     private void ApplyGrouping()
     {
-        var parsed = QueryUtils.ParseQuery(SearchText);
+        var query = QueryMapper.ToQueryModel(
+            QueryBuilder.Filters,
+            QueryBuilder.Sorts,
+            QueryBuilder.Groups);
 
         var filtered = _queryService
-            .ApplyQuery(Journals.Where(j => !j.IsDeleted), parsed.Filters, parsed.Sorts)
+            .ApplyQuery(Journals.Where(j => !j.IsDeleted),
+                query.Filters,
+                query.Sorts)
             .ToList();
 
         var grouped = _queryService
-            .ApplyGrouping(filtered, parsed.Groups)
+            .ApplyGrouping(filtered, query.Groups)
             .ToList();
 
         GroupedJournals = new ObservableCollection<GroupItemsCalDavJournal>(
@@ -88,9 +99,41 @@ public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableCon
         );
     }
 
-    partial void OnSearchTextChanged(string value)
+    private void HookBuilderChanges()
     {
-        ApplyGrouping();
+        HookCollection(QueryBuilder.Filters);
+        HookCollection(QueryBuilder.Sorts);
+        HookCollection(QueryBuilder.Groups);
+    }
+
+    private void HookCollection<T>(ObservableCollection<T> collection)
+        where T : INotifyPropertyChanged
+    {
+        // Hook existing items
+        foreach (var item in collection)
+            item.PropertyChanged += OnBuilderItemChanged;
+
+        collection.CollectionChanged += (s, e) =>
+        {
+            if (e.NewItems != null)
+            {
+                foreach (T item in e.NewItems)
+                    item.PropertyChanged += OnBuilderItemChanged;
+            }
+
+            if (e.OldItems != null)
+            {
+                foreach (T item in e.OldItems)
+                    item.PropertyChanged -= OnBuilderItemChanged;
+            }
+
+            Refresh(); // collection itself changed
+        };
+    }
+    
+    private void OnBuilderItemChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        Refresh();
     }
 
     partial void OnSelectedJournalChanged(CalDavJournal? value)
@@ -104,10 +147,10 @@ public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableCon
         SelectedDavInstance = DavInstances.FirstOrDefault(d => d.Id == value.DavConfigId);
     }
     
-    public JournalsViewModel()
+    public JournalsViewModel(SearchQueryBuilder queryBuilder)
     {
         _databaseService = new DatabaseService();
-            
+        QueryBuilder = queryBuilder;
 
         // Keep old message handling
         WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (r, m) =>
@@ -119,6 +162,7 @@ public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableCon
         });
 
         // Initialize notes
+        HookBuilderChanges();
         _ = InitializeAsync();
     }
     
@@ -151,7 +195,7 @@ public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableCon
         if (notes.Value != null) Journals = new ObservableCollection<CalDavJournal>(notes.Value.OrderByDescending(n => n.PublishedDate));
 
         SelectedJournal = new();
-        ApplyGrouping();
+        Refresh();
     }
     
     private async Task RefreshForInstance(DavConfig config)
@@ -177,7 +221,7 @@ public partial class JournalsViewModel : ViewModelBase,  IViewModelSearchableCon
         foreach (var note in notes.Value.OrderByDescending(n => n.PublishedDate))
             Journals.Add(note);
             
-        ApplyGrouping();
+        Refresh();
     }
     
     [RelayCommand]
