@@ -6,6 +6,7 @@
         xmlns:vm="clr-namespace:VSuiteLab.ViewModels"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         xmlns:models="clr-namespace:VSuiteLab.Models"
+        xmlns:converters="clr-namespace:VSuiteLab.Converters"
         x:Class="VSuiteLab.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Width="1100" Height="700"
@@ -16,66 +17,265 @@
         <vm:MainWindowViewModel />
     </Window.DataContext>
 
+    <Window.DataTemplates>
+        <DataTemplate DataType="converters:TextEditorVm">
+            <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </DataTemplate>
+
+        <DataTemplate DataType="converters:NumberEditorVm">
+            <NumericUpDown Value="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </DataTemplate>
+
+        <DataTemplate DataType="converters:BoolEditorVm">
+            <CheckBox IsChecked="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </DataTemplate>
+
+        <DataTemplate DataType="converters:DateEditorVm">
+            <DatePicker SelectedDate="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </DataTemplate>
+
+        <DataTemplate DataType="converters:EnumEditorVm">
+            <ComboBox ItemsSource="{Binding Values}"
+                      SelectedItem="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </DataTemplate>
+    </Window.DataTemplates>
+
     <DockPanel>
 
         <!-- Top toolbar with TabControl -->
         <Border DockPanel.Dock="Top" Padding="5,0,5,0"
                 Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
                 Height="43">
-            <Grid ColumnDefinitions="200,*,*,Auto">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
 
-                <TextBox Grid.Column="0"
-                         Height="32"
-                         Text="{Binding CurrentSearchContext.SearchText, Mode=TwoWay}"
-                         Watermark="{Binding SelectedItem.(TabItem.Header), ElementName=MainTabs, StringFormat=Search {0}}" />
+                <!-- SEARCH + FILTER FLYOUT -->
+                <StackPanel Orientation="Horizontal">
+
+                    <!-- SEARCH BUTTON (replaces textbox) -->
+                    <Button>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <materialIcons:MaterialIcon Kind="Search" />
+                            <TextBlock Text="Search" />
+                        </StackPanel>
+                        <Button.Flyout>
+                            <Flyout Placement="Bottom"
+                                    ShowMode="Standard">
+
+                                <!-- PANEL -->
+                                <Border
+                                    Padding="5"
+                                    CornerRadius="10"
+                                    BorderThickness="1">
+
+                                    <StackPanel>
+
+                                        <!-- HEADER -->
+                                        <TextBlock Text="Filters"
+                                                   FontSize="12"
+                                                   Opacity="0.7"
+                                                   Margin="4,0" />
+
+                                        <!-- FILTERS -->
+                                        <ItemsControl ItemsSource="{Binding QueryBuilder.Filters}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+
+                                                    <Border CornerRadius="8"
+                                                            Padding="7"
+                                                            Margin="0,4"
+                                                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+
+                                                        <Grid ColumnDefinitions="*,*,*,Auto"
+                                                              ColumnSpacing="8">
+
+                                                            <!-- FIELD -->
+                                                            <ComboBox
+                                                                ItemsSource="{Binding AvailableFields}"
+                                                                SelectedItem="{Binding SelectedField, Mode=TwoWay}"
+                                                                DisplayMemberBinding="{Binding Label}"  />
+
+                                                            <!-- OPERATOR -->
+                                                            <ComboBox Grid.Column="1"
+                                                                      ItemsSource="{Binding AvailableSearchOperators}"
+                                                                      SelectedItem="{Binding OperatorType}"
+                                                                      Background="Transparent"
+                                                                      BorderThickness="0" />
+
+                                                            <!-- VALUE -->
+                                                            <ContentControl Grid.Column="2"
+                                                                            Content="{Binding Editor}" />
+
+                                                            <!-- REMOVE -->
+                                                            <Button Grid.Column="3"
+                                                                    Content="✕"
+                                                                    Background="Transparent"
+                                                                    BorderThickness="0"
+                                                                    Opacity="0.6"
+                                                                    Command="{Binding $parent[Window].DataContext.RemoveFilterCommand}"
+                                                                    CommandParameter="{Binding}" />
+
+                                                        </Grid>
+                                                    </Border>
+
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- ADD FILTER -->
+                                        <Button Content="+ Add filter"
+                                                Command="{Binding AddFilterCommand}"
+                                                HorizontalAlignment="Left"
+                                                Padding="10,4"
+                                                Background="Transparent"
+                                                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6" />
+
+                                        <TextBlock Text="Sorts"
+                                                   FontSize="12"
+                                                   Opacity="0.7"
+                                                   Margin="4,10,4,0" />
+
+                                        <ItemsControl ItemsSource="{Binding QueryBuilder.Sorts}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+
+                                                    <Border CornerRadius="8"
+                                                            Padding="7"
+                                                            Margin="0,4"
+                                                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+                                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+
+                                                            <!-- FIELD -->
+                                                            <ComboBox
+                                                                ItemsSource="{Binding AvailableFields}"
+                                                                SelectedItem="{Binding SelectedField}"
+                                                                DisplayMemberBinding="{Binding Label}" />
+
+                                                            <!-- DESC -->
+                                                            <CheckBox Grid.Column="1"
+                                                                      Content="Desc"
+                                                                      IsChecked="{Binding Descending}" />
+
+                                                            <!-- REMOVE -->
+                                                            <Button Grid.Column="2"
+                                                                    Content="✕"
+                                                                    Command="{Binding $parent[Window].DataContext.RemoveSortCommand}"
+                                                                    CommandParameter="{Binding}" />
+
+                                                        </Grid>
+                                                    </Border>
+
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Button Content="+ Add sort"
+                                                Padding="10,4"
+                                                Background="Transparent"
+                                                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                                BorderThickness="1"
+                                                Command="{Binding AddSortCommand}" />
+
+                                        <TextBlock Text="Groups"
+                                                   FontSize="12"
+                                                   Opacity="0.7"
+                                                   Margin="4,10,4,0" />
+
+                                        <ItemsControl ItemsSource="{Binding QueryBuilder.Groups}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+
+                                                    <Border CornerRadius="8"
+                                                            Padding="7"
+                                                            Margin="0,4"
+                                                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+                                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+
+                                                            <!-- FIELD -->
+                                                            <ComboBox
+                                                                ItemsSource="{Binding AvailableFields}"
+                                                                SelectedItem="{Binding SelectedField}"
+                                                                DisplayMemberBinding="{Binding Label}" />
+
+                                                            <!-- REMOVE -->
+                                                            <Button Grid.Column="1"
+                                                                    Content="✕"
+                                                                    Command="{Binding $parent[Window].DataContext.RemoveGroupCommand}"
+                                                                    CommandParameter="{Binding}" />
+
+                                                        </Grid>
+                                                    </Border>
+
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Button Content="+ Add group"
+                                                Padding="10,4"
+                                                Background="Transparent"
+                                                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                                BorderThickness="1"
+                                                Command="{Binding AddGroupCommand}" />
+
+                                    </StackPanel>
+
+                                </Border>
+
+                            </Flyout>
+                        </Button.Flyout>
+
+                    </Button>
+
+                </StackPanel>
 
                 <!-- Tabs -->
                 <TabControl Grid.Column="1"
                             x:Name="MainTabs"
                             SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
-                    <TabItem Header="Journals"/>
+                    <TabItem Header="Journals" />
                     <TabItem Header="Notes" />
-                    <TabItem Header="Tasks"/>
+                    <TabItem Header="Tasks" />
                 </TabControl>
-                
+
                 <ToggleButton Grid.Column="2"
                               IsEnabled="{Binding HasSyncErrors}"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
                               Background="Transparent"
                               BorderBrush="Transparent">
-                    
+
                     <TextBlock Text="{Binding ActiveSync.Message, TargetNullValue=Idle}"
                                TextWrapping="Wrap" VerticalAlignment="Center" FontSize="10" />
 
                     <ToggleButton.Flyout>
                         <Flyout Placement="Bottom" ShowMode="Transient">
                             <Border Width="400" MaxHeight="300">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                        <ItemsControl ItemsSource="{Binding SyncResults}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Padding="5"
-                                                            Background="{Binding IsError}">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding SyncResults}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="5"
+                                                        Background="{Binding IsError}">
 
-                                                        <StackPanel Spacing="4">
-                                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <TextBlock Text="{Binding ServerName}" FontWeight="Bold"/>
-                                                                <TextBlock Text="{Binding Timestamp}" FontSize="10"/>
-                                                            </StackPanel>
-                                                            
-                                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap"/>
-                                                            
-                                                            <Button Content="Retry"
-                                                                    Command="{Binding $parent[views:MainWindow].DataContext.RetrySyncCommand}"
-                                                                    CommandParameter="{Binding}" />
+                                                    <StackPanel Spacing="4">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <TextBlock Text="{Binding ServerName}" FontWeight="Bold" />
+                                                            <TextBlock Text="{Binding Timestamp}" FontSize="10" />
                                                         </StackPanel>
 
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </ScrollViewer>
+                                                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+
+                                                        <Button Content="Retry"
+                                                                Command="{Binding $parent[views:MainWindow].DataContext.RetrySyncCommand}"
+                                                                CommandParameter="{Binding}" />
+                                                    </StackPanel>
+
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
                             </Border>
                         </Flyout>
                     </ToggleButton.Flyout>
@@ -86,17 +286,19 @@
                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
                     <SplitButton Command="{Binding SyncCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <materialIcons:MaterialIcon Kind="RemoteDesktop"/>
-                            <TextBlock Text="Sync"/>
+                            <materialIcons:MaterialIcon Kind="RemoteDesktop" />
+                            <TextBlock Text="Sync" />
                         </StackPanel>
                         <SplitButton.Flyout>
                             <Flyout>
                                 <ItemsControl ItemsSource="{Binding DavInstances}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="models:DavConfig">
-                                            <Button Command="{Binding $parent[views:MainWindow].DataContext.SyncDavItem}" 
-                                                    CommandParameter="{Binding}">
-                                                <TextBlock Text="{Binding Name}" Foreground="{Binding Color}" FontWeight="Bold" />
+                                            <Button
+                                                Command="{Binding $parent[views:MainWindow].DataContext.SyncDavItem}"
+                                                CommandParameter="{Binding}">
+                                                <TextBlock Text="{Binding Name}" Foreground="{Binding Color}"
+                                                           FontWeight="Bold" />
                                             </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -107,8 +309,8 @@
 
                     <Button Command="{Binding OpenSettingsCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <materialIcons:MaterialIcon Kind="Settings"/>
-                            <TextBlock Text="Settings"/>
+                            <materialIcons:MaterialIcon Kind="Settings" />
+                            <TextBlock Text="Settings" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -118,7 +320,7 @@
 
         <!-- Main content -->
         <ContentControl DockPanel.Dock="Bottom"
-                        Content="{Binding SelectedTabContent}"/>
+                        Content="{Binding SelectedTabContent}" />
 
     </DockPanel>
 </Window>

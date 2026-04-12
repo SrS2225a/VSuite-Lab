@@ -3,16 +3,11 @@ using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using HeyRed.Mime;
@@ -20,16 +15,19 @@ using VSuiteLab.Models;
 using VSuiteLab.Services;
 using VSuiteLab.Converters;
 using Microsoft.EntityFrameworkCore;
+using VSuiteLab.Models.Contexts;
 using VSuiteLab.Utils;
 using VSuiteLab.Views;
 using TodoStatus = VSuiteLab.Models.TodoStatus;
 
 namespace VSuiteLab.ViewModels
 {
-    public partial class TasksViewModel : ViewModelBase, IViewModelSearchableContext
+    public partial class TasksViewModel : ViewModelBase
     {
         private readonly DatabaseService _databaseService;
         private readonly QueryService _queryService = new();
+        
+        private SearchQueryBuilder QueryBuilder { get; }
         
         public IEnumerable<EnumOption<TodoStatus>> TodoStatuses =>
             new[]
@@ -172,16 +170,27 @@ namespace VSuiteLab.ViewModels
         [ObservableProperty]
         private bool isPreviewMode = true;
         
+        private void Refresh()
+        {
+            ApplyGrouping();
+        }
+
+        
         private void ApplyGrouping()
         {
-            var parsed = QueryUtils.ParseQuery(SearchText);
+            var query = QueryMapper.ToQueryModel(
+                QueryBuilder.Filters,
+                QueryBuilder.Sorts,
+                QueryBuilder.Groups);
 
             var filtered = _queryService
-                .ApplyQuery(Tasks.Where(j => !j.IsDeleted), parsed.Filters, parsed.Sorts)
+                .ApplyQuery(Tasks.Where(j => !j.IsDeleted),
+                    query.Filters,
+                    query.Sorts)
                 .ToList();
 
             var grouped = _queryService
-                .ApplyGrouping(filtered, parsed.Groups)
+                .ApplyGrouping(filtered, query.Groups)
                 .ToList();
 
             GroupedNotes = new ObservableCollection<GroupItemsCalDavTask>(
@@ -191,6 +200,43 @@ namespace VSuiteLab.ViewModels
                     Items = new ObservableCollection<CalDavTask>(g.Items.ToList())
                 })
             );
+        }
+        
+        private void HookBuilderChanges()
+        {
+            HookCollection(QueryBuilder.Filters);
+            HookCollection(QueryBuilder.Sorts);
+            HookCollection(QueryBuilder.Groups);
+        }
+
+        private void HookCollection<T>(ObservableCollection<T> collection)
+            where T : INotifyPropertyChanged
+        {
+            // Hook existing items
+            foreach (var item in collection)
+                item.PropertyChanged += OnBuilderItemChanged;
+
+            collection.CollectionChanged += (s, e) =>
+            {
+                if (e.NewItems != null)
+                {
+                    foreach (T item in e.NewItems)
+                        item.PropertyChanged += OnBuilderItemChanged;
+                }
+
+                if (e.OldItems != null)
+                {
+                    foreach (T item in e.OldItems)
+                        item.PropertyChanged -= OnBuilderItemChanged;
+                }
+
+                Refresh(); // collection itself changed
+            };
+        }
+        
+        private void OnBuilderItemChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            Refresh();
         }
 
         partial void OnSearchTextChanged(string value)
@@ -214,9 +260,10 @@ namespace VSuiteLab.ViewModels
             OnPropertyChanged(nameof(DueTimeOnly));
         }
 
-        public TasksViewModel()
+        public TasksViewModel(SearchQueryBuilder queryBuilder)
         {
             _databaseService = new DatabaseService();
+            QueryBuilder = queryBuilder;
             
             // Keep old message handling
             WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (r, m) =>
@@ -228,6 +275,7 @@ namespace VSuiteLab.ViewModels
             });
 
             // Initialize notes
+            HookBuilderChanges();
             _ = InitializeAsync();
         }
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using VSuiteLab.Utils;
 
 namespace VSuiteLab.Models;
 
@@ -13,6 +14,7 @@ public class QueryHelper
         LessThan,
         LessThanOrEqual,
     }
+    
     
     public class Filter
     {

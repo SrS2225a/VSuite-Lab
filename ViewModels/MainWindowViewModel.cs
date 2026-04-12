@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -11,19 +12,23 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using VSuiteLab.Models;
+using VSuiteLab.Models.Contexts;
 using VSuiteLab.Services;
+using VSuiteLab.Utils;
 using VSuiteLab.Views;
+using QueryFilterVm = VSuiteLab.Models.Contexts.QueryFilterVm;
+using QueryGroupVm = VSuiteLab.Models.Contexts.QueryGroupVm;
+using QuerySortVm = VSuiteLab.Models.Contexts.QuerySortVm;
 
 namespace VSuiteLab.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
-        public JournalsViewModel JournalsViewModel { get; } = new JournalsViewModel();
-        public TasksViewModel TasksViewModel { get; } = new TasksViewModel();
-        public NotesViewModel NotesViewModel { get; } = new NotesViewModel();
-        
         private SyncService? _syncService;
         private DatabaseService? _databaseService;
+        
+        [ObservableProperty]
+        private SearchQueryBuilder queryBuilder = new();
         
         public ObservableCollection<DavConfig> DavInstances { get; } = new();
 
@@ -36,22 +41,45 @@ namespace VSuiteLab.ViewModels
 
         [ObservableProperty]
         private bool isSyncing;
-        
-        private string _searchText = string.Empty;
-        public string SearchText
-        {
-            get => _searchText;
-            set
-            {
-                if (_searchText != value)
-                {
-                    _searchText = value;
-                    OnPropertyChanged();
 
-                    if (CurrentSearchContext != null)
-                        CurrentSearchContext.SearchText = value;
-                }
-            }
+        public JournalsViewModel JournalsViewModel { get; }
+        public TasksViewModel TasksViewModel { get; }
+        public NotesViewModel NotesViewModel { get; } = new NotesViewModel();
+        
+        [RelayCommand]
+        private void AddFilter()
+        {
+            QueryBuilder.Filters.Add(new QueryFilterVm(QueryBuilder));
+        }
+
+        [RelayCommand]
+        private void RemoveFilter(QueryFilterVm filter)
+        {
+            QueryBuilder.Filters.Remove(filter);
+        }
+        
+        [RelayCommand]
+        private void AddSort()
+        {
+            QueryBuilder.Sorts.Add(new QuerySortVm(QueryBuilder));
+        }
+
+        [RelayCommand]
+        private void RemoveSort(QuerySortVm sort)
+        {
+            QueryBuilder.Sorts.Remove(sort);
+        }
+
+        [RelayCommand]
+        private void AddGroup()
+        {
+            QueryBuilder.Groups.Add(new QueryGroupVm(QueryBuilder));
+        }
+
+        [RelayCommand]
+        private void RemoveGroup(QueryGroupVm group)
+        {
+            QueryBuilder.Groups.Remove(group);
         }
 
         [RelayCommand]
@@ -137,12 +165,16 @@ namespace VSuiteLab.ViewModels
             _syncService = new SyncService();
 
             _ = LoadMains();
+
+            JournalsViewModel = new JournalsViewModel(QueryBuilder);
+            TasksViewModel = new TasksViewModel(QueryBuilder);
             
             SelectedTabIndex = 0;
             UpdateSelectedTabContent();
             
             _ = StartAutoSync();
         }
+
 
         private async Task LoadMains()
         {
@@ -178,7 +210,6 @@ namespace VSuiteLab.ViewModels
                 });
         }
         
-        
         public IViewModelSearchableContext? CurrentSearchContext
         {
             get
@@ -205,9 +236,6 @@ namespace VSuiteLab.ViewModels
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(CurrentSearchContext));
                     
-                    if (CurrentSearchContext != null)
-                        CurrentSearchContext.SearchText = SearchText;
-                    
                     UpdateSelectedTabContent();
                 }
             }
@@ -230,6 +258,7 @@ namespace VSuiteLab.ViewModels
             {
                 case 0:
                     SelectedTabContent = new JournalsView() {DataContext = JournalsViewModel};
+                    QueryBuilder.SetAvailableFields(QuerySchemaRegistry.Get<CalDavJournal>());
                     break;
                 case 1:
                     SelectedTabContent = new NotesView();

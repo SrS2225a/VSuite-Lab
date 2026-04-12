@@ -13,6 +13,8 @@ public class QueryService
     {
         IEnumerable<T> query = items;
         
+        //Console.WriteLine(sorts.Count());
+        
         if (filters != null)
         {
             foreach (var filter in filters)
@@ -31,6 +33,7 @@ public class QueryService
 
     private bool MatchFilter<T>(T task, QueryHelper.Filter filter)
     {
+        // Console.WriteLine($"Matching filter: {filter.Property} {filter.Operator} {filter.Value}");
         var parts = filter.Property.Split('.');
         return MatchPath(task, parts, 0, filter);
     }
@@ -109,8 +112,10 @@ public class QueryService
                 return value.Equals(convertedTarget);
 
             case QueryHelper.QueryOperator.Contains:
-                return value.ToString()?.ToLower()
-                    .Contains(convertedTarget.ToString()!.ToLower()) ?? false;
+                return value.ToString()?.Contains(
+                    convertedTarget?.ToString() ?? string.Empty,
+                    StringComparison.CurrentCultureIgnoreCase
+                ) ?? false;
 
             case QueryHelper.QueryOperator.GreaterThan:
                 return comparison > 0;
@@ -133,21 +138,16 @@ public class QueryService
     {
         IOrderedEnumerable<T>? ordered = null;
 
-        foreach (var rule in sorts)
+        foreach (var rule in sorts ?? Enumerable.Empty<QueryHelper.SortRule>())
         {
-            var prop = typeof(T).GetProperty(rule.Property,
-                BindingFlags.IgnoreCase |
-                BindingFlags.Public |
-                BindingFlags.Instance);
+            var props = rule.Property.Split('.');
             
-            if (prop == null)
-                continue;
-            
-            Func<T, object?> keySelector = x => prop.GetValue(x);
+            Func<T, object?> keySelector = item => ResolveSortValue(item, props, 0);
 
             if (ordered == null)
             {
-                ordered = rule.Descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+                var enumerable = query as T[] ?? query.ToArray();
+                ordered = rule.Descending ? enumerable.OrderByDescending(keySelector) : enumerable.OrderBy(keySelector);
             }
             else
             {
@@ -158,6 +158,52 @@ public class QueryService
         }
         
         return ordered ?? query;
+    }
+
+    private object? ResolveSortValue(object current, string[] parts, int index)
+    {
+        if (index >= parts.Length)
+            return NormalizeValue(current);
+
+        if (current is System.Collections.IEnumerable collection && current is not string)
+        {
+            foreach (var item in collection)
+            {
+                var value = ResolveSortValue(item, parts, index + 1);
+                if (value != null)
+                    return value;
+            }
+        }
+        
+        var prop = current.GetType().GetProperty(parts[index],
+            BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+        
+        if (prop == null)
+            return null;
+        
+        var next = prop.GetValue(current);
+        return ResolveSortValue(next, parts, index + 1);
+    }
+
+    private object? NormalizeValue(object? value)
+    {
+        switch (value)
+        {
+            case null:
+                return null;
+            case DateTime dt:
+                return dt;
+            case DateTimeOffset dto:
+                return dto;
+        }
+
+        if (value.GetType().IsEnum)
+            return (int)value;
+
+        if (value is IComparable)
+            return value;
+
+        return value.ToString();
     }
 
     public IEnumerable<QueryHelper.GroupItems<T>> ApplyGrouping<T>(
@@ -186,10 +232,8 @@ public class QueryService
                 Key = g.Key ?? "(Ungrouped)"
             };
 
-            if (remaining.Any())
-                tg.Items = ApplyGrouping(g, remaining).Cast<T>().ToList();
-            else
-                tg.Items = g.ToList();
+            var groupRules = remaining as QueryHelper.GroupRule[] ?? remaining.ToArray();
+            tg.Items = groupRules.Any() ? ApplyGrouping(g, groupRules).Cast<T>().ToList() : g.ToList();
 
             result.Add(tg);
         }

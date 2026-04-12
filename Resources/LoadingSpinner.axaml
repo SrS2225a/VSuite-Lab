@@ -21,7 +21,7 @@
     <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}"/>
     <Setter Property="Template">
       <ControlTemplate>
-        <Border IsVisible="{TemplateBinding IsActive}"
+        <Border IsVisible="{TemplateBinding  IsActive}"
                 Background="Transparent"
                 ClipToBounds="True"
                 IsHitTestVisible="False">
