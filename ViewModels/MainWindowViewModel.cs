@@ -265,6 +265,7 @@ namespace VSuiteLab.ViewModels
                     break;
                 case 2:
                     SelectedTabContent = new TasksView() { DataContext = TasksViewModel };
+                    QueryBuilder.SetAvailableFields(QuerySchemaRegistry.Get<CalDavTask>());
                     break;
                 default:
                     SelectedTabContent = null;
