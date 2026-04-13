@@ -10,6 +10,10 @@
              x:DataType="vm:JournalsViewModel"
              x:Class="VSuiteLab.Views.JournalsView"
              mc:Ignorable="d">
+    
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Escape" Command="{Binding CancelNoteSelection}" />
+    </UserControl.KeyBindings>
 
     <Grid ColumnDefinitions="320,*" RowDefinitions="Auto,*">
 

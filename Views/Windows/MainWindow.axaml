@@ -39,6 +39,12 @@
                       SelectedItem="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         </DataTemplate>
     </Window.DataTemplates>
+    
+    <Window.KeyBindings>
+        <!-- <KeyBinding Gesture="Oem2" Command="{Binding OpenSearchCommand}" /> -->
+        <KeyBinding Gesture="F5" Command="{Binding SyncCommand}" />
+        <KeyBinding Gesture="F9" Command="{Binding OpenSettingsCommand}" />
+    </Window.KeyBindings>
 
     <DockPanel>
 
@@ -51,8 +57,8 @@
                 <!-- SEARCH + FILTER FLYOUT -->
                 <StackPanel Orientation="Horizontal">
 
-                    <!-- SEARCH BUTTON (replaces textbox) -->
-                    <Button>
+                    <!-- SEARCH BUTTON -->
+                    <Button x:Name="SearchButton">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <materialIcons:MaterialIcon Kind="Search" />
                             <TextBlock Text="Search" />
