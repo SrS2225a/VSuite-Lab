@@ -393,6 +393,8 @@ namespace VSuiteLab.ViewModels
                 Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
             }
         }
+        
+        
         [RelayCommand]
         private async Task DeleteNote()
         {
@@ -408,6 +410,13 @@ namespace VSuiteLab.ViewModels
                 
                 ApplyGrouping();
             }
+        }
+
+        [RelayCommand]
+        public Task CancelNoteSelection()
+        {
+            SelectedNote = null;
+            return Task.CompletedTask;
         }
         
         [RelayCommand]

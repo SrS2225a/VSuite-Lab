@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using VSuiteLab.Models;
 using System;
 using QueryFilterVm = VSuiteLab.Models.Contexts.QueryFilterVm;
 
