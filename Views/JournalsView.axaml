@@ -18,14 +18,20 @@
                 BorderThickness="0,1,1,0"
                 BorderBrush="{DynamicResource ThemeBorderLowBrush}">
 
-            <DockPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="8">
-                    <Button Content="New" Command="{Binding SaveNewJournalCommand}" />
-                    <Button Content="Update" Command="{Binding SaveJournalCommand}" />
-                    <Button Content="Delete" Command="{Binding DeleteJournalCommand}"/>
-                </StackPanel>
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="8">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="6">
+                        <Button Content="New" Command="{Binding SaveNewJournalCommand}" />
+                        <Button Content="Update" Command="{Binding SaveJournalCommand}" />
+                        <Button Content="Delete" Command="{Binding DeleteJournalCommand}" />
+                    </StackPanel>
+                    
+                    <Button Grid.Column="1"
+                            Content="Esc" Command="{Binding CancelNoteSelection}"
+                            HorizontalAlignment="Right"/>
+                </Grid>
 
-                <ScrollViewer>
+                <ScrollViewer Grid.Row="1">
                     <ItemsControl ItemsSource="{Binding GroupedJournals}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="views:GroupItemsCalDavJournal">
@@ -37,7 +43,7 @@
                                             CornerRadius="6">
                                         <TextBlock Text="{Binding Key}"
                                                    FontWeight="Bold"
-                                                   FontSize="12"/>
+                                                   FontSize="12" />
                                     </Border>
 
                                     <!-- Journal list -->
@@ -51,25 +57,29 @@
                                                 <StackPanel Background="Transparent">
                                                     <StackPanel.ContextMenu>
                                                         <ContextMenu>
-                                                            <MenuItem Command="{Binding $parent[UserControl].DataContext.DownloadICSCommand}"
-                                                                      CommandParameter="{Binding}">
+                                                            <MenuItem
+                                                                Command="{Binding $parent[UserControl].DataContext.DownloadICSCommand}"
+                                                                CommandParameter="{Binding}">
                                                                 <MenuItem.Header>
                                                                     <StackPanel Orientation="Horizontal" Spacing="2">
-                                                                        <materialIcons:MaterialIcon Kind="Download" /> 
-                                                                        <TextBlock Text="Download ICS" FontSize="10"/>
+                                                                        <materialIcons:MaterialIcon Kind="Download" />
+                                                                        <TextBlock Text="Download ICS" FontSize="10" />
                                                                     </StackPanel>
                                                                 </MenuItem.Header>
                                                             </MenuItem>
                                                         </ContextMenu>
                                                     </StackPanel.ContextMenu>
-                                                    
+
                                                     <ToolTip.Tip>
                                                         <TextBlock TextWrapping="Wrap">
-                                                            <Run Text="Id: "/><Run Text="{Binding Id}"/><LineBreak/>
-                                                            <Run Text="Uri: "/><Run Text="{Binding Uri}"/><LineBreak/>
-                                                            <Run Text="Etag: "/><Run Text="{Binding Etag}"/><LineBreak/>
-                                                            <Run Text="Uid: "/><Run Text="{Binding Uid}"/><LineBreak/>
-                                                            <Run Text="Sequence: "/><Run Text="{Binding Sequence}"/>
+                                                            <Run Text="Id: " /><Run Text="{Binding Id}" /><LineBreak />
+                                                            <Run Text="Uri: " /><Run Text="{Binding Uri}" />
+                                                            <LineBreak />
+                                                            <Run Text="Etag: " /><Run Text="{Binding Etag}" />
+                                                            <LineBreak />
+                                                            <Run Text="Uid: " /><Run Text="{Binding Uid}" />
+                                                            <LineBreak />
+                                                            <Run Text="Sequence: " /><Run Text="{Binding Sequence}" />
                                                         </TextBlock>
                                                     </ToolTip.Tip>
                                                     <ToolTip.ServiceEnabled>
@@ -80,7 +90,7 @@
                                                     <TextBlock Text="{Binding Summary}"
                                                                FontWeight="SemiBold"
                                                                FontSize="13"
-                                                               TextWrapping="Wrap"/>
+                                                               TextWrapping="Wrap" />
 
                                                     <!-- Date -->
                                                     <StackPanel Orientation="Horizontal"
@@ -90,65 +100,72 @@
                                                         <materialIcons:MaterialIcon Kind="ClockOutline"
                                                                 Width="12"
                                                                 Height="12"
-                                                                Opacity="0.6"/>
+                                                                Opacity="0.6" />
 
-                                                        <TextBlock Text="{Binding PublishedDate, StringFormat='{}{0:MMM dd, yyyy • HH:mm}'}"
-                                                                   FontSize="10"
-                                                                   Opacity="0.6"/>
+                                                        <TextBlock
+                                                            Text="{Binding PublishedDate, StringFormat='{}{0:MMM dd, yyyy • HH:mm}'}"
+                                                            FontSize="10"
+                                                            Opacity="0.6" />
                                                     </StackPanel>
 
                                                     <WrapPanel Margin="0,6,0,0">
-                                                        <Border Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                                                Margin="2, 0"
-                                                                CornerRadius="8"
-                                                                Padding="4,1"
-                                                                VerticalAlignment="Center">
+                                                        <Border
+                                                            Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                            Margin="2, 0"
+                                                            CornerRadius="8"
+                                                            Padding="4,1"
+                                                            VerticalAlignment="Center">
                                                             <StackPanel Orientation="Horizontal" Spacing="2">
-                                                                <materialIcons:MaterialIcon Kind="InformationOutline" /> 
-                                                                <TextBlock Text="{Binding Status}" FontSize="10"/>
+                                                                <materialIcons:MaterialIcon Kind="InformationOutline" />
+                                                                <TextBlock Text="{Binding Status}" FontSize="10" />
                                                             </StackPanel>
                                                         </Border>
-                           
+
                                                         <ItemsControl ItemsSource="{Binding Categories}">
                                                             <ItemsControl.ItemsPanel>
                                                                 <ItemsPanelTemplate>
-                                                                    <WrapPanel/>
+                                                                    <WrapPanel />
                                                                 </ItemsPanelTemplate>
                                                             </ItemsControl.ItemsPanel>
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
-                                                                    <Border Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                                                            Margin="2, 0"
-                                                                            CornerRadius="8"
-                                                                            Padding="4,1">
-                                                                        <StackPanel Orientation="Horizontal" Spacing="2">
-                                                                            <materialIcons:MaterialIcon Kind="Tag" /> 
-                                                                            <TextBlock Text="{Binding Value}" FontSize="10"/>
+                                                                    <Border
+                                                                        Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                                        Margin="2, 0"
+                                                                        CornerRadius="8"
+                                                                        Padding="4,1">
+                                                                        <StackPanel Orientation="Horizontal"
+                                                                                Spacing="2">
+                                                                            <materialIcons:MaterialIcon Kind="Tag" />
+                                                                            <TextBlock Text="{Binding Value}"
+                                                                                    FontSize="10" />
                                                                         </StackPanel>
                                                                     </Border>
                                                                 </DataTemplate>
                                                             </ItemsControl.ItemTemplate>
                                                         </ItemsControl>
-                                                        
-                                                        <Border Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                                                Margin="2, 0"
-                                                                CornerRadius="8"
-                                                                Padding="4,1"
-                                                                IsVisible="{Binding Attachments.Count, Converter={StaticResource IntToBoolConverter}}">
+
+                                                        <Border
+                                                            Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                            Margin="2, 0"
+                                                            CornerRadius="8"
+                                                            Padding="4,1"
+                                                            IsVisible="{Binding Attachments.Count, Converter={StaticResource IntToBoolConverter}}">
                                                             <StackPanel Orientation="Horizontal" Spacing="2">
-                                                                <materialIcons:MaterialIcon Kind="Paperclip" /> 
-                                                                <TextBlock Text="Attach" FontSize="10"/>
+                                                                <materialIcons:MaterialIcon Kind="Paperclip" />
+                                                                <TextBlock Text="Attach" FontSize="10" />
                                                             </StackPanel>
                                                         </Border>
-                                                        
-                                                        <Border Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                                                Margin="2, 0"
-                                                                CornerRadius="8"
-                                                                Padding="4,1"
-                                                                IsVisible="{Binding Comments.Count, Converter={StaticResource IntToBoolConverter}}">
+
+                                                        <Border
+                                                            Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                            Margin="2, 0"
+                                                            CornerRadius="8"
+                                                            Padding="4,1"
+                                                            IsVisible="{Binding Comments.Count, Converter={StaticResource IntToBoolConverter}}">
                                                             <StackPanel Orientation="Horizontal" Spacing="2">
-                                                                <materialIcons:MaterialIcon Kind="CommentText" /> 
-                                                                <TextBlock Text="Notes" FontSize="10"/>
+                                                                <materialIcons:MaterialIcon Kind="CommentText" />
+                                                                <TextBlock Text="Notes" FontSize="10" />
                                                             </StackPanel>
                                                         </Border>
 
@@ -158,8 +175,9 @@
                                                                 Padding="4,1"
                                                                 Background="{Binding DavConfig.Color}">
                                                             <StackPanel Orientation="Horizontal" Spacing="2">
-                                                                <materialIcons:MaterialIcon Kind="Server" /> 
-                                                                <TextBlock Text="{Binding DavConfig.Name}" FontSize="10"/>
+                                                                <materialIcons:MaterialIcon Kind="Server" />
+                                                                <TextBlock Text="{Binding DavConfig.Name}"
+                                                                           FontSize="10" />
                                                             </StackPanel>
                                                         </Border>
                                                     </WrapPanel>
@@ -173,7 +191,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-            </DockPanel>
+            </Grid>
         </Border>
 
         <!-- ===== Editor ===== -->
@@ -206,23 +224,23 @@
                                      Text="{Binding SelectedJournal.Summary}"
                                      Watermark="Title"
                                      FontSize="20"
-                                     FontWeight="SemiBold"/>
+                                     FontWeight="SemiBold" />
                         </Grid>
 
                         <!-- Description -->
                         <resources:MarkdownEditor
                             Text="{Binding SelectedJournal.Description, Mode=TwoWay}"
                             IsPreviewMode="{Binding IsPreviewMode}" />
-                        
+
                         <StackPanel Spacing="10">
                             <Grid ColumnDefinitions="*,*"
                                   ColumnSpacing="16">
-                                
+
                                 <!-- Status -->
                                 <Grid Grid.Column="0" RowDefinitions="Auto,*">
                                     <TextBlock Text="Status"
                                                FontSize="11"
-                                               Opacity="0.6"/>
+                                               Opacity="0.6" />
                                     <ComboBox Grid.Row="1"
                                               HorizontalAlignment="Stretch"
                                               ItemsSource="{Binding JounralStatuses}"
@@ -231,19 +249,19 @@
                                               SelectedValue="{Binding SelectedJournal.Status}" />
                                 </Grid>
 
-                                
+
                                 <!-- Class -->
                                 <Grid Grid.Column="2" RowDefinitions="Auto,*">
                                     <TextBlock Text="Class"
                                                FontSize="11"
-                                               Opacity="0.6"/>
+                                               Opacity="0.6" />
                                     <ComboBox Grid.Row="1"
                                               HorizontalAlignment="Stretch"
                                               ItemsSource="{Binding Classifications}"
                                               DisplayMemberBinding="{Binding Label}"
                                               SelectedValueBinding="{Binding Value}"
                                               SelectedValue="{Binding SelectedJournal.Classification}" />
-                                    
+
                                 </Grid>
                             </Grid>
                         </StackPanel>
@@ -252,8 +270,8 @@
                         <StackPanel Spacing="4">
                             <TextBlock Text="Published"
                                        FontSize="11"
-                                       Opacity="0.6"/>
-                            
+                                       Opacity="0.6" />
+
                             <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
                                 <DatePicker Grid.Column="0" SelectedDate="{Binding PublishedDateOnly, Mode=TwoWay}" />
                                 <TimePicker Grid.Column="1" SelectedTime="{Binding PublishedTimeOnly, Mode=TwoWay}" />
@@ -276,43 +294,46 @@
                             <StackPanel Spacing="12">
 
                                 <TextBlock Text="Metadata"
-                                           FontWeight="SemiBold"/>
+                                           FontWeight="SemiBold" />
 
-                                
+
                                 <Grid ColumnDefinitions="*,*"
                                       ColumnSpacing="12">
-                                    
-                                    <TextBox Text="{Binding SelectedJournal.Url}" Watermark="Url"/>
-                                    <TextBox Grid.Column="1" Text="{Binding SelectedJournal.Contact}" Watermark="Contact"/>
+
+                                    <TextBox Text="{Binding SelectedJournal.Url}" Watermark="Url" />
+                                    <TextBox Grid.Column="1" Text="{Binding SelectedJournal.Contact}"
+                                             Watermark="Contact" />
                                 </Grid>
 
                                 <!-- Categories -->
-                                <TextBlock Text="Categories" FontWeight="SemiBold"/>
+                                <TextBlock Text="Categories" FontWeight="SemiBold" />
                                 <Button Content="Add Category"
-                                        Command="{Binding AddCategoryCommand}"/>
+                                        Command="{Binding AddCategoryCommand}" />
 
                                 <ItemsControl ItemsSource="{Binding SelectedJournal.Categories}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="models:CalDavCategory">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBox Text="{Binding Value}"/>
+                                                <TextBox Text="{Binding Value}" />
                                                 <Button Content="✕"
                                                         Command="{Binding $parent[ItemsControl].DataContext.RemoveCategoryCommand}"
-                                                        CommandParameter="{Binding}"/>
+                                                        CommandParameter="{Binding}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                
+
                                 <!-- Attendees -->
                                 <TextBlock Text="Attendees"
                                            FontWeight="SemiBold" />
-                                <TextBlock FontSize="12" Text="Attention: Servers might automatically process attendees e.g. by sending iMAP messages."></TextBlock>
-                                
+                                <TextBlock FontSize="12"
+                                           Text="Attention: Servers might automatically process attendees e.g. by sending iMAP messages.">
+                                </TextBlock>
+
                                 <Button Content="Add Attendee"
                                         Command="{Binding AddAttendeeCommand}"
-                                        HorizontalAlignment="Left"/>
-                                
+                                        HorizontalAlignment="Left" />
+
                                 <ItemsControl ItemsSource="{Binding SelectedJournal.Attendees}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="models:CalDavAttendee">
@@ -321,14 +342,14 @@
                                                   Margin="0,2">
                                                 <TextBox Grid.Column="0"
                                                          Text="{Binding Name}"
-                                                         Watermark="Name"/>
-                                                
+                                                         Watermark="Name" />
+
                                                 <TextBox Grid.Column="1"
                                                          Text="{Binding Email}"
-                                                         Watermark="Email"/>
-                                                
+                                                         Watermark="Email" />
+
                                                 <ComboBox Grid.Column="2"
-                                                   SelectedItem="{Binding Role}">
+                                                          SelectedItem="{Binding Role}">
                                                     <x:String>REQ-PARTICIPANT</x:String>
                                                     <x:String>OPT-PARTICIPANT</x:String>
                                                     <x:String>NON-PARTICIPANT</x:String>
@@ -346,46 +367,46 @@
                                 </ItemsControl>
 
                                 <!-- Comments -->
-                                <TextBlock Text="Comments" FontWeight="SemiBold"/>
+                                <TextBlock Text="Comments" FontWeight="SemiBold" />
                                 <Button Content="Add Comment"
-                                        Command="{Binding AddCommentCommand}"/>
+                                        Command="{Binding AddCommentCommand}" />
 
                                 <ItemsControl ItemsSource="{Binding SelectedJournal.Comments}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="models:CalDavComment">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBox Text="{Binding Value}" AcceptsReturn="True"/>
+                                                <TextBox Text="{Binding Value}" AcceptsReturn="True" />
                                                 <Button Content="✕"
                                                         Command="{Binding $parent[ItemsControl].DataContext.RemoveCommentCommand}"
-                                                        CommandParameter="{Binding}"/>
+                                                        CommandParameter="{Binding}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
                                 <!-- Attachments -->
-                                <TextBlock Text="Attachments" FontWeight="SemiBold"/>
+                                <TextBlock Text="Attachments" FontWeight="SemiBold" />
                                 <Button Content="Add Attachment"
-                                        Command="{Binding AddAttachmentCommand}"/>
+                                        Command="{Binding AddAttachmentCommand}" />
 
                                 <ItemsControl ItemsSource="{Binding SelectedJournal.Attachments}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="models:CalDavAttachment">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="{Binding Title}"/>
+                                                <TextBlock Text="{Binding Title}" />
                                                 <Button Content="Download"
                                                         Command="{Binding $parent[UserControl].DataContext.DownloadAttachmentCommand}"
-                                                        CommandParameter="{Binding}"/>
+                                                        CommandParameter="{Binding}" />
                                                 <Button Content="✕"
                                                         Command="{Binding $parent[ItemsControl].DataContext.RemoveAttachmentCommand}"
-                                                        CommandParameter="{Binding}"/>
+                                                        CommandParameter="{Binding}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                
+
                                 <!-- ===== Alarms ===== -->
-                                 <TextBlock Text="Alarms"
+                                <TextBlock Text="Alarms"
                                            FontWeight="SemiBold"
                                            FontSize="14" />
                                 <Button Content="Add Alarm"
@@ -399,17 +420,17 @@
                                                     CornerRadius="8"
                                                     Background="{DynamicResource ThemeControlMidBrush}">
                                                 <StackPanel Spacing="12">
-                                                    <TextBox Text="{Binding Summary}" 
+                                                    <TextBox Text="{Binding Summary}"
                                                              Watermark="Summary" />
 
                                                     <TextBox Text="{Binding Description}"
                                                              Watermark="Description" />
-                                                    
+
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <DatePicker SelectedDate="{Binding AlarmDateOnly, Mode=TwoWay}"/>
-                                                        <TimePicker SelectedTime="{Binding AlarmTimeOnly, Mode=TwoWay}"/>
+                                                        <DatePicker SelectedDate="{Binding AlarmDateOnly, Mode=TwoWay}" />
+                                                        <TimePicker SelectedTime="{Binding AlarmTimeOnly, Mode=TwoWay}" />
                                                     </StackPanel>
-                                                    
+
                                                     <Button Content="✕"
                                                             Command="{Binding $parent[ItemsControl].DataContext.RemoveAlarmCommand}"
                                                             CommandParameter="{Binding}" />

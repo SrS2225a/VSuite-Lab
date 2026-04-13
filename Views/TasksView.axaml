@@ -18,14 +18,20 @@
                 BorderThickness="0,1,1,0"
                 BorderBrush="{DynamicResource ThemeBorderLowBrush}">
 
-            <DockPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="8">
-                    <Button Content="New" Command="{Binding SaveNewNoteCommand}" />
-                    <Button Content="Update" Command="{Binding SaveNoteCommand}" />
-                    <Button Content="Delete" Command="{Binding DeleteNoteCommand}"/>
-                </StackPanel>
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="8">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="New" Command="{Binding SaveNewNoteCommand}" />
+                        <Button Content="Update" Command="{Binding SaveNoteCommand}" />
+                        <Button Content="Delete" Command="{Binding DeleteNoteCommand}"/>
+                    </StackPanel>
 
-                <ScrollViewer>
+                    <Button Grid.Column="1"
+                            Content="Esc" Command="{Binding CancelNoteSelection}"
+                            HorizontalAlignment="Right"/>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1">
                     <ItemsControl ItemsSource="{Binding GroupedNotes}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="views:GroupItemsCalDavTask">
@@ -215,7 +221,7 @@
                     </ItemsControl>
                 </ScrollViewer>
                 
-            </DockPanel>
+            </Grid>
         </Border>
 
         <!-- Editor -->

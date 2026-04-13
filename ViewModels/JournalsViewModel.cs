@@ -293,6 +293,13 @@ public partial class JournalsViewModel : ViewModelBase
     }
     
     [RelayCommand]
+    public Task CancelNoteSelection()
+    {
+        SelectedJournal = null;
+        return Task.CompletedTask;
+    }
+    
+    [RelayCommand]
     public void AddCategoryCommand()
     {
         if(SelectedJournal == null)
