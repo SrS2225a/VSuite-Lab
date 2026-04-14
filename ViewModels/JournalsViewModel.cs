@@ -15,8 +15,10 @@ using Microsoft.EntityFrameworkCore;
 using VSuiteLab.Converters;
 using VSuiteLab.Models;
 using VSuiteLab.Models.Contexts;
+using VSuiteLab.Models.Helpers;
 using VSuiteLab.Services;
 using VSuiteLab.Utils;
+using VSuiteLab.Utils.Query;
 using VSuiteLab.Views;
 
 namespace VSuiteLab.ViewModels;
@@ -60,7 +62,7 @@ public partial class JournalsViewModel : ViewModelBase
     [ObservableProperty] 
     private CalDavJournal? selectedJournal;
 
-    [ObservableProperty] private bool _debugEnabled = false; 
+    [ObservableProperty] private bool _debugEnabled; 
         
     [ObservableProperty]
     private ObservableCollection<GroupItemsCalDavJournal> groupedJournals = new();
@@ -113,7 +115,7 @@ public partial class JournalsViewModel : ViewModelBase
         foreach (var item in collection)
             item.PropertyChanged += OnBuilderItemChanged;
 
-        collection.CollectionChanged += (s, e) =>
+        collection.CollectionChanged += (_, e) =>
         {
             if (e.NewItems != null)
             {
@@ -153,9 +155,9 @@ public partial class JournalsViewModel : ViewModelBase
         QueryBuilder = queryBuilder;
 
         // Keep old message handling
-        WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (r, m) =>
+        WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (_, m) =>
         {
-            Dispatcher.UIThread.Post(async () =>
+            Dispatcher.UIThread.Post(async void () =>
             {
                 await RefreshForInstance(m.Value);
             });
@@ -174,13 +176,13 @@ public partial class JournalsViewModel : ViewModelBase
     private async Task LoadJournals()
     {
         var instances = await _databaseService.ReadAllAsync<DavConfig>();
-        foreach(var instance in instances.Value.OrderBy(i => i.Name))
+        foreach(var instance in instances.Value!.OrderBy(i => i.Name))
         {
             DavInstances.Add(instance);
         }
 
         var appSettings = await _databaseService.ReadAllAsync<Settings>();
-        DebugEnabled = appSettings.Value?.FirstOrDefault().DebugEnabled ?? false;
+        DebugEnabled = appSettings.Value?.FirstOrDefault()?.DebugEnabled ?? false;
             
         var notes = await _databaseService.ReadAllAsync<CalDavJournal>(query =>
                 query
@@ -218,34 +220,35 @@ public partial class JournalsViewModel : ViewModelBase
                 .Include(n => n.Alarms)
         );
 
-        foreach (var note in notes.Value.OrderByDescending(n => n.PublishedDate))
-            Journals.Add(note);
-            
+        if (notes.Value != null)
+            foreach (var note in notes.Value.OrderByDescending(n => n.PublishedDate))
+                Journals.Add(note);
+
         Refresh();
     }
     
     [RelayCommand]
-    public async Task DownloadICSCommand(CalDavJournal task)
+    public async Task DownloadIcsCommand(CalDavJournal? task)
     {
         if(task == null)
             return;
             
-        var ICSUtils = new ICSUtils();
-        var IcsContent = ICSUtils.BuildICS(task);
+        var icsUtils = new IcsUtils();
+        var icsContent = icsUtils.BuildIcs(task);
             
-        await FilePickerUtils.SaveFileDialog(task.Uid + ".ics", Encoding.UTF8.GetBytes(IcsContent), "ics");
+        await FilePickerUtils.SaveFileDialog(task.Uid + ".ics", Encoding.UTF8.GetBytes(icsContent), "ics");
     }
 
     [RelayCommand]
     public async Task SaveNewJournal()
     {
-        if (SelectedJournal != null && selectedDavInstance != null)
+        if (SelectedJournal != null && SelectedDavInstance != null)
         {
             var fullUri = new Uri(
-                new Uri(selectedDavInstance.httpUrl),
+                new Uri(SelectedDavInstance?.httpUrl!),
                 $"{SelectedJournal.Id}.ics");
             SelectedJournal.Uri = fullUri.ToString();
-            SelectedJournal.DavConfigId = selectedDavInstance.Id;
+            if (SelectedDavInstance != null) SelectedJournal.DavConfigId = SelectedDavInstance.Id;
             SelectedJournal.Uid = Guid.NewGuid().ToString();
             SelectedJournal.IsDirty = true;
 
@@ -421,7 +424,7 @@ public partial class JournalsViewModel : ViewModelBase
 
             SelectedJournal.PublishedDate = TimeConverter.SetDateOnly( SelectedJournal.PublishedDate, value);
                 
-            OnPropertyChanged(nameof(PublishedDateOnly));
+            OnPropertyChanged();
         }
     }
 
@@ -436,7 +439,7 @@ public partial class JournalsViewModel : ViewModelBase
 
             SelectedJournal.PublishedDate = TimeConverter.SetTimeOnly(SelectedJournal.PublishedDate, value);
                 
-            OnPropertyChanged(nameof(PublishedTimeOnly));
+            OnPropertyChanged();
         }
     }
 }

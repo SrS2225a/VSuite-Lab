@@ -3,7 +3,10 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 using VSuiteLab.Models;
-using VSuiteLab.Services.NotificationController;
+using VSuiteLab.Models.Contexts;
+using VSuiteLab.Services;
+
+namespace VSuiteLab.Controllers;
 
 public class AlarmJobController : IJob
 {
@@ -11,7 +14,7 @@ public class AlarmJobController : IJob
     {
         var map = context.MergedJobDataMap;
 
-        var alarmId = Guid.Parse(map.GetString("AlarmId"));
+        var alarmId = Guid.Parse(map.GetString("AlarmId") ?? "");
         var summary = map.GetString("Summary") ?? "Reminder";
         var description = map.GetString("Description") ?? "";
         

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using VSuiteLab.Utils;
 
-namespace VSuiteLab.Models;
+namespace VSuiteLab.Models.Helpers;
 
 public class QueryHelper
 {

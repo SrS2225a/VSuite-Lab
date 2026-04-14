@@ -16,7 +16,9 @@ using VSuiteLab.Services;
 using VSuiteLab.Converters;
 using Microsoft.EntityFrameworkCore;
 using VSuiteLab.Models.Contexts;
+using VSuiteLab.Models.Helpers;
 using VSuiteLab.Utils;
+using VSuiteLab.Utils.Query;
 using VSuiteLab.Views;
 using TodoStatus = VSuiteLab.Models.TodoStatus;
 
@@ -122,7 +124,7 @@ namespace VSuiteLab.ViewModels
 
         public void ClearStartDate()
         {
-            if(SelectedNote.StartDate == null)
+            if(SelectedNote?.StartDate == null)
                 return;
 
             SelectedNote.StartDate = null;
@@ -133,7 +135,7 @@ namespace VSuiteLab.ViewModels
         
         public void ClearDueDate()
         {
-            if(SelectedNote.DueDate == null)
+            if(SelectedNote?.DueDate == null)
                 return;
 
             SelectedNote.DueDate = null;
@@ -162,7 +164,7 @@ namespace VSuiteLab.ViewModels
         [ObservableProperty]
         private string _searchText = string.Empty;
 
-        [ObservableProperty] private bool _debugEnabled = false; 
+        [ObservableProperty] private bool _debugEnabled; 
         
         [ObservableProperty]
         private ObservableCollection<GroupItemsCalDavTask> groupedNotes = new();
@@ -216,7 +218,7 @@ namespace VSuiteLab.ViewModels
             foreach (var item in collection)
                 item.PropertyChanged += OnBuilderItemChanged;
 
-            collection.CollectionChanged += (s, e) =>
+            collection.CollectionChanged += (_, e) =>
             {
                 if (e.NewItems != null)
                 {
@@ -266,9 +268,9 @@ namespace VSuiteLab.ViewModels
             QueryBuilder = queryBuilder;
             
             // Keep old message handling
-            WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (_, m) =>
             {
-                Dispatcher.UIThread.Post(async () =>
+                Dispatcher.UIThread.Post(async void () =>
                 {
                     await RefreshForInstance(m.Value);
                 });
@@ -287,13 +289,13 @@ namespace VSuiteLab.ViewModels
         private async Task LoadNotes()
         {
             var instances = await _databaseService.ReadAllAsync<DavConfig>();
-            foreach(var instance in instances.Value.OrderBy(i => i.Name))
+            foreach(var instance in instances.Value!.OrderBy(i => i.Name))
             {
                 DavInstances.Add(instance);
             }
 
             var appSettings = await _databaseService.ReadAllAsync<Settings>();
-            DebugEnabled = appSettings.Value?.FirstOrDefault().DebugEnabled ?? false;
+            DebugEnabled = appSettings.Value?.FirstOrDefault()?.DebugEnabled ?? false;
             
             var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
                 query
@@ -332,22 +334,23 @@ namespace VSuiteLab.ViewModels
                     .AsSplitQuery()
             );
 
-            foreach (var note in notes.Value)
-                Tasks.Add(note);
-            
+            if (notes.Value != null)
+                foreach (var note in notes.Value)
+                    Tasks.Add(note);
+
             ApplyGrouping();
         }
 
         [RelayCommand]
-        public async Task DownloadICSCommand(CalDavTask task)
+        public async Task DownloadIcsCommand(CalDavTask? task)
         {
             if(task == null)
                 return;
             
-            var ICSUtils = new ICSUtils();
-            var IcsContent = ICSUtils.BuildICS(task);
+            var icsUtils = new IcsUtils();
+            var icsContent = icsUtils.BuildIcs(task);
             
-            await FilePickerUtils.SaveFileDialog(task.Uid + ".ics", Encoding.UTF8.GetBytes(IcsContent), "ics");
+            await FilePickerUtils.SaveFileDialog(task.Uid + ".ics", Encoding.UTF8.GetBytes(icsContent), "ics");
         }
 
         [RelayCommand]
@@ -360,13 +363,13 @@ namespace VSuiteLab.ViewModels
         [RelayCommand]
         private async Task SaveNewNote()
         {
-            if (SelectedNote != null && selectedDavInstance != null)
+            if (SelectedNote != null && SelectedDavInstance != null)
             {
                 var fullUri = new Uri(
-                    new Uri(selectedDavInstance.httpUrl),
+                    new Uri(SelectedDavInstance?.httpUrl!),
                     $"{SelectedNote.Id}.ics");
                 SelectedNote.Uri = fullUri.ToString();
-                SelectedNote.DavConfigId = selectedDavInstance.Id;
+                if (SelectedDavInstance != null) SelectedNote.DavConfigId = SelectedDavInstance.Id;
                 SelectedNote.Uid = Guid.NewGuid().ToString();
                 SelectedNote.IsDirty = true;
                 await _databaseService.CreateAsync(SelectedNote);
@@ -383,7 +386,7 @@ namespace VSuiteLab.ViewModels
         [RelayCommand]
         private async Task SaveNote()
         {
-            if (SelectedNote != null && selectedDavInstance != null)
+            if (SelectedNote != null && SelectedDavInstance != null)
             {
                 SelectedNote.IsDirty = true;
                 SelectedNote.LastModified = DateTime.UtcNow;

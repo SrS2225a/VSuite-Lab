@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using VSuiteLab.Models;
+using VSuiteLab.Models.Helpers;
 
 namespace VSuiteLab.Services;
 
@@ -113,7 +114,7 @@ public class QueryService
 
             case QueryHelper.QueryOperator.Contains:
                 return value.ToString()?.Contains(
-                    convertedTarget?.ToString() ?? string.Empty,
+                    convertedTarget.ToString() ?? string.Empty,
                     StringComparison.CurrentCultureIgnoreCase
                 ) ?? false;
 
@@ -160,7 +161,7 @@ public class QueryService
         return ordered ?? query;
     }
 
-    private object? ResolveSortValue(object current, string[] parts, int index)
+    private object? ResolveSortValue(object? current, string[] parts, int index)
     {
         if (index >= parts.Length)
             return NormalizeValue(current);
@@ -175,7 +176,7 @@ public class QueryService
             }
         }
         
-        var prop = current.GetType().GetProperty(parts[index],
+        var prop = current?.GetType().GetProperty(parts[index],
             BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
         
         if (prop == null)

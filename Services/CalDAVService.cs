@@ -1,15 +1,15 @@
 using System;
 using System.Threading.Tasks;
+using VSuiteLab.Models.Helpers;
 using VSuiteLab.Models;
-using VSuiteLab.Services;
 
 namespace VSuiteLab.Services;
 
-public class CalDAVService
+public class CalDavService
 {
     private readonly DatabaseService _databaseService;
 
-    public CalDAVService()
+    public CalDavService()
     {
         _databaseService = new DatabaseService();
     }
@@ -19,14 +19,14 @@ public class CalDAVService
     /// Adds a new mount to the database
     /// </summary>
     /// <param name="davConfig"></param>
-    /// <returns> A <see cref="StatusResponse{String}"/> containing the result of the operation. </returns>
+    /// <returns> A <see cref="VSuiteLab.Models.Helpers.StatusResponse{String}"/> containing the result of the operation. </returns>
     public async Task<StatusResponse<string>> addMount(DavConfig davConfig)
     {
-        var client = DavMiddlewareService.getDavClient(davConfig);
-        var hasCalDav = await DavMiddlewareService.hasCalDav(client, davConfig);
+        var client = DavMiddlewareService.GetDavClient(davConfig);
+        var hasCalDav = await DavMiddlewareService.HasCalDav(client, davConfig);
         if (hasCalDav.Success)
         {
-            var calDavFeatures = await DavMiddlewareService.checkDavFeatures(client, davConfig);
+            var calDavFeatures = await DavMiddlewareService.CheckDavFeatures(client, davConfig);
             if (calDavFeatures.Success)
             {
                 davConfig = calDavFeatures.Value;

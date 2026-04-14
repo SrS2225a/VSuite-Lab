@@ -1,20 +1,17 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using VSuiteLab.Models;
 using VSuiteLab.Models.Contexts;
+using VSuiteLab.Models.Helpers;
 using VSuiteLab.Services;
-using VSuiteLab.Utils;
+using VSuiteLab.Services.Sync;
+using VSuiteLab.Utils.Query;
 using VSuiteLab.Views;
 using QueryFilterVm = VSuiteLab.Models.Contexts.QueryFilterVm;
 using QueryGroupVm = VSuiteLab.Models.Contexts.QueryGroupVm;
@@ -90,7 +87,7 @@ namespace VSuiteLab.ViewModels
 
             SyncResults.Clear();
 
-            await _syncService.SyncAllAsync(result =>
+            await _syncService?.SyncAllAsync(result =>
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
@@ -101,7 +98,7 @@ namespace VSuiteLab.ViewModels
                         OnPropertyChanged(nameof(HasSyncErrors));
                     }
                 });
-            });
+            })!;
             
             IsSyncing = false;
         }
@@ -109,12 +106,9 @@ namespace VSuiteLab.ViewModels
         [RelayCommand]
         private async Task RetrySyncAsync(SyncProgress result)
         {
-            if (result?.Config == null)
-                return;
-
             SyncResults.Clear();
 
-            await _syncService.SyncAsync(result.Config, e =>
+            await _syncService!.SyncAsync(result.Config, e =>
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
@@ -134,7 +128,7 @@ namespace VSuiteLab.ViewModels
         {
             SyncResults.Clear();
 
-            await _syncService.SyncAsync(config, e =>
+            await _syncService!.SyncAsync(config, e =>
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
@@ -145,7 +139,7 @@ namespace VSuiteLab.ViewModels
                         OnPropertyChanged(nameof(HasSyncErrors));
                     }
                 });
-            }, MaxIndex:1);
+            }, maxIndex:1);
             WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(config));
         }
 
@@ -153,10 +147,7 @@ namespace VSuiteLab.ViewModels
         private async Task OpenSettingsAsync()
         {
             var settingsWindow = new SettingsWindow();
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                await settingsWindow.ShowDialog(desktop.MainWindow);
-            }
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: not null } desktop) await settingsWindow.ShowDialog(desktop.MainWindow);
         }
         
         public MainWindowViewModel()
@@ -178,8 +169,8 @@ namespace VSuiteLab.ViewModels
 
         private async Task LoadMains()
         {
-            var instances = await _databaseService.ReadAllAsync<DavConfig>();
-            foreach(var instance in instances.Value.OrderBy(i => i.Name))
+            var instances = await _databaseService?.ReadAllAsync<DavConfig>()!;
+            foreach(var instance in instances.Value!.OrderBy(i => i.Name))
             {
                 DavInstances.Add(instance);
             }
@@ -187,7 +178,7 @@ namespace VSuiteLab.ViewModels
 
         private async Task StartAutoSync()
         {
-            await _syncService.StatPerodic(
+            await _syncService!.StatPerodic(
                 result =>
                 {
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -210,20 +201,6 @@ namespace VSuiteLab.ViewModels
                 });
         }
         
-        public IViewModelSearchableContext? CurrentSearchContext
-        {
-            get
-            {
-                return SelectedTabIndex switch
-                {
-                    0 => JournalsViewModel as IViewModelSearchableContext,
-                    1 => NotesViewModel as IViewModelSearchableContext,
-                    2 => TasksViewModel as IViewModelSearchableContext,
-                    _ => null
-                };
-            }
-        }
-        
         private int _selectedTabIndex;
         public int SelectedTabIndex
         {
@@ -234,7 +211,6 @@ namespace VSuiteLab.ViewModels
                 {
                     _selectedTabIndex = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(CurrentSearchContext));
                     
                     UpdateSelectedTabContent();
                 }
@@ -252,7 +228,7 @@ namespace VSuiteLab.ViewModels
             }
         }
 
-        public void UpdateSelectedTabContent()
+        private void UpdateSelectedTabContent()
         {
             switch (SelectedTabIndex)
             {

@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using VSuiteLab.Models;
 
 namespace VSuiteLab.ViewModels;
 

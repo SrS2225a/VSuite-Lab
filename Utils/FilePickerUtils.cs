@@ -1,11 +1,8 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
-using HeyRed.Mime;
 
 namespace VSuiteLab.Utils;
 
@@ -28,9 +25,9 @@ public class FilePickerUtils
             FileTypeChoices = extension != null
                 ? new List<FilePickerFileType>
                 {
-                    new FilePickerFileType(fileName)
+                    new(fileName)
                     {
-                        Patterns = new[] { $"*.{extension}" }
+                        Patterns = [$"*.{extension}"]
                     }
                 }
                 : null
@@ -50,12 +47,12 @@ public class FilePickerUtils
 
     public static async Task<IReadOnlyList<IStorageFile>> OpenFileDialog()
     {
-        var window = ((IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime).MainWindow;
-        var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        var window = ((IClassicDesktopStyleApplicationLifetime)Application.Current?.ApplicationLifetime!).MainWindow;
+        var files = await window?.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Select file to attach",
             AllowMultiple = true
-        });
+        })!;
 
         return files;
     }

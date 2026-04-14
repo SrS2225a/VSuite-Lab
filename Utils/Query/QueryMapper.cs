@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using VSuiteLab.Models;
+using VSuiteLab.Models.Helpers;
 using QueryFilterVm = VSuiteLab.Models.Contexts.QueryFilterVm;
 using QueryGroupVm = VSuiteLab.Models.Contexts.QueryGroupVm;
 using QuerySortVm = VSuiteLab.Models.Contexts.QuerySortVm;
 
-namespace VSuiteLab.Utils;
+namespace VSuiteLab.Utils.Query;
 
 public static class QueryMapper
 {

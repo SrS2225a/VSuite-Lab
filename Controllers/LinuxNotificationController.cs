@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Tmds.DBus;
+using VSuiteLab.Services;
 
-namespace VSuiteLab.Services.NotificationController;
+namespace VSuiteLab.Controllers;
 
 [DBusInterface("org.freedesktop.Notifications")]
 public interface INotifications : IDBusObject
@@ -41,8 +42,8 @@ public class LinuxNotificationController : INotificationService
             appIdentify,
             0,
             appIdentify,
-            title ?? "VSuiteLab",
-            message ?? "No message",
+            title,
+            message,
             System.Array.Empty<string>(),
             hints,
             -1

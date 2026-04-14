@@ -3,21 +3,14 @@ using System;
 using QueryFilterVm = VSuiteLab.Models.Contexts.QueryFilterVm;
 
 namespace VSuiteLab.Converters;
-public abstract class FilterEditorVm
+public abstract class FilterEditorVm(QueryFilterVm filter)
 {
-    protected QueryFilterVm Filter;
-
-    protected FilterEditorVm(QueryFilterVm filter)
-    {
-        Filter = filter;   
-    }
+    protected readonly QueryFilterVm Filter = filter;
 }
 
 // TEXT
-public class TextEditorVm : FilterEditorVm
+public class TextEditorVm(QueryFilterVm f) : FilterEditorVm(f)
 {
-    public TextEditorVm(QueryFilterVm f) : base(f) { }
-
     public string? Value
     {
         get => (string?)Filter.Value;
@@ -26,10 +19,8 @@ public class TextEditorVm : FilterEditorVm
 }
 
 // NUMBER
-public class NumberEditorVm : FilterEditorVm
+public class NumberEditorVm(QueryFilterVm f) : FilterEditorVm(f)
 {
-    public NumberEditorVm(QueryFilterVm f) : base(f) { }
-
     public decimal Value
     {
         get => Convert.ToDecimal(Filter.Value ?? 0);
@@ -50,10 +41,8 @@ public class BoolEditorVm : FilterEditorVm
 }
 
 // DATE
-public class DateEditorVm : FilterEditorVm
+public class DateEditorVm(QueryFilterVm f) : FilterEditorVm(f)
 {
-    public DateEditorVm(QueryFilterVm f) : base(f) { }
-
     public DateTimeOffset? Value
     {
         get => Filter.Value as DateTimeOffset?;
@@ -62,10 +51,8 @@ public class DateEditorVm : FilterEditorVm
 }
 
 // ENUM
-public class EnumEditorVm : FilterEditorVm
+public class EnumEditorVm(QueryFilterVm f) : FilterEditorVm(f)
 {
-    public EnumEditorVm(QueryFilterVm f) : base(f) { }
-
     public IEnumerable<object>? Values => Filter.EnumValues;
 
     public object? Value

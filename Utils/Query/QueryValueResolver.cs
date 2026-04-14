@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using VSuiteLab.Models;
+using VSuiteLab.Utils.Query;
 
 namespace VSuiteLab.Utils;
 

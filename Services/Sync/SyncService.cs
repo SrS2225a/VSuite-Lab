@@ -5,12 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
 using VSuiteLab.Models;
+using VSuiteLab.Models.Helpers;
 
-namespace VSuiteLab.Services;
+namespace VSuiteLab.Services.Sync;
 
 public class SyncService
 {
-    private Settings _settings;
+    private Settings? _settings;
     private readonly DatabaseService _databaseService;
     private readonly AlarmService _alarmService;
 
@@ -29,7 +30,7 @@ public class SyncService
 
     public async Task SyncAsync(
         DavConfig config,
-        Action<SyncProgress> onResult, int CurrentIndex = 0, int MaxIndex = 0)
+        Action<SyncProgress> onResult, int currentIndex = 0, int maxIndex = 0)
     {
         // main sync entry point
         string key = GetKey(config);
@@ -42,30 +43,30 @@ public class SyncService
             Config = config,
             ServerName = config.Name,
             Url = config.httpUrl,
-            CurrentIndex = CurrentIndex + 1,
-            MaxIndex = MaxIndex
+            CurrentIndex = currentIndex + 1,
+            MaxIndex = maxIndex
         };
 
         try
         {
-            onResult?.Invoke(progress);
+            onResult.Invoke(progress);
             await _syncWorker.ExecuteAsync(config, progress, CancellationToken.None);
         }
         finally
         {
             // callback to UI
-            onResult?.Invoke(progress);
+            onResult.Invoke(progress);
             if (progress.Success)
             {
                 WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(config));
 
-                if (CurrentIndex == MaxIndex - 1)
+                if (currentIndex == maxIndex - 1)
                 {
                     // likely the last sync, sync alarms
                     var alarmsResult =
                         await _databaseService.ReadAllAsync<CalDavAlarm>(
                             q => q.Where(a => a.SelectedDate != null && !a.HasRan), true);
-                    await _alarmService.SyncAlarmsAsync(alarmsResult.Value);
+                    if (alarmsResult.Value != null) await _alarmService.SyncAlarmsAsync(alarmsResult.Value);
                 }
             }
 
@@ -76,10 +77,11 @@ public class SyncService
     public async Task SyncAllAsync(Action<SyncProgress> onResult)
     {
         var accounts = await _databaseService.ReadAllAsync<DavConfig>();
-        foreach (var account in accounts.Value.Select((value, index) => new { value, index }))
-        {
-            await SyncAsync(account.value, onResult, account.index, accounts.Value.Count);
-        }
+        if (accounts.Value != null)
+            foreach (var account in accounts.Value.Select((value, index) => new { value, index }))
+            {
+                await SyncAsync(account.value, onResult, account.index, accounts.Value.Count);
+            }
     }
 
     public async Task StatPerodic(Action<SyncProgress> onResult, Action? onStart = null)
@@ -122,7 +124,7 @@ public class SyncService
     private async Task<Settings> GetSettingsAsync()
     {
         var result = await _databaseService.ReadAllAsync<Settings>();
-        return result.Value.FirstOrDefault() ?? new Settings();
+        return result.Value!.FirstOrDefault() ?? new Settings();
     }
     
     private string GetKey(DavConfig config) => $"{config.httpUrl}:{config.username}";

@@ -2,7 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace VSuiteLab.Utils;
+namespace VSuiteLab.Utils.Query;
 
 public partial class QueryFieldDescriptor : ObservableObject
 {
@@ -10,8 +10,7 @@ public partial class QueryFieldDescriptor : ObservableObject
     public string Label { get; init; } = string.Empty;
     public QueryFieldType Type { get; init; }
     public Type? EnumType { get; init; }
-
-    // 🔥 CRITICAL: stable identity = reference equality only
+    
     public override bool Equals(object? obj) => ReferenceEquals(this, obj);
 
     public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);

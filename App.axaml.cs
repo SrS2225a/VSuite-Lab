@@ -1,11 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
-using Avalonia.Data.Core.Plugins;
-using System.Linq;
 using Avalonia.Markup.Xaml;
 using VSuiteLab.Models;
 using VSuiteLab.Utils;
+using VSuiteLab.Utils.Query;
 using VSuiteLab.ViewModels;
 using VSuiteLab.Views;
 

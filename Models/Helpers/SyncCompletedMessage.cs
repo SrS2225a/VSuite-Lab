@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging.Messages;
 
-namespace VSuiteLab.Models;
+namespace VSuiteLab.Models.Helpers;
 
 public class SyncCompletedMessage(DavConfig value) : ValueChangedMessage<DavConfig>(value);

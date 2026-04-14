@@ -1,11 +1,12 @@
 using System.Threading.Tasks;
+using VSuiteLab.Services;
 #if MACOS
 using System;
 using Foundation;
 using UserNotifications;
 #endif
 
-namespace VSuiteLab.Services.NotificationController;
+namespace VSuiteLab.Controllers;
 
 public class MacNotificationController : INotificationService
 {

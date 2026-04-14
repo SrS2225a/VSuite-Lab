@@ -3,6 +3,7 @@ using System;
 using Avalonia.Logging;
 using Microsoft.EntityFrameworkCore;
 using VSuiteLab.Models;
+using VSuiteLab.Models.Contexts;
 
 namespace VSuiteLab;
 
@@ -28,5 +29,5 @@ sealed class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
-            .LogToTrace(LogEventLevel.Warning);
+            .LogToTrace();
 }
