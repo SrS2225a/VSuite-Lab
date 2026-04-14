@@ -6,6 +6,7 @@ using VSuiteLab.Utils;
 using VSuiteLab.Utils.Query;
 using VSuiteLab.ViewModels;
 using VSuiteLab.Views;
+using MainWindow = VSuiteLab.Views.Windows.MainWindow;
 
 namespace VSuiteLab;
 
