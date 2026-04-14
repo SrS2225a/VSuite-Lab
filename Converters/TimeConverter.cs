@@ -1,10 +1,8 @@
 using System;
-using System.Globalization;
-using Avalonia.Data.Converters;
 
 namespace VSuiteLab.Converters;
 
-public class TimeConverter
+public abstract class TimeConverter
 {
     public static double ConvertToDisplay(float seconds, TimeUnit unit) => unit switch
     {

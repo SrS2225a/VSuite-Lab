@@ -1,9 +1,9 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using VSuiteLab.Models.Helpers;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
@@ -12,7 +12,7 @@ using VSuiteLab.Models;
 
 namespace VSuiteLab.Utils;
 
-public class ICSUtils
+public class IcsUtils
 {
     /// <summary>
     /// Downloads the ICS (iCalendar) content from the specified URI using the provided HttpClient.
@@ -22,7 +22,7 @@ public class ICSUtils
     /// <returns>
     /// A <see cref="Task{String}"/> containing the raw ICS content as a string.
     /// </returns>
-    public async Task<string> DownloadICS(HttpClient client, string uri)
+    public async Task<string> DownloadIcs(HttpClient? client, string uri)
     {
         using var response = await client.GetAsync(uri);
         response.EnsureSuccessStatusCode();
@@ -35,13 +35,13 @@ public class ICSUtils
     /// </summary>
     /// <param name="item">The CalDavItem instance to build the ICS content for.</param>
     /// <returns> A <see cref="Task{String}"/> containing the ICS content as a string. </returns>
-    public string BuildICS(CalDavItem item)
+    public string BuildIcs(CalDavItem item)
     {
         return item switch
         {
-            CalDavTask task       => BuildVTodoICS(task),
-            CalDavJournal journal => BuildVJournalICS(journal),
-            CalDavNote note       => BuildVJournalNoteICS(note),
+            CalDavTask task       => BuildVTodoIcs(task),
+            CalDavJournal journal => BuildVJournalIcs(journal),
+            CalDavNote note       => BuildVJournalNoteIcs(note),
             _ => throw new NotSupportedException($"Unsupported type: {item.GetType().Name}")
         };
     }
@@ -51,15 +51,15 @@ public class ICSUtils
     /// </summary>
     /// <param name="ics">The raw ICS content to parse as a string.</param>
     /// <returns> A <see cref="Task{CalDavItem}"/> containing the parsed CalDavItem instance. </returns>
-    public CalDavItem? ParseICS(string ics)
+    public CalDavItem? ParseIcs(string ics)
     {
         var calendar = Calendar.Load(ics);
 
-        if (calendar.Todos?.Any() == true)
-            return ParseICSVTodo(calendar);
+        if (calendar?.Todos.Any() == true)
+            return ParseIcsvTodo(calendar);
 
-        if (calendar.Journals?.Any() == true)
-            return ParseICSVJournal(calendar);
+        if (calendar?.Journals.Any() == true)
+            return ParseIcsvJournal(calendar);
 
         return null;
     }
@@ -84,7 +84,7 @@ public class ICSUtils
             target.Attachments.Add(new CalDavAttachment
             {
                 Uri = a.Data ?? Array.Empty<byte>(),
-                Title = a.Parameters.Get("FILENAME"),
+                Title = a.Parameters.Get("FILENAME") ?? "",
                 ContentType = a.FormatType ?? string.Empty
             });
         }
@@ -139,9 +139,9 @@ public class ICSUtils
         if (!string.IsNullOrWhiteSpace(target.Url)) j.Url = new Uri(target.Url);
     }
     
-    private CalDavItem ParseICSVJournal(Calendar ics)
+    private CalDavItem ParseIcsvJournal(Calendar ics)
     {
-        var vJournal = ics?.Journals.FirstOrDefault();
+        var vJournal = ics.Journals.FirstOrDefault();
         if (vJournal is null)
             return new CalDavJournal();
 
@@ -200,11 +200,11 @@ public class ICSUtils
         return note;
     }
 
-    private CalDavTask ParseICSVTodo(Calendar ics)
+    private CalDavTask ParseIcsvTodo(Calendar ics)
     {
         var note = new CalDavTask();
         
-        var vTodo = ics?.Todos.FirstOrDefault();
+        var vTodo = ics.Todos.FirstOrDefault();
         if (vTodo is null)
             return new CalDavTask();
        
@@ -272,7 +272,7 @@ public class ICSUtils
         }
         foreach (var attachment in vTodo.Attachments)
         {
-            note.Attachments.Add(new CalDavAttachment {Uri = attachment.Data ?? Array.Empty<byte>(), Title = attachment.Parameters.Get("FILENAME"), ContentType = attachment.FormatType ?? string.Empty});
+            note.Attachments.Add(new CalDavAttachment {Uri = attachment.Data ?? Array.Empty<byte>(), Title = attachment.Parameters.Get("FILENAME") ?? "", ContentType = attachment.FormatType ?? string.Empty});
         }
         foreach (var comment in vTodo.Comments)
         {
@@ -283,7 +283,7 @@ public class ICSUtils
     }
 
 
-    private string BuildVTodoICS(CalDavTask item)
+    private string BuildVTodoIcs(CalDavTask item)
     {
         var vTodoCalendar = new Calendar();
 
@@ -318,11 +318,11 @@ public class ICSUtils
         vTodoCalendar.Todos.Add(vTodo);
 
         var serializer = new CalendarSerializer();
-        return serializer.SerializeToString(vTodoCalendar);
+        return serializer.SerializeToString(vTodoCalendar) ?? "";
     }
     
     
-    private string BuildVJournalICS(CalDavJournal item)
+    private string BuildVJournalIcs(CalDavJournal item)
     {
         var calendar = new Calendar();
 
@@ -348,10 +348,10 @@ public class ICSUtils
 
         calendar.Journals.Add(journal);
 
-        return new CalendarSerializer().SerializeToString(calendar);
+        return new CalendarSerializer().SerializeToString(calendar) ?? "";
     }
 
-    private string BuildVJournalNoteICS(CalDavNote item)
+    private string BuildVJournalNoteIcs(CalDavNote item)
     {
         var calendar = new Calendar();
 
@@ -375,7 +375,7 @@ public class ICSUtils
         
         calendar.Journals.Add(journal);
 
-        return new CalendarSerializer().SerializeToString(calendar);
+        return new CalendarSerializer().SerializeToString(calendar) ?? "";
     }
 
     private void ApplyCommonFields(RecurringComponent component, CalDavItem item)
@@ -463,7 +463,7 @@ public class ICSUtils
     /// <returns>
     /// A <see cref="String"/> containing the raw XML request content as a string.
     /// </returns>
-    public string BuildSyncCollectionXml(string syncToken)
+    public string BuildSyncCollectionXml(string? syncToken)
     {
         var xml = $@"<?xml version=""1.0"" encoding=""utf-8"" ?>
             <D:sync-collection xmlns:D=""DAV:"">
@@ -486,7 +486,7 @@ public class ICSUtils
     /// <param name="response">An <see cref="XDocument"/> representing the Sync Collection XML response.</param>
     /// <param name="vCalTYpe">A string specifying the vCalendar type (e.g., "VTODO", "VEVENT").</param>
     /// <returns>
-    /// A <see cref="SyncCollectionResult"/> containing the parsed synchronization token,
+    /// A <see cref="VSuiteLab.Models.Helpers.SyncCollectionResult"/> containing the parsed synchronization token,
     /// a list of changed resources, and a list of deleted resources.
     /// </returns>
     public SyncCollectionResult ParseSyncCollectionResponse(XDocument response, string vCalTYpe)

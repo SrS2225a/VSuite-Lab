@@ -5,7 +5,8 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VSuiteLab.Models;
-using VSuiteLab.Utils;
+using VSuiteLab.Models.Contexts;
+using VSuiteLab.Models.Helpers;
 
 namespace VSuiteLab.Services;
 
@@ -18,9 +19,9 @@ public class DatabaseService
     {
         try
         {
-            await using var _db = new DatabaseContext();
+            await using var db = new DatabaseContext();
             
-            IQueryable<T> query = _db.Set<T>();
+            IQueryable<T> query = db.Set<T>();
             if (include != null) query = include(query);
 
             if (noTracking) query = query.AsNoTracking();

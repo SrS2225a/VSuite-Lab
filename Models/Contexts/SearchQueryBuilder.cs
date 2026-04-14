@@ -4,7 +4,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VSuiteLab.Converters;
+using VSuiteLab.Models.Helpers;
 using VSuiteLab.Utils;
+using VSuiteLab.Utils.Query;
 
 namespace VSuiteLab.Models.Contexts;
 

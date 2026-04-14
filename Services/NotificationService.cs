@@ -1,8 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using VSuiteLab.Controllers;
 
-namespace VSuiteLab.Services.NotificationController;
+namespace VSuiteLab.Services;
 
 public class NotificationService : INotificationService
 {

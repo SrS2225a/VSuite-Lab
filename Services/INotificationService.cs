@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace VSuiteLab.Services.NotificationController;
+namespace VSuiteLab.Services;
 
 public interface INotificationService
 {

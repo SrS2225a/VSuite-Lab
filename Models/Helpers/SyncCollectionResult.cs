@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace VSuiteLab.Models;
+namespace VSuiteLab.Models.Helpers;
 
 public class SyncCollectionResult
 {

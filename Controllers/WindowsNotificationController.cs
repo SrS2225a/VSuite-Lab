@@ -1,7 +1,8 @@
 using System.Threading.Tasks;
 using Microsoft.Toolkit.Uwp.Notifications;
+using VSuiteLab.Services;
 
-namespace VSuiteLab.Services.NotificationController;
+namespace VSuiteLab.Controllers;
 
 public class WindowsNotificationController : INotificationService
 {

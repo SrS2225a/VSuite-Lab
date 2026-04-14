@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace VSuiteLab.Models;
+namespace VSuiteLab.Models.Contexts;
 
 public class DatabaseContext : DbContext
 {

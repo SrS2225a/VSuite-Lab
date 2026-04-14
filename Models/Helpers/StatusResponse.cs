@@ -1,4 +1,4 @@
-namespace VSuiteLab.Models;
+namespace VSuiteLab.Models.Helpers;
 
 public class StatusResponse<T>
 {

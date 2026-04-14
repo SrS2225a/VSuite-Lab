@@ -62,7 +62,7 @@
                                                     
                                                     <StackPanel.ContextMenu>
                                                         <ContextMenu>
-                                                            <MenuItem Command="{Binding $parent[UserControl].DataContext.DownloadICSCommand}"
+                                                            <MenuItem Command="{Binding $parent[UserControl].DataContext.DownloadIcsCommand}"
                                                                       CommandParameter="{Binding}">
                                                                 <MenuItem.Header>
                                                                     <StackPanel Orientation="Horizontal" Spacing="2">

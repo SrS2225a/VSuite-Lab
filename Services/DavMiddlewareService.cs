@@ -6,12 +6,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using VSuiteLab.Models.Helpers;
 using VSuiteLab.Models;
+using VSuiteLab.Models.Contexts;
 using VSuiteLab.Utils;
 
 namespace VSuiteLab.Services;
 
-public class DavMiddlewareService
+public abstract class DavMiddlewareService
 {
     /// <summary>
     /// Creates and returns an HTTP client configured with the specified DAV server settings,
@@ -19,7 +21,7 @@ public class DavMiddlewareService
     /// </summary>
     /// <param name="davConfig">The configuration details of the DAV server, including the HTTP URL and credentials.</param>
     /// <returns>An instance of <see cref="HttpClient"/> configured for interacting with the DAV server.</returns>
-    public static HttpClient getDavClient(DavConfig davConfig)
+    public static HttpClient GetDavClient(DavConfig davConfig)
     {
         var handler = new HttpClientHandler
         {
@@ -44,9 +46,9 @@ public class DavMiddlewareService
     /// <param name="client">The HTTP client used to communicate with the DAV server.</param>
     /// <param name="davConfig">The configuration details of the DAV server, including the resource URL to inspect.</param>
     /// <returns>A status response indicating success or failure, along with an optional message.</returns>
-    public static async Task<StatusResponse<string>> hasCalDav(HttpClient client, DavConfig davConfig)
+    public static async Task<StatusResponse<string>> HasCalDav(HttpClient client, DavConfig davConfig)
     {
-        var statusMessage = new StatusResponse<string>();
+        StatusResponse<string> statusMessage;
         try
         {
             // Perform a PROPFIND request to check for CalDAV support (use the calendar folder path)
@@ -108,10 +110,10 @@ public class DavMiddlewareService
     /// </summary>
     /// <param name="client">An instance of <see cref="HttpClient"/> used to send requests to the DAV server.</param>
     /// <param name="davConfig">The configuration details of the DAV server, including URL and feature support flags.</param>
-    /// <returns>A <see cref="StatusResponse{DavConfig}"/> object containing the updated configuration with detected features, or an error status if the validation fails.</returns>
-    public static async Task<StatusResponse<DavConfig>> checkDavFeatures(HttpClient client, DavConfig davConfig)
+    /// <returns>A <see cref="VSuiteLab.Models.Helpers.StatusResponse{DavConfig}"/> object containing the updated configuration with detected features, or an error status if the validation fails.</returns>
+    public static async Task<StatusResponse<DavConfig>> CheckDavFeatures(HttpClient client, DavConfig davConfig)
     {
-        var statusMessage = new StatusResponse<DavConfig>();
+        StatusResponse<DavConfig> statusMessage;
         try
         {
             // Perform a PROPFIND request to check for CalDAV support (use the calendar folder path)
@@ -143,7 +145,7 @@ public class DavMiddlewareService
                 .Descendants(cal + "comp");
 
             var components = compElements
-                .Select(e => (string)e.Attribute("name"))
+                .Select(e => (string)e.Attribute("name")!)
                 .Where(n => !string.IsNullOrEmpty(n))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -172,17 +174,17 @@ public class DavMiddlewareService
     /// <param name="config">The configuration details of the CalDAV server.</param>
     /// <param name="syncToken">The last synchronization token received from the server, or null for the initial fetch.</param>
     /// <param name="client">The HTTP client used to send the request to the CalDAV server.</param>
-    /// <param name="ICSUtils">An instance of the utility class to generate the REPORT XML payload.</param>
+    /// <param name="icsUtils">An instance of the utility class to generate the REPORT XML payload.</param>
     /// <returns>A status response containing the XML document from the server if successful, or an error message otherwise.</returns>
     public static async Task<StatusResponse<XDocument>> SyncCollectionReportAsync(
         DavConfig config,
         string? syncToken,
-        HttpClient client,
-        ICSUtils ICSUtils)
+        HttpClient? client,
+        IcsUtils icsUtils)
     {
         async Task<HttpResponseMessage> SendReport(string? token)
         {
-            var xml = ICSUtils.BuildSyncCollectionXml(token);
+            var xml = icsUtils.BuildSyncCollectionXml(token);
 
             var request = new HttpRequestMessage(new HttpMethod("REPORT"), config.httpUrl)
             {
@@ -227,8 +229,8 @@ public class DavMiddlewareService
     /// <param name="token">The cancellation token that can be used to cancel the operation.</param>
     public static async Task UploadOrUpdateRemoteItem(
         DatabaseContext db,
-        ICSUtils icsUtils,
-        HttpClient client,
+        IcsUtils icsUtils,
+        HttpClient? client,
         CalDavItem item,
         CancellationToken token = default)
     {
@@ -236,13 +238,11 @@ public class DavMiddlewareService
             return;
         
         item.Sequence++;
-        var icsContent = icsUtils.BuildICS(item);
+        var icsContent = icsUtils.BuildIcs(item);
 
-        using var request = new HttpRequestMessage(HttpMethod.Put, item.Uri)
-        {
-            Content = new StringContent(icsContent, Encoding.UTF8, "text/calendar")
-        };
-        
+        using var request = new HttpRequestMessage(HttpMethod.Put, item.Uri);
+        request.Content = new StringContent(icsContent, Encoding.UTF8, "text/calendar");
+
         if (!string.IsNullOrWhiteSpace(item.Etag))
             request.Headers.TryAddWithoutValidation("If-Match", item.Etag);
         else
@@ -281,7 +281,7 @@ public class DavMiddlewareService
         DatabaseContext db,
         HttpClient client,
         CalDavItem localItem,
-        ICSUtils icsUtils,
+        IcsUtils icsUtils,
         CancellationToken token)
     {
         var settings = db.Settings.FirstOrDefault();
@@ -290,51 +290,52 @@ public class DavMiddlewareService
         response.EnsureSuccessStatusCode();
 
         var remoteIcs = await response.Content.ReadAsStringAsync(token);
-        var parsed = icsUtils.ParseICS(remoteIcs);
+        var parsed = icsUtils.ParseIcs(remoteIcs);
 
         var localUtc = localItem.LastModified?.ToUniversalTime();
-        var remoteUtc = parsed.LastModified?.ToUniversalTime();
-
-        switch (settings.ConflictStrategy)
+        if (parsed != null)
         {
-            case ConflictStrategy.PreferServer:
-                SolveConflictRemoteWins(db, parsed, localItem, response);
-                return;
+            var remoteUtc = parsed.LastModified?.ToUniversalTime();
 
-            case ConflictStrategy.PreferClient:
-                await SolveConflictLocalWins(localItem, icsUtils, client, response);
-                return;
-
-            default:
-                if (localUtc > remoteUtc)
-                    await SolveConflictLocalWins(localItem, icsUtils, client, response);
-                else
+            switch (settings!.ConflictStrategy)
+            {
+                case ConflictStrategy.PreferServer:
                     SolveConflictRemoteWins(db, parsed, localItem, response);
-                return;
+                    return;
+
+                case ConflictStrategy.PreferClient:
+                    await SolveConflictLocalWins(localItem, icsUtils, client, response);
+                    return;
+
+                default:
+                    if (localUtc > remoteUtc)
+                        await SolveConflictLocalWins(localItem, icsUtils, client, response);
+                    else
+                        SolveConflictRemoteWins(db, parsed, localItem, response);
+                    return;
+            }
         }
     }
     
-    private static async Task SolveConflictLocalWins(CalDavItem localItem, ICSUtils icsUtils, HttpClient client,
+    private static async Task SolveConflictLocalWins(CalDavItem localItem, IcsUtils icsUtils, HttpClient client,
         HttpResponseMessage response)
     {
         // Local wins -> overwrite remote tracked entity
         var remoteETag = response.Headers.ETag?.Tag;
-        var ics = icsUtils.BuildICS(localItem);
-        using var retry = new HttpRequestMessage(HttpMethod.Put, localItem.Uri)
-        {
-            Content = new StringContent(
-                ics,
-                Encoding.UTF8,
-                "text/calendar")
-        };
-            
+        var ics = icsUtils.BuildIcs(localItem);
+        using var retry = new HttpRequestMessage(HttpMethod.Put, localItem.Uri);
+        retry.Content = new StringContent(
+            ics,
+            Encoding.UTF8,
+            "text/calendar");
+
         retry.Headers.TryAddWithoutValidation("If-Match", remoteETag);
 
         using var retryResponse = await client.SendAsync(retry);
         retryResponse.EnsureSuccessStatusCode();
 
         localItem.IsDirty = false;
-        localItem.Etag = retryResponse.Headers.ETag?.Tag;
+        localItem.Etag = retryResponse.Headers.ETag?.Tag ?? "";
     }
 
     private static void SolveConflictRemoteWins(DatabaseContext db, CalDavItem parsed, CalDavItem localItem, HttpResponseMessage response)
@@ -343,14 +344,14 @@ public class DavMiddlewareService
         parsed.Id = localItem.Id;
         parsed.DavConfigId = localItem.DavConfigId;
         parsed.IsDirty = false;
-        parsed.Etag = response.Headers.ETag?.Tag;
+        parsed.Etag = response.Headers.ETag?.Tag ?? "";
 
         // Update scalar properties
         db.Entry(localItem).CurrentValues.SetValues(parsed);
     }
 
     public static async Task DeleteRemoteItem(
-        HttpClient client,
+        HttpClient? client,
         CalDavItem item,
         CancellationToken token = default)
     {

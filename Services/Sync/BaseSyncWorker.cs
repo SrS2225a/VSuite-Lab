@@ -9,9 +9,11 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using VSuiteLab.Models;
+using VSuiteLab.Models.Contexts;
+using VSuiteLab.Models.Helpers;
 using VSuiteLab.Utils;
 
-namespace VSuiteLab.Services;
+namespace VSuiteLab.Services.Sync;
 
 /// <summary>
 /// Serves as a foundational class for handling data synchronization between a local database
@@ -21,20 +23,20 @@ namespace VSuiteLab.Services;
 /// </summary>
 public class BaseSyncWorker
 {
-    private readonly ICSUtils _icsUtils = new();
-    private readonly DatabaseService _databaseService = new();
+    private readonly IcsUtils _icsUtils;
+    private readonly DatabaseService _databaseService;
 
     public BaseSyncWorker()
     {
         _databaseService = new DatabaseService();
-        _icsUtils = new ICSUtils();
+        _icsUtils = new IcsUtils();
     }
 
     /// <summary>
     /// Creates and returns an HttpClient instance for DAV-related operations if a network connection is available.
     /// </summary>
     /// <param name="config">The DAV configuration containing connection details and credentials.</param>
-    /// <returns>A <see cref="StatusResponse{T}"/></returns>
+    /// <returns>A <see cref="VSuiteLab.Models.Helpers.StatusResponse{T}"/></returns>
     private async Task<StatusResponse<HttpClient>> GetDavClientWithNetworkAsync(DavConfig config)
     {
         if (!NetworkInterface.GetIsNetworkAvailable())
@@ -45,7 +47,7 @@ public class BaseSyncWorker
             };
 
         // Wrap potentially blocking synchronous call
-        var client = DavMiddlewareService.getDavClient(config);
+        var client = DavMiddlewareService.GetDavClient(config);
         return StatusResponse<HttpClient>.Ok(client);
     }
     
@@ -53,7 +55,7 @@ public class BaseSyncWorker
     /// Executes the synchronization process for a given DAV configuration.
     /// </summary>
     /// <param name="config">The DAV configuration containing connection details and credentials.</param>
-    /// <param name="message">A <see cref="SyncProgress"/> instance to update with progress information.</param>
+    /// <param name="message">A <see cref="VSuiteLab.Models.Helpers.SyncProgress"/> instance to update with progress information.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while awaiting the tasks.</param>
     public async Task ExecuteAsync(DavConfig config, SyncProgress message, CancellationToken cancellationToken)
     {
@@ -163,7 +165,7 @@ public class BaseSyncWorker
 
             var report = reportResponse.Value;
             foreach (var action in pullActions)
-                await action(report);
+                await action(report!);
 
             message.Update("Completed");
             message.Complete(true);
@@ -202,8 +204,8 @@ public class BaseSyncWorker
     /// <param name="token">A cancellation token to observe while awaiting the tasks.</param>
     private async Task PushLocalChanges<T>(
         Func<DatabaseContext, DbSet<T>> setSelector,
-        ICSUtils icsUtils,
-        HttpClient client,
+        IcsUtils icsUtils,
+        HttpClient? client,
         DavConfig config,
         CancellationToken token)
         where T : CalDavItem
@@ -266,8 +268,8 @@ public class BaseSyncWorker
     /// <param name="config">The DAV configuration containing connection details and credentials.</param>
     /// <param name="token">A cancellation token to observe while awaiting the tasks.</param>
     private async Task PullVTodoItems(
-        ICSUtils icsUtils,
-        HttpClient client,
+        IcsUtils icsUtils,
+        HttpClient? client,
         SyncCollectionResult syncResult,
         DavConfig config,
         CancellationToken token)
@@ -289,26 +291,26 @@ public class BaseSyncWorker
             .ToDictionary(g => g.Key, g => g.First());
         
         var deletedSet = syncResult.DeletedResources.ToHashSet();
-        db.Tasks.RemoveRange(existingNotes.Where(x => deletedSet.Contains(x.Uri) && x.DavConfigId == config.Id));
+        db.Tasks.RemoveRange(existingNotes.Where(x => x.Uri != null && deletedSet.Contains(x.Uri) && x.DavConfigId == config.Id));
 
         // Process changed/added resources
         foreach (var resource in syncResult.ChangedResources)
         {
             token.ThrowIfCancellationRequested();
 
-            var remoteUri = new Uri(client.BaseAddress!, resource.Uri).ToString();
+            var remoteUri = new Uri(client?.BaseAddress!, resource.Uri).ToString();
             var remoteETag = resource.Etag;
             
             if ((existingByUri.TryGetValue(remoteUri, out var existing) && existing.Etag == remoteETag) || string.IsNullOrEmpty(remoteUri))
                 continue;
 
-            var ics = await icsUtils.DownloadICS(client, remoteUri);
-            var parsed = icsUtils.ParseICS(ics);
+            var ics = await icsUtils.DownloadIcs(client, remoteUri);
+            var parsed = icsUtils.ParseIcs(ics);
             
             if (parsed is not CalDavTask task)
                 continue;
-            
-            parsed.Etag = remoteETag;
+
+            if (remoteETag != null) parsed.Etag = remoteETag;
             parsed.Uri = remoteUri;
             parsed.DavConfigId = config.Id;
             
@@ -350,8 +352,8 @@ public class BaseSyncWorker
     /// <param name="config">The DAV configuration containing connection details and credentials.</param>
     /// <param name="token">A cancellation token to observe while awaiting the tasks.</param>
     private async Task PullVJournalItems(
-        ICSUtils icsUtils,
-        HttpClient client,
+        IcsUtils icsUtils,
+        HttpClient? client,
         SyncCollectionResult syncResult,
         DavConfig config,
         CancellationToken token)
@@ -365,14 +367,14 @@ public class BaseSyncWorker
         var notesByUri = existingNotes.ToDictionary(x => x.Uri);
 
         var deletedSet = syncResult.DeletedResources.ToHashSet();
-        db.Journals.RemoveRange(existingJournals.Where(x => deletedSet.Contains(x.Uri) && x.DavConfigId == config.Id));
-        db.Notes.RemoveRange(existingNotes.Where(x => deletedSet.Contains(x.Uri) && x.DavConfigId == config.Id));
+        db.Journals.RemoveRange(existingJournals.Where(x => x.Uri != null && deletedSet.Contains(x.Uri) && x.DavConfigId == config.Id));
+        db.Notes.RemoveRange(existingNotes.Where(x => x.Uri != null && deletedSet.Contains(x.Uri) && x.DavConfigId == config.Id));
 
         foreach (var resource in syncResult.ChangedResources)
         {
             token.ThrowIfCancellationRequested();
 
-            var remoteUri = new Uri(client.BaseAddress!, resource.Uri).ToString();
+            var remoteUri = new Uri(client?.BaseAddress!, resource.Uri).ToString();
             var remoteETag = resource.Etag;
             
             if ((journalsByUri.TryGetValue(remoteUri, out var existingJournal) && existingJournal.Etag == remoteETag) ||
@@ -381,8 +383,8 @@ public class BaseSyncWorker
                 continue;
             }
 
-            var ics = await icsUtils.DownloadICS(client, remoteUri);
-            var parsedItem = icsUtils.ParseICS(ics);
+            var ics = await icsUtils.DownloadIcs(client, remoteUri);
+            var parsedItem = icsUtils.ParseIcs(ics);
             
 
             if (parsedItem == null) continue;

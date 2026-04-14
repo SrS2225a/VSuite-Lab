@@ -2,27 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace VSuiteLab.Utils;
+namespace VSuiteLab.Utils.Query;
 
 public static class QuerySchemaRegistry
 {
-    private static readonly Dictionary<Type, List<QueryFieldDescriptor>> _schemaRegistry = new();
+    private static readonly Dictionary<Type, List<QueryFieldDescriptor>> SchemaRegistry = new();
     
     public static void Register<T>(List<QueryFieldDescriptor> fields)
     {
-        _schemaRegistry[typeof(T)] = fields;
+        SchemaRegistry[typeof(T)] = fields;
     }
     
     public static List<QueryFieldDescriptor> Get<T>()
     {
-        return _schemaRegistry.TryGetValue(typeof(T), out var fields)
+        return SchemaRegistry.TryGetValue(typeof(T), out var fields)
             ? fields
             : new List<QueryFieldDescriptor>();
     }
     
     public static QueryFieldDescriptor Resolve(string path, Type modelType)
     {
-        var schema = _schemaRegistry.TryGetValue(modelType, out var fields)
+        var schema = SchemaRegistry.TryGetValue(modelType, out var fields)
             ? fields
             : new List<QueryFieldDescriptor>();
 
