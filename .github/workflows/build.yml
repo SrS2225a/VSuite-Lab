@@ -34,7 +34,7 @@ jobs:
       - name: Build Linux app
         run: |
           chmod +x Build/build-linux.sh
-          ./Build/build-linux.sh
+          ./Build/build-linux.sh ${{ matrix.rid }}
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
@@ -67,7 +67,7 @@ jobs:
       - name: Build Windows installer
         shell: pwsh
         run: |
-          ./Build/build-win.ps1
+          ./Build/build-win.ps1 ${{ matrix.rid }}
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
@@ -98,7 +98,7 @@ jobs:
       - name: Build macOS app
         run: |
           chmod +x Build/build-macos.sh
-          ./Build/build-macos.sh
+          ./Build/build-macos.sh ${{ matrix.rid }}
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
