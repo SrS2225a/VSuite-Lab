@@ -1,5 +1,5 @@
-#define MyAppRid "{#MyAppRid}"
-#define PublishDir "{#PublishDir}"
+#define MyAppRid ExpandConstant('{param:MyAppRid}')
+#define PublishDir ExpandConstant('{param:PublishDir}')
 
 [Setup]
 AppName=V Suite Lab
