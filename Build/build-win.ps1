@@ -55,5 +55,5 @@ foreach ($RID in $RIDS) {
         "/DAppName=$DISPLAY_NAME" `
         "/DAppVersion=$VERSION" `
         "/DAppRid=$RID" `
-        "packaging\win\VSuiteLab.iss"
+        "Build\Packaging\VSuiteLab.iss"
 }
