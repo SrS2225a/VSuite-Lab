@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=VSuite Lab
+Comment=Get the most out of your journals, notes & tasks
+Exec=/usr/bin/vsuitelab
+Icon=vsuitelab
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=Utility;
