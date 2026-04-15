@@ -1,4 +1,5 @@
-#define MyAppRid GetEnv("MyAppRid")
+#define MyAppRid "{#MyAppRid}"
+#define PublishDir "{#PublishDir}"
 
 [Setup]
 AppName=V Suite Lab
@@ -8,8 +9,4 @@ DefaultGroupName=V Suite Lab
 OutputBaseFilename=vsuitelab-{#MyAppRid}-installer
 
 [Files]
-Source: "publish\{#MyAppRid}\*"; DestDir: "{app}"; Flags: recursesubdirs
-
-[Icons]
-Name: "{group}\V Suite Lab"; Filename: "{app}\vsuitelab.exe"
-Name: "{commondesktop}\V Suite Lab"; Filename: "{app}\vsuitelab.exe"
+Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: recursesubdirs
