@@ -28,7 +28,7 @@ jobs:
       - name: Install fpm dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ruby ruby-dev build-essential rpm
+          sudo apt-get install -y ruby ruby-dev build-essential rpm bsdtar libarchive-tools
           sudo gem install --no-document fpm
 
       - name: Build Linux app
@@ -67,7 +67,7 @@ jobs:
       - name: Build Windows installer
         shell: pwsh
         run: |
-          ./Build/build-windows.ps1
+          ./Build/build-win.ps1
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
