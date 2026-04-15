@@ -40,20 +40,20 @@ if (-not (Test-Path $ISCC)) {
 # ----------------------------
 # Build loop
 # ----------------------------
-foreach ($RID in $RIDS) {
+$RID = $args[0]
 
-    Write-Host "Building $DISPLAY_NAME ($RID)..."
+Write-Host "Building $DISPLAY_NAME ($RID)..."
 
-    $PUBLISH_DIR = "publish/$RID"
+$PUBLISH_DIR = "publish/$RID"
 
-    dotnet publish -c Release -f net8.0 -r $RID `
-        --self-contained true `
-        -p:UseAppHost=true `
-        -o $PUBLISH_DIR
+dotnet publish -c Release -f net8.0 -r $RID `
+    --self-contained true `
+    -p:UseAppHost=true `
+    -o $PUBLISH_DIR
 
-    & $ISCC `
-        "/DAppName=$DISPLAY_NAME" `
-        "/DAppVersion=$VERSION" `
-        "/DAppRid=$RID" `
-        "Build\Packaging\VSuiteLab.iss"
-}
+& $ISCC `
+    "/DAppName=$DISPLAY_NAME" `
+    "/DAppVersion=$VERSION" `
+    "/DAppRid=$RID" `
+    "/DPublishDir=$PUBLISH_DIR" `
+    "Build\Packaging\VSuiteLab.iss"
