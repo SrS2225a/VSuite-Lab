@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    
+    
+permissions:
+  contents: write
 
 jobs:
   # =========================
@@ -74,7 +78,7 @@ jobs:
         with:
           name: windows-${{ matrix.rid }}
           path: |
-            *.exe
+            Build/Packaging/Output/*.exe
   
   
   # =========================
@@ -125,3 +129,5 @@ jobs:
           files: dist/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+Build/Packaging/Output/*:
+  exe:
