@@ -47,8 +47,9 @@ Write-Host "Building $DISPLAY_NAME ($RID)..."
 $PUBLISH_DIR = "publish/$RID"
 
 dotnet publish -c Release -f net8.0 -r $RID `
-    --self-contained true `
+    -p:SelfContained=true `
     -p:UseAppHost=true `
+    -p:PublishSingleFile=true `
     -o $PUBLISH_DIR
 
 & $ISCC `
