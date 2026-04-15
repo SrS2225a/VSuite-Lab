@@ -25,7 +25,7 @@ for RID in "${RIDS[@]}"; do
   mkdir -p "$APP_DIR/Resources"
 
   cp "$PUBLISH_DIR/$BINARY" "$APP_DIR/MacOS/"
-  cp Packaging/macos/Info.plist "$APP_DIR/"
+  cp Packaging/Info.plist "$APP_DIR/"
 
   chmod +x "$APP_DIR/MacOS/$BINARY"
 
