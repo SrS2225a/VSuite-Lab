@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>MyApp</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.example.myapp</string>
+    <key>CFBundleExecutable</key>
+    <string>myapp</string>
+</dict>
+</plist>

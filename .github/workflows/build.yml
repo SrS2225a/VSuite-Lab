@@ -1,0 +1,109 @@
+name: Build VSuite Lab
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  # =========================
+  # LINUX (deb/rpm/arch)
+  # =========================
+  linux:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rid: [linux-x64, linux-arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install fpm dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev build-essential rpm
+          sudo gem install --no-document fpm
+
+      - name: Build Linux app
+        run: |
+          chmod +x Build/build-linux.sh
+          ./Build/build-linux.sh
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.rid }}
+          path: |
+            *.deb
+            *.rpm
+            *.pkg.tar.zst
+  
+  
+  # =========================
+  # WINDOWS (Inno Setup)
+  # =========================
+  windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        rid: [win-x64, win-arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          ./Build/build-windows.ps1
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.rid }}
+          path: |
+            *.exe
+  
+  
+  # =========================
+  # MACOS (.app + pkg)
+  # =========================
+  macos:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        rid: [osx-x64, osx-arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build macOS app
+        run: |
+          chmod +x Build/build-macos.sh
+          ./Build/build-macos.sh
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.rid }}
+          path: |
+            *.pkg
+            *.app

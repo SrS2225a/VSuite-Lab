@@ -5,6 +5,11 @@ using VSuiteLab.Controllers;
 
 namespace VSuiteLab.Services;
 
+public interface INotificationService
+{
+    Task ShowNotificationAsync(string title, string message);
+}
+
 public class NotificationService : INotificationService
 {
     private readonly INotificationService _impl;

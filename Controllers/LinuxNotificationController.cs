@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Tmds.DBus;
 using VSuiteLab.Services;
@@ -30,7 +31,7 @@ public class LinuxNotificationController : INotificationService
 
     public async Task ShowNotificationAsync(string title, string message)
     {
-        var appIdentify = INotificationService.NotificationServiceKey;
+        var appIdentify = Assembly.GetExecutingAssembly().GetName().Name;
 
         var hints = new Dictionary<string, object>
         {
