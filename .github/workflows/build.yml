@@ -78,7 +78,7 @@ jobs:
         with:
           name: windows-${{ matrix.rid }}
           path: |
-            Build/Packaging/Output/*.exe
+            ./Build/Packaging/Output/*.exe
   
   
   # =========================
