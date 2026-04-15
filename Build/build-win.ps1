@@ -54,6 +54,6 @@ dotnet publish -c Release -f net8.0 -r $RID `
 & $ISCC `
     "/DAppName=$DISPLAY_NAME" `
     "/DAppVersion=$VERSION" `
-    "/DAppRid=$RID" `
+    "/DMyAppRid=$RID" `
     "/DPublishDir=$PUBLISH_DIR" `
     "Build\Packaging\VSuiteLab.iss"
