@@ -15,6 +15,7 @@ public partial class App : Application
     public override void Initialize()
     {
         QuerySchemaRegistry.Register<CalDavJournal>(QueryValueResolver.JournalSchema.Fields);
+        QuerySchemaRegistry.Register<CalDavNote>(QueryValueResolver.NoteSchema.Fields);
         QuerySchemaRegistry.Register<CalDavTask>(QueryValueResolver.TaskSchema.Fields);
         
         AvaloniaXamlLoader.Load(this);
