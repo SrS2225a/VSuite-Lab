@@ -41,7 +41,7 @@ namespace VSuiteLab.ViewModels
 
         public JournalsViewModel JournalsViewModel { get; }
         public TasksViewModel TasksViewModel { get; }
-        public NotesViewModel NotesViewModel { get; } = new NotesViewModel();
+        public NotesViewModel NotesViewModel { get; }
         
         [RelayCommand]
         private void AddFilter()
@@ -159,6 +159,7 @@ namespace VSuiteLab.ViewModels
 
             JournalsViewModel = new JournalsViewModel(QueryBuilder);
             TasksViewModel = new TasksViewModel(QueryBuilder);
+            NotesViewModel = new NotesViewModel(QueryBuilder);
             
             SelectedTabIndex = 0;
             UpdateSelectedTabContent();
@@ -237,7 +238,8 @@ namespace VSuiteLab.ViewModels
                     QueryBuilder.SetAvailableFields(QuerySchemaRegistry.Get<CalDavJournal>());
                     break;
                 case 1:
-                    SelectedTabContent = new NotesView();
+                    SelectedTabContent = new NotesView() { DataContext = NotesViewModel };
+                    QueryBuilder.SetAvailableFields(QuerySchemaRegistry.Get<CalDavNote>());
                     break;
                 case 2:
                     SelectedTabContent = new TasksView() { DataContext = TasksViewModel };

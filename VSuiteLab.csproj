@@ -56,6 +56,10 @@
       <DependentUpon>MarkdownEditor.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\NotesView.axaml.cs">
+      <DependentUpon>NotesView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
