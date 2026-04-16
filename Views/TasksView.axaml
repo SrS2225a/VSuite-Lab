@@ -321,63 +321,61 @@
                             <!--             Watermark="Completed Date"/> -->
 
                         </StackPanel>
+                        
 
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                        <!-- Start -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Start"
+                                       FontSize="11"
+                                       Opacity="0.6"/>
+                            
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
+                                <Grid ColumnDefinitions="2*,1*" ColumnSpacing="8">
+                                    <DatePicker Grid.Column="0"
+                                                SelectedDate="{Binding StartDateOnly, Mode=TwoWay}"
+                                                HorizontalAlignment="Stretch" />
 
-                            <!-- Start -->
-                            <StackPanel Grid.Column="0" Spacing="4">
-                                <TextBlock Text="Start"
-                                           FontSize="11"
-                                           Opacity="0.6"/>
-                                
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
-                                    <Grid ColumnDefinitions="2*,1*" ColumnSpacing="8">
-                                        <DatePicker Grid.Column="0"
-                                                    SelectedDate="{Binding StartDateOnly, Mode=TwoWay}"
-                                                    HorizontalAlignment="Stretch" />
-
-                                        <TimePicker Grid.Column="1"
-                                                    SelectedTime="{Binding StartTimeOnly, Mode=TwoWay}"
-                                                    HorizontalAlignment="Stretch" />
-                                    </Grid>
-
-                                    <!-- Clear button -->
-                                    <Button Grid.Column="1"
-                                            Content="✕"
-                                            Padding="6,2"
-                                            VerticalAlignment="Center"
-                                            Command="{Binding ClearStartDate}" />
+                                    <TimePicker Grid.Column="1"
+                                                SelectedTime="{Binding StartTimeOnly, Mode=TwoWay}"
+                                                HorizontalAlignment="Stretch" />
                                 </Grid>
-                            </StackPanel>
 
-                            <!-- Due -->
-                            <StackPanel Grid.Column="1" Spacing="4">
-                                <TextBlock Text="Due"
-                                           FontSize="11"
-                                           Opacity="0.6"/>
+                                <!-- Clear button -->
+                                <Button Grid.Column="1"
+                                        Content="✕"
+                                        Padding="6,2"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding ClearStartDate}" />
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Due -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Due"
+                                       FontSize="11"
+                                       Opacity="0.6"/>
+                            
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
                                 
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalAlignment="Center">
-                                    
-                                    <Grid ColumnDefinitions="2*,1*" ColumnSpacing="8">
-                                        <DatePicker Grid.Column="0"
-                                                    SelectedDate="{Binding DueDateOnly, Mode=TwoWay}"
-                                                    HorizontalAlignment="Stretch" />
+                                <Grid ColumnDefinitions="2*,1*" ColumnSpacing="8">
+                                    <DatePicker Grid.Column="0"
+                                                SelectedDate="{Binding DueDateOnly, Mode=TwoWay}"
+                                                HorizontalAlignment="Stretch" />
 
-                                        <TimePicker Grid.Column="1"
-                                                    SelectedTime="{Binding DueTimeOnly, Mode=TwoWay}"
-                                                    HorizontalAlignment="Stretch" />
-                                    </Grid>
-
-                                    <!-- Clear button -->
-                                    <Button Grid.Column="1"
-                                            Content="✕"
-                                            Padding="6,2"
-                                            VerticalAlignment="Center"
-                                            Command="{Binding ClearDueDate}" />
+                                    <TimePicker Grid.Column="1"
+                                                SelectedTime="{Binding DueTimeOnly, Mode=TwoWay}"
+                                                HorizontalAlignment="Stretch" />
                                 </Grid>
-                            </StackPanel>
 
-                        </Grid>
+                                <!-- Clear button -->
+                                <Button Grid.Column="1"
+                                        Content="✕"
+                                        Padding="6,2"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding ClearDueDate}" />
+                            </Grid>
+                        </StackPanel>
+                        
                     </StackPanel>
                 </Border>
 
