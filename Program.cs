@@ -15,10 +15,10 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        using (var db = new DatabaseContext())
-        {
-            db.Database.Migrate(); // creates DB + applies migrations
-        }
+        // using (var db = new DatabaseContext())
+        // {
+        //     db.Database.Migrate(); // creates DB + applies migrations
+        // }
 
         BuildAvaloniaApp()
             .WithDeveloperTools()
