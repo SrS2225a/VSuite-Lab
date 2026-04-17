@@ -24,6 +24,8 @@ namespace VSuiteLab.ViewModels
         private SyncService? _syncService;
         private DatabaseService? _databaseService;
         
+        public Task InitializationTask { get; }
+        
         [ObservableProperty]
         private SearchQueryBuilder queryBuilder = new();
         
@@ -39,10 +41,10 @@ namespace VSuiteLab.ViewModels
         [ObservableProperty]
         private bool isSyncing;
 
-        public JournalsViewModel JournalsViewModel { get; }
-        public TasksViewModel TasksViewModel { get; }
-        public NotesViewModel NotesViewModel { get; }
-        
+        public JournalsViewModel JournalsViewModel { get; set; }
+        public TasksViewModel TasksViewModel { get; set; }
+        public NotesViewModel NotesViewModel { get; set; }
+
         [RelayCommand]
         private void AddFilter()
         {
@@ -155,18 +157,21 @@ namespace VSuiteLab.ViewModels
             _databaseService = new DatabaseService();
             _syncService = new SyncService();
 
-            _ = LoadMains();
+            SelectedTabIndex = 0;
+            UpdateSelectedTabContent();
 
+            InitializationTask = Task.Run(InitializeAsync);
+        }
+
+        private async Task InitializeAsync()
+        {
             JournalsViewModel = new JournalsViewModel(QueryBuilder);
             TasksViewModel = new TasksViewModel(QueryBuilder);
             NotesViewModel = new NotesViewModel(QueryBuilder);
             
-            SelectedTabIndex = 0;
-            UpdateSelectedTabContent();
-            
+            await LoadMains();
             _ = StartAutoSync();
         }
-
 
         private async Task LoadMains()
         {
@@ -177,9 +182,9 @@ namespace VSuiteLab.ViewModels
             }
         }
 
-        private async Task StartAutoSync()
+        private Task StartAutoSync()
         {
-            await _syncService!.StatPerodic(
+            return _syncService!.StatPerodic(
                 result =>
                 {
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
