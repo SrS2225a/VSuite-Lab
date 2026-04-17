@@ -65,11 +65,6 @@ public partial class App : Application
 
             mainWindow.Show();
             splash.Close();
-            
-            desktop.MainWindow = mainWindow;
-
-            mainWindow.Show();   // show new window FIRST
-            splash.Close();      // then close splash
         }
 
         base.OnFrameworkInitializationCompleted();
