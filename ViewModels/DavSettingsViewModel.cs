@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using VSuiteLab.Models;
 using VSuiteLab.Models.Helpers;
 using VSuiteLab.Services;
@@ -112,6 +113,8 @@ public partial class DavSettingsViewModel : ViewModelBase
         await _databaseService.DeleteAsync(SelectedDavConfig);
         
         DavConfigs.Remove(SelectedDavConfig);
+        
+        WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(SelectedDavConfig));
         
         SelectedDavConfig = new DavConfig();
         StatusResponse = new();

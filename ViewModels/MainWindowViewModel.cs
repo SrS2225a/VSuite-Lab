@@ -156,11 +156,8 @@ namespace VSuiteLab.ViewModels
         {
             _databaseService = new DatabaseService();
             _syncService = new SyncService();
-
-            SelectedTabIndex = 0;
-            UpdateSelectedTabContent();
-
-            InitializationTask = Task.Run(InitializeAsync);
+            
+            InitializationTask = InitializeAsync();
         }
 
         private async Task InitializeAsync()
@@ -170,6 +167,10 @@ namespace VSuiteLab.ViewModels
             NotesViewModel = new NotesViewModel(QueryBuilder);
             
             await LoadMains();
+            
+            SelectedTabIndex = 0;
+            UpdateSelectedTabContent();
+            
             _ = StartAutoSync();
         }
 
