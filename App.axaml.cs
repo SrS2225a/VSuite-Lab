@@ -49,11 +49,10 @@ public partial class App : Application
                 db.Database.Migrate();
             });
 
-            var mainVm = new MainWindowViewModel();
-
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 splashVm.Status = "Loading your data...");
 
+            var mainVm = new MainWindowViewModel();
             await mainVm.InitializationTask;
 
             var mainWindow = new MainWindow
