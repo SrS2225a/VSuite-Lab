@@ -267,13 +267,9 @@ namespace VSuiteLab.ViewModels
             _databaseService = new DatabaseService();
             QueryBuilder = queryBuilder;
             
-            // Keep old message handling
             WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (_, m) =>
             {
-                Dispatcher.UIThread.Post(async void () =>
-                {
-                    await RefreshForInstance(m.Value);
-                });
+                _ = Dispatcher.UIThread.InvokeAsync(() => RefreshForInstance(m.Value));
             });
 
             // Initialize notes
