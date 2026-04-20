@@ -273,10 +273,10 @@ public abstract class DavMiddlewareService
     /// based on the defined conflict resolution strategy.
     /// </summary>
     /// <param name="db">The database context.</param>
-    /// <param name="client">The HTTP client used to fetch the remote task from the server.</param>
-    /// <param name="localItem">The local CalDav task that potentially conflicts with the remote version.</param>
+    /// <param name="client">The HTTP client used to fetch the remote item from the server.</param>
+    /// <param name="localItem">The local CalDav item that potentially conflicts with the remote version.</param>
     /// <param name="icsUtils">The utility class instance used to handle ICS parsing and operations.</param>
-    /// <param name="token">A cancellation token to propagate task cancellation notifications.</param>
+    /// <param name="token">A cancellation token to propagate item cancellation notifications.</param>
     private static async Task ResolveConflict(
         DatabaseContext db,
         HttpClient client,
@@ -291,12 +291,9 @@ public abstract class DavMiddlewareService
 
         var remoteIcs = await response.Content.ReadAsStringAsync(token);
         var parsed = icsUtils.ParseIcs(remoteIcs);
-
-        var localUtc = localItem.LastModified?.ToUniversalTime();
+        
         if (parsed != null)
         {
-            var remoteUtc = parsed.LastModified?.ToUniversalTime();
-
             switch (settings!.ConflictStrategy)
             {
                 case ConflictStrategy.PreferServer:
@@ -308,6 +305,9 @@ public abstract class DavMiddlewareService
                     return;
 
                 default:
+                    var localUtc = localItem.LastModified?.ToUniversalTime();
+                    var remoteUtc = parsed.LastModified?.ToUniversalTime();
+                    
                     if (localUtc > remoteUtc)
                         await SolveConflictLocalWins(localItem, icsUtils, client, response);
                     else

@@ -80,7 +80,7 @@
                             <ColorPicker Grid.Column="1"
                                          HorizontalAlignment="Stretch"
                                          IsAlphaEnabled="False" IsAlphaVisible="False"
-                                         Color="{Binding SelectedDavConfig.Color}" />
+                                         Color="{Binding SelectedDavConfig.Color, Converter={StaticResource ColorConverter}}" />
                         </Grid>
                     </Border>
 
