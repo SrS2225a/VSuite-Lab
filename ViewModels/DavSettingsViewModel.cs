@@ -19,7 +19,7 @@ public partial class DavSettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _isUpdateSaving;
     
     public ObservableCollection<DavConfig> DavConfigs { get; set; }
-    private DavConfig? _selectedDavConfig;
+    private DavConfig _selectedDavConfig;
     public DavConfig SelectedDavConfig
     {
         get => _selectedDavConfig;
@@ -69,6 +69,10 @@ public partial class DavSettingsViewModel : ViewModelBase
 
     private async Task AddAsync()
     {
+        if(string.IsNullOrEmpty(SelectedDavConfig?.httpUrl) || string.IsNullOrEmpty(SelectedDavConfig.Name))
+            return;
+
+        
         IsAddSaving = true;
         
         StatusResponse = await _davService.addMount(SelectedDavConfig);
@@ -84,6 +88,9 @@ public partial class DavSettingsViewModel : ViewModelBase
 
     private async Task UpdateAsync()
     {
+        if(string.IsNullOrEmpty(SelectedDavConfig?.httpUrl) || string.IsNullOrEmpty(SelectedDavConfig.Name))
+            return;
+        
         IsUpdateSaving = true;
         
         var davClient = DavMiddlewareService.GetDavClient(SelectedDavConfig);
@@ -110,6 +117,10 @@ public partial class DavSettingsViewModel : ViewModelBase
 
     private async Task RemoveAsync()
     {
+        if(string.IsNullOrEmpty(SelectedDavConfig?.httpUrl) || string.IsNullOrEmpty(SelectedDavConfig.Name))
+            return;
+
+        
         await _databaseService.DeleteAsync(SelectedDavConfig);
         
         DavConfigs.Remove(SelectedDavConfig);

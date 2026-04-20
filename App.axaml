@@ -17,6 +17,7 @@
         <ResourceDictionary>
             <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
             <conv:NullToBoolConverter x:Key="NullToBoolConverter"/>
+            <conv:ColorConverter x:Key="ColorConverter" />
             
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://VSuiteLab/Resources/LoadingSpinner.axaml" />
