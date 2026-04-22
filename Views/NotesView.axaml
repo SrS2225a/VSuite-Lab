@@ -25,7 +25,7 @@
             <Grid RowDefinitions="Auto,*">
                 <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="8">
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="6">
-                        <Button Content="New" Command="{Binding SaveNewJournalCommand}" />
+                        <Button Content="Save New" Command="{Binding SaveNewJournalCommand}" />
                         <Button Content="Update" Command="{Binding SaveJournalCommand}" />
                         <Button Content="Delete" Command="{Binding DeleteJournalCommand}" />
                     </StackPanel>
