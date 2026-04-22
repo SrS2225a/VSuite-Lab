@@ -12,6 +12,8 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using HeyRed.Mime;
 using Microsoft.EntityFrameworkCore;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using VSuiteLab.Converters;
 using VSuiteLab.Models;
 using VSuiteLab.Models.Contexts;
@@ -29,7 +31,7 @@ public partial class JournalsViewModel : ViewModelBase
     private readonly QueryService _queryService = new();
 
     private SearchQueryBuilder QueryBuilder { get; }
-    
+
     public IEnumerable<EnumOption<JournalStatus>> JounralStatuses =>
         new[]
         {
@@ -37,15 +39,16 @@ public partial class JournalsViewModel : ViewModelBase
             new EnumOption<JournalStatus>(JournalStatus.Final, "Final"),
             new EnumOption<JournalStatus>(JournalStatus.Cancelled, "Cancelled")
         };
-    
+
     public IEnumerable<EnumOption<string>> Classifications => new[]
     {
         new EnumOption<string>("PUBLIC", "Public"),
         new EnumOption<string>("PRIVATE", "Private"),
         new EnumOption<string>("CONFIDENTIAL", "Confidential"),
     };
-    
+
     private ObservableCollection<CalDavJournal> _journals = new();
+
     public ObservableCollection<CalDavJournal> Journals
     {
         get => _journals;
@@ -55,26 +58,24 @@ public partial class JournalsViewModel : ViewModelBase
             OnPropertyChanged();
         }
     }
-    public ObservableCollection<DavConfig> DavInstances { get; } = new();
-        
-    [ObservableProperty] private DavConfig? selectedDavInstance;
-        
-    [ObservableProperty] 
-    private CalDavJournal? selectedJournal;
 
-    [ObservableProperty] private bool _debugEnabled; 
-        
-    [ObservableProperty]
-    private ObservableCollection<GroupItemsCalDavJournal> groupedJournals = new();
-        
-    [ObservableProperty]
-    private bool isPreviewMode = true;
-    
+    public ObservableCollection<DavConfig> DavInstances { get; } = new();
+
+    [ObservableProperty] private DavConfig? selectedDavInstance;
+
+    [ObservableProperty] private CalDavJournal? selectedJournal;
+
+    [ObservableProperty] private bool _debugEnabled;
+
+    [ObservableProperty] private ObservableCollection<GroupItemsCalDavJournal> groupedJournals = new();
+
+    [ObservableProperty] private bool isPreviewMode = true;
+
     private void Refresh()
     {
         ApplyGrouping();
     }
-    
+
     private void ApplyGrouping()
     {
         var query = QueryMapper.ToQueryModel(
@@ -132,7 +133,7 @@ public partial class JournalsViewModel : ViewModelBase
             Refresh(); // collection itself changed
         };
     }
-    
+
     private void OnBuilderItemChanged(object? sender, PropertyChangedEventArgs e)
     {
         Refresh();
@@ -148,42 +149,35 @@ public partial class JournalsViewModel : ViewModelBase
 
         SelectedDavInstance = DavInstances.FirstOrDefault(d => d.Id == value.DavConfigId);
     }
-    
+
     public JournalsViewModel(SearchQueryBuilder queryBuilder)
     {
         _databaseService = new DatabaseService();
         QueryBuilder = queryBuilder;
-        
-        WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (_, m) =>
-        {
-            _ = Dispatcher.UIThread.InvokeAsync(() => RefreshForInstance(m.Value));
-        });
-        
-        WeakReferenceMessenger.Default.Register<DavConfigChangedMessage>(this, async (_, m) =>
-        {
-            await Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                await ReloadDavInstances();
-            });
-        });
+
+        WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this,
+            (_, m) => { _ = Dispatcher.UIThread.InvokeAsync(() => RefreshForInstance(m.Value)); });
+
+        WeakReferenceMessenger.Default.Register<DavConfigChangedMessage>(this,
+            async (_, m) => { await Dispatcher.UIThread.InvokeAsync(async () => { await ReloadDavInstances(); }); });
 
         // Initialize notes
         HookBuilderChanges();
         _ = InitializeAsync();
     }
-    
+
     private async Task InitializeAsync()
     {
         await LoadJournals();
     }
-    
+
     private async Task LoadJournals()
     {
         await ReloadDavInstances();
 
         var appSettings = await _databaseService.ReadAllAsync<Settings>();
         DebugEnabled = appSettings.Value?.FirstOrDefault()?.DebugEnabled ?? false;
-            
+
         var notes = await _databaseService.ReadAllAsync<CalDavJournal>(query =>
                 query
                     .Include(n => n.DavConfig)
@@ -194,16 +188,17 @@ public partial class JournalsViewModel : ViewModelBase
                     .Include(n => n.Alarms), true
         );
 
-        if (notes.Value != null) Journals = new ObservableCollection<CalDavJournal>(notes.Value.OrderByDescending(n => n.PublishedDate));
+        if (notes.Value != null)
+            Journals = new ObservableCollection<CalDavJournal>(notes.Value.OrderByDescending(n => n.PublishedDate));
 
         SelectedJournal = new();
         Refresh();
     }
-    
+
     private async Task RefreshForInstance(DavConfig config)
     {
         GroupedJournals.Clear();
-            
+
         var toRemove = Journals.Where(n => n.DavConfigId == config.Id).ToList();
         foreach (var note in toRemove)
             Journals.Remove(note);
@@ -226,7 +221,7 @@ public partial class JournalsViewModel : ViewModelBase
 
         Refresh();
     }
-    
+
     private async Task ReloadDavInstances()
     {
         DavInstances.Clear();
@@ -248,16 +243,16 @@ public partial class JournalsViewModel : ViewModelBase
                 .FirstOrDefault(d => d.Id == SelectedDavInstance.Id);
         }
     }
-    
+
     [RelayCommand]
     public async Task DownloadIcsCommand(CalDavJournal? task)
     {
-        if(task == null)
+        if (task == null)
             return;
-            
+
         var icsUtils = new IcsUtils();
         var icsContent = icsUtils.BuildIcs(task);
-            
+
         await FilePickerUtils.SaveFileDialog(task.Uid + ".ics", Encoding.UTF8.GetBytes(icsContent), "ics");
     }
 
@@ -275,12 +270,12 @@ public partial class JournalsViewModel : ViewModelBase
             SelectedJournal.IsDirty = true;
 
             await _databaseService.CreateAsync(SelectedJournal);
-            
+
             Journals.Add(SelectedJournal);
 
             SelectedJournal = null;
             Dispatcher.UIThread.Post(() => SelectedJournal = new CalDavJournal());
-            
+
             ApplyGrouping();
         }
     }
@@ -312,86 +307,141 @@ public partial class JournalsViewModel : ViewModelBase
             Journals.Remove(SelectedJournal);
             SelectedJournal = null;
             Dispatcher.UIThread.Post(() => SelectedJournal = new CalDavJournal());
-            
+
             ApplyGrouping();
         }
     }
-    
+
+    [RelayCommand]
+    public async Task ImportIcsNote(DavConfig config)
+    {
+        var files = await FilePickerUtils.OpenFileDialog();
+        if (files.Count == 0)
+            return;
+
+        List<Tuple<string, string>> faultyFile = new List<Tuple<string, string>>();
+
+        var utils = new IcsUtils();
+
+        foreach (var file in files)
+        {
+            await using var stream = await file.OpenReadAsync();
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            try
+            {
+                var ics = utils.ParseIcs(Encoding.UTF8.GetString(ms.ToArray()));
+                if (ics is CalDavJournal calDavJournal)
+                {
+                    SelectedJournal = calDavJournal;
+                    SelectedDavInstance = config;
+
+                    await SaveNewJournal();
+                }
+                else
+                {
+                    faultyFile.Add(new Tuple<string, string>(file.Name, "Invalid Journal ICS file"));
+                }
+            }
+            catch (Exception e)
+            {
+                faultyFile.Add(new Tuple<string, string>(file.Name, e.Message));
+            }
+        }
+
+        if (faultyFile.Count > 0)
+        {
+            var faltyFilesString =
+                string.Join(",", faultyFile.Select(t => string.Format("-{0}, {1}\n", t.Item1, t.Item2)));
+            var invalidJournal = MessageBoxManager.GetMessageBoxStandard("Journal Import",
+                $"Could not import {faultyFile.Count} out of {files.Count} journals:\n" +
+                $"{faltyFilesString}", ButtonEnum.Ok, Icon.Error);
+            await invalidJournal.ShowAsync();
+        }
+        else
+        {
+            var invalidJournal = MessageBoxManager.GetMessageBoxStandard("Journal Import",
+                "All journals have been imported successfully", ButtonEnum.Ok, Icon.Info);
+            await invalidJournal.ShowAsync();
+        }
+    }
+
     [RelayCommand]
     public Task CancelNoteSelection()
     {
         SelectedJournal = null;
         return Task.CompletedTask;
     }
-    
+
     [RelayCommand]
     public void AddCategoryCommand()
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Categories.Add(new CalDavCategory { Value = string.Empty });
     }
 
     [RelayCommand]
     public void RemoveCategoryCommand(CalDavCategory category)
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Categories.Remove(category);
     }
-    
+
     [RelayCommand]
     public void AddCommentCommand()
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Comments.Add(new CalDavComment());
     }
 
     [RelayCommand]
     public void RemoveCommentCommand(CalDavComment comment)
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Comments.Remove(comment);
     }
-    
+
     [RelayCommand]
     public void AddAttendeeCommand()
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Attendees.Add(new CalDavAttendee());
     }
-    
+
     [RelayCommand]
     public void RemoveAttendeeCommand(CalDavAttendee attendee)
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Attendees.Remove(attendee);
     }
-    
+
     [RelayCommand]
     public async Task AddAttachmentCommand()
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         var files = await FilePickerUtils.OpenFileDialog();
 
         foreach (var file in files)
-        { 
+        {
             await using var stream = await file.OpenReadAsync();
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
-                
+
             SelectedJournal.Attachments.Add(new CalDavAttachment
             {
                 Title = file.Name,
@@ -404,37 +454,37 @@ public partial class JournalsViewModel : ViewModelBase
     [RelayCommand]
     public void RemoveAttachmentCommand(CalDavAttachment attachment)
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Attachments.Remove(attachment);
     }
-    
+
     [RelayCommand]
     public void AddAlarmCommand()
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Alarms.Add(new CalDavAlarm());
     }
 
     [RelayCommand]
     public void RemoveAlarmCommand(CalDavAlarm alarm)
     {
-        if(SelectedJournal == null)
+        if (SelectedJournal == null)
             return;
-            
+
         SelectedJournal.Alarms.Remove(alarm);
     }
-    
+
     [RelayCommand]
     public async Task DownloadAttachmentCommand(CalDavAttachment alarm)
     {
         var fileExtension = alarm.Title.Split('.').LastOrDefault();
         await FilePickerUtils.SaveFileDialog(alarm.Title, alarm.Uri, fileExtension);
     }
-    
+
     public DateTimeOffset? PublishedDateOnly
     {
         get => TimeConverter.GetDateOnly(SelectedJournal?.PublishedDate);
@@ -444,8 +494,8 @@ public partial class JournalsViewModel : ViewModelBase
             if (SelectedJournal == null)
                 return;
 
-            SelectedJournal.PublishedDate = TimeConverter.SetDateOnly( SelectedJournal.PublishedDate, value);
-                
+            SelectedJournal.PublishedDate = TimeConverter.SetDateOnly(SelectedJournal.PublishedDate, value);
+
             OnPropertyChanged();
         }
     }
@@ -460,7 +510,7 @@ public partial class JournalsViewModel : ViewModelBase
                 return;
 
             SelectedJournal.PublishedDate = TimeConverter.SetTimeOnly(SelectedJournal.PublishedDate, value);
-                
+
             OnPropertyChanged();
         }
     }

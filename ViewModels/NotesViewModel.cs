@@ -12,6 +12,8 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using HeyRed.Mime;
 using Microsoft.EntityFrameworkCore;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using VSuiteLab.Converters;
 using VSuiteLab.Models;
 using VSuiteLab.Models.Contexts;
@@ -30,7 +32,7 @@ public partial class NotesViewModel : ViewModelBase
     private readonly QueryService _queryService = new();
 
     private SearchQueryBuilder QueryBuilder { get; }
-    
+
     public IEnumerable<EnumOption<JournalStatus>> JounralStatuses =>
         new[]
         {
@@ -38,15 +40,16 @@ public partial class NotesViewModel : ViewModelBase
             new EnumOption<JournalStatus>(JournalStatus.Final, "Final"),
             new EnumOption<JournalStatus>(JournalStatus.Cancelled, "Cancelled")
         };
-    
+
     public IEnumerable<EnumOption<string>> Classifications => new[]
     {
         new EnumOption<string>("PUBLIC", "Public"),
         new EnumOption<string>("PRIVATE", "Private"),
         new EnumOption<string>("CONFIDENTIAL", "Confidential"),
     };
-    
+
     private ObservableCollection<CalDavNote> notes = new();
+
     public ObservableCollection<CalDavNote> Notes
     {
         get => notes;
@@ -56,26 +59,24 @@ public partial class NotesViewModel : ViewModelBase
             OnPropertyChanged();
         }
     }
-    public ObservableCollection<DavConfig> DavInstances { get; } = new();
-        
-    [ObservableProperty] private DavConfig? selectedDavInstance;
-        
-    [ObservableProperty] 
-    private CalDavNote? selectedNote;
 
-    [ObservableProperty] private bool _debugEnabled; 
-        
-    [ObservableProperty]
-    private ObservableCollection<GroupItemsCalDavNote> groupedNotes = new();
-        
-    [ObservableProperty]
-    private bool isPreviewMode = true;
-    
+    public ObservableCollection<DavConfig> DavInstances { get; } = new();
+
+    [ObservableProperty] private DavConfig? selectedDavInstance;
+
+    [ObservableProperty] private CalDavNote? selectedNote;
+
+    [ObservableProperty] private bool _debugEnabled;
+
+    [ObservableProperty] private ObservableCollection<GroupItemsCalDavNote> groupedNotes = new();
+
+    [ObservableProperty] private bool isPreviewMode = true;
+
     private void Refresh()
     {
         ApplyGrouping();
     }
-    
+
     private void ApplyGrouping()
     {
         var query = QueryMapper.ToQueryModel(
@@ -133,7 +134,7 @@ public partial class NotesViewModel : ViewModelBase
             Refresh(); // collection itself changed
         };
     }
-    
+
     private void OnBuilderItemChanged(object? sender, PropertyChangedEventArgs e)
     {
         Refresh();
@@ -149,43 +150,36 @@ public partial class NotesViewModel : ViewModelBase
 
         SelectedDavInstance = DavInstances.FirstOrDefault(d => d.Id == value.DavConfigId);
     }
-    
+
     public NotesViewModel(SearchQueryBuilder queryBuilder)
     {
         _databaseService = new DatabaseService();
         QueryBuilder = queryBuilder;
-        
-        WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this, (_, m) =>
-        {
-            _ = Dispatcher.UIThread.InvokeAsync(() => RefreshForInstance(m.Value));
-        });
-        
-        WeakReferenceMessenger.Default.Register<DavConfigChangedMessage>(this, async (_, m) =>
-        {
-            await Dispatcher.UIThread.InvokeAsync(async () =>
-            {
-                await ReloadDavInstances();
-            });
-        });
+
+        WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this,
+            (_, m) => { _ = Dispatcher.UIThread.InvokeAsync(() => RefreshForInstance(m.Value)); });
+
+        WeakReferenceMessenger.Default.Register<DavConfigChangedMessage>(this,
+            async (_, m) => { await Dispatcher.UIThread.InvokeAsync(async () => { await ReloadDavInstances(); }); });
 
 
         // Initialize notes
         HookBuilderChanges();
         _ = InitializeAsync();
     }
-    
+
     private async Task InitializeAsync()
     {
         await LoadJournals();
     }
-    
+
     private async Task LoadJournals()
     {
         await ReloadDavInstances();
 
         var appSettings = await _databaseService.ReadAllAsync<Settings>();
         DebugEnabled = appSettings.Value?.FirstOrDefault()?.DebugEnabled ?? false;
-            
+
         var notes = await _databaseService.ReadAllAsync<CalDavNote>(query =>
                 query
                     .Include(n => n.DavConfig)
@@ -201,11 +195,11 @@ public partial class NotesViewModel : ViewModelBase
         SelectedNote = new();
         Refresh();
     }
-    
+
     private async Task RefreshForInstance(DavConfig config)
     {
         GroupedNotes.Clear();
-            
+
         var toRemove = Notes.Where(n => n.DavConfigId == config.Id).ToList();
         foreach (var note in toRemove)
             Notes.Remove(note);
@@ -228,7 +222,7 @@ public partial class NotesViewModel : ViewModelBase
 
         Refresh();
     }
-    
+
     private async Task ReloadDavInstances()
     {
         DavInstances.Clear();
@@ -250,16 +244,71 @@ public partial class NotesViewModel : ViewModelBase
                 .FirstOrDefault(d => d.Id == SelectedDavInstance.Id);
         }
     }
-    
+
     [RelayCommand]
-    public async Task DownloadIcsCommand(CalDavJournal? task)
+    public async Task ImportIcsNote(DavConfig config)
     {
-        if(task == null)
+        var files = await FilePickerUtils.OpenFileDialog();
+        if (files.Count == 0)
             return;
-            
+
+        List<Tuple<string, string>> faultyFile = new List<Tuple<string, string>>();
+
+        var utils = new IcsUtils();
+
+        foreach (var file in files)
+        {
+            await using var stream = await file.OpenReadAsync();
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            try
+            {
+                var ics = utils.ParseIcs(Encoding.UTF8.GetString(ms.ToArray()));
+                if (ics is CalDavNote calDavNote)
+                {
+                    SelectedNote = calDavNote;
+                    SelectedDavInstance = config;
+
+                    await SaveNewJournal();
+                }
+                else
+                {
+                    faultyFile.Add(new Tuple<string, string>(file.Name, "Invalid Note ICS file"));
+                }
+            }
+            catch (Exception e)
+            {
+                faultyFile.Add(new Tuple<string, string>(file.Name, e.Message));
+            }
+        }
+
+        if (faultyFile.Count > 0)
+        {
+            var faltyFilesString =
+                string.Join(",", faultyFile.Select(t => string.Format("-{0}, {1}\n", t.Item1, t.Item2)));
+            var invalidJournal = MessageBoxManager.GetMessageBoxStandard("Note Import",
+                $"Could not import {faultyFile.Count} out of {files.Count} notes:\n" +
+                $"{faltyFilesString}", ButtonEnum.Ok, Icon.Error);
+            await invalidJournal.ShowAsync();
+        }
+        else
+        {
+            var invalidJournal = MessageBoxManager.GetMessageBoxStandard("Note Import",
+                "All notes have been imported successfully", ButtonEnum.Ok, Icon.Info);
+            await invalidJournal.ShowAsync();
+        }
+    }
+
+    [RelayCommand]
+    public async Task DownloadIcsCommand(CalDavNote? task)
+    {
+        if (task == null)
+            return;
+
         var icsUtils = new IcsUtils();
         var icsContent = icsUtils.BuildIcs(task);
-            
+
         await FilePickerUtils.SaveFileDialog(task.Uid + ".ics", Encoding.UTF8.GetBytes(icsContent), "ics");
     }
 
@@ -277,12 +326,12 @@ public partial class NotesViewModel : ViewModelBase
             SelectedNote.IsDirty = true;
 
             await _databaseService.CreateAsync(SelectedNote);
-            
+
             Notes.Add(SelectedNote);
 
             SelectedNote = null;
             Dispatcher.UIThread.Post(() => SelectedNote = new CalDavNote());
-            
+
             ApplyGrouping();
         }
     }
@@ -314,86 +363,86 @@ public partial class NotesViewModel : ViewModelBase
             Notes.Remove(SelectedNote);
             SelectedNote = null;
             Dispatcher.UIThread.Post(() => SelectedNote = new CalDavNote());
-            
+
             ApplyGrouping();
         }
     }
-    
+
     [RelayCommand]
     public Task CancelNoteSelection()
     {
         SelectedNote = null;
         return Task.CompletedTask;
     }
-    
+
     [RelayCommand]
     public void AddCategoryCommand()
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Categories.Add(new CalDavCategory { Value = string.Empty });
     }
 
     [RelayCommand]
     public void RemoveCategoryCommand(CalDavCategory category)
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Categories.Remove(category);
     }
-    
+
     [RelayCommand]
     public void AddCommentCommand()
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Comments.Add(new CalDavComment());
     }
 
     [RelayCommand]
     public void RemoveCommentCommand(CalDavComment comment)
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Comments.Remove(comment);
     }
-    
+
     [RelayCommand]
     public void AddAttendeeCommand()
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Attendees.Add(new CalDavAttendee());
     }
-    
+
     [RelayCommand]
     public void RemoveAttendeeCommand(CalDavAttendee attendee)
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Attendees.Remove(attendee);
     }
-    
+
     [RelayCommand]
     public async Task AddAttachmentCommand()
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         var files = await FilePickerUtils.OpenFileDialog();
 
         foreach (var file in files)
-        { 
+        {
             await using var stream = await file.OpenReadAsync();
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
-                
+
             SelectedNote.Attachments.Add(new CalDavAttachment
             {
                 Title = file.Name,
@@ -406,30 +455,30 @@ public partial class NotesViewModel : ViewModelBase
     [RelayCommand]
     public void RemoveAttachmentCommand(CalDavAttachment attachment)
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Attachments.Remove(attachment);
     }
-    
+
     [RelayCommand]
     public void AddAlarmCommand()
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Alarms.Add(new CalDavAlarm());
     }
 
     [RelayCommand]
     public void RemoveAlarmCommand(CalDavAlarm alarm)
     {
-        if(SelectedNote == null)
+        if (SelectedNote == null)
             return;
-            
+
         SelectedNote.Alarms.Remove(alarm);
     }
-    
+
     [RelayCommand]
     public async Task DownloadAttachmentCommand(CalDavAttachment alarm)
     {
