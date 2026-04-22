@@ -159,6 +159,15 @@ public partial class NotesViewModel : ViewModelBase
         {
             _ = Dispatcher.UIThread.InvokeAsync(() => RefreshForInstance(m.Value));
         });
+        
+        WeakReferenceMessenger.Default.Register<DavConfigChangedMessage>(this, async (_, m) =>
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                await ReloadDavInstances();
+            });
+        });
+
 
         // Initialize notes
         HookBuilderChanges();
@@ -172,11 +181,7 @@ public partial class NotesViewModel : ViewModelBase
     
     private async Task LoadJournals()
     {
-        var instances = await _databaseService.ReadAllAsync<DavConfig>();
-        foreach(var instance in instances.Value!.OrderBy(i => i.Name))
-        {
-            DavInstances.Add(instance);
-        }
+        await ReloadDavInstances();
 
         var appSettings = await _databaseService.ReadAllAsync<Settings>();
         DebugEnabled = appSettings.Value?.FirstOrDefault()?.DebugEnabled ?? false;
@@ -222,6 +227,28 @@ public partial class NotesViewModel : ViewModelBase
                 Notes.Add(note);
 
         Refresh();
+    }
+    
+    private async Task ReloadDavInstances()
+    {
+        DavInstances.Clear();
+
+        var instances = await _databaseService.ReadAllAsync<DavConfig>();
+
+        if (instances.Value != null)
+        {
+            foreach (var instance in instances.Value.OrderBy(i => i.Name))
+            {
+                DavInstances.Add(instance);
+            }
+        }
+
+        // keep selection valid
+        if (SelectedDavInstance != null)
+        {
+            SelectedDavInstance = DavInstances
+                .FirstOrDefault(d => d.Id == SelectedDavInstance.Id);
+        }
     }
     
     [RelayCommand]

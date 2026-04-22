@@ -81,6 +81,8 @@ public partial class DavSettingsViewModel : ViewModelBase
             DavConfigs.Add(SelectedDavConfig);
             SelectedDavConfig = new DavConfig();
             StatusResponse = new();
+            
+            WeakReferenceMessenger.Default.Send(new DavConfigChangedMessage(SelectedDavConfig));
         }
         
         IsAddSaving = false;
@@ -105,6 +107,8 @@ public partial class DavSettingsViewModel : ViewModelBase
             {
                 DavConfigs.Add(SelectedDavConfig);
                 DavConfigs.Remove(found);
+                
+                WeakReferenceMessenger.Default.Send(new DavConfigChangedMessage(SelectedDavConfig));
             }
         }
         else
@@ -125,7 +129,7 @@ public partial class DavSettingsViewModel : ViewModelBase
         
         DavConfigs.Remove(SelectedDavConfig);
         
-        WeakReferenceMessenger.Default.Send(new SyncCompletedMessage(SelectedDavConfig));
+        WeakReferenceMessenger.Default.Send(new DavConfigChangedMessage(SelectedDavConfig));
         
         SelectedDavConfig = new DavConfig();
         StatusResponse = new();
