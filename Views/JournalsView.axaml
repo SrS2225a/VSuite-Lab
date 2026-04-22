@@ -9,8 +9,9 @@
              xmlns:views="clr-namespace:VSuiteLab.Views"
              x:DataType="vm:JournalsViewModel"
              x:Class="VSuiteLab.Views.JournalsView"
+             x:Name="This"
              mc:Ignorable="d">
-    
+
     <UserControl.KeyBindings>
         <KeyBinding Gesture="Escape" Command="{Binding CancelNoteSelection}" />
     </UserControl.KeyBindings>
@@ -24,15 +25,37 @@
 
             <Grid RowDefinitions="Auto,*">
                 <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="8">
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="6">
-                        <Button Content="Save New" Command="{Binding SaveNewJournalCommand}" />
-                        <Button Content="Update" Command="{Binding SaveJournalCommand}" />
-                        <Button Content="Delete" Command="{Binding DeleteJournalCommand}" />
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="5">
+                        <Button Content="Save" FontSize="12" Command="{Binding SaveNewJournalCommand}" />
+                        <Button Content="Update" FontSize="12" Command="{Binding SaveJournalCommand}" />
+                        <Button Content="Delete" FontSize="12" Command="{Binding DeleteJournalCommand}" />
                     </StackPanel>
-                    
-                    <Button Grid.Column="1"
-                            Content="Esc" Command="{Binding CancelNoteSelection}"
-                            HorizontalAlignment="Right"/>
+
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal"
+                                DockPanel.Dock="Top" Spacing="5">
+                        <DropDownButton>
+                            <materialIcons:MaterialIcon Kind="Import" />
+                            <DropDownButton.Flyout>
+                                <Flyout>
+                                    <ItemsControl ItemsSource="{Binding DavInstances}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="models:DavConfig">
+                                                <Button Content="{Binding Name}"
+                                                        Foreground="{Binding Color}"
+                                                        Command="{Binding #This.DataContext.ImportIcsNoteCommand}"
+                                                        CommandParameter="{Binding}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Flyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                        <Button
+                            Command="{Binding CancelNoteSelectionCommand}"
+                            HorizontalAlignment="Right">
+                            <materialIcons:MaterialIcon Kind="Cancel" FontSize="19" />
+                        </Button>
+                    </StackPanel>
                 </Grid>
 
                 <ScrollViewer Grid.Row="1">
