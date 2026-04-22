@@ -25,7 +25,7 @@
             <Grid RowDefinitions="Auto,*">
                 <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="8">
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="New" Command="{Binding SaveNewNoteCommand}" />
+                        <Button Content="Save New" Command="{Binding SaveNewNoteCommand}" />
                         <Button Content="Update" Command="{Binding SaveNoteCommand}" />
                         <Button Content="Delete" Command="{Binding DeleteNoteCommand}"/>
                     </StackPanel>
