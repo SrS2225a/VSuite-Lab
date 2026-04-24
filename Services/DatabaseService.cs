@@ -12,7 +12,6 @@ namespace VSuiteLab.Services;
 
 public class DatabaseService
 {
-    
     public async Task<StatusResponse<List<T>>> ReadAllAsync<T>(
         Func<IQueryable<T>, IQueryable<T>>? include = null,
         bool noTracking = false) where T : class
@@ -20,7 +19,7 @@ public class DatabaseService
         try
         {
             await using var db = new DatabaseContext();
-            
+
             IQueryable<T> query = db.Set<T>();
             if (include != null) query = include(query);
 
@@ -34,27 +33,29 @@ public class DatabaseService
             return StatusResponse<List<T>>.Error(ex.Message);
         }
     }
-    
+
     public async Task<StatusResponse<bool>> ReadExistsWhereAsync<T>(Expression<Func<T, bool>> predicate) where T : class
     {
         try
         {
             await using var _db = new DatabaseContext();
-            
+
             var data = await _db.Set<T>().AnyAsync(predicate);
             return StatusResponse<bool>.Ok(data);
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             return StatusResponse<bool>.Error(ex.Message);
         }
     }
+
 
     public async Task<StatusResponse<List<T>>> ReadWhereAsync<T>(Expression<Func<T, bool>> predicate) where T : class
     {
         try
         {
             await using var _db = new DatabaseContext();
-            
+
             var data = await _db.Set<T>().Where(predicate).ToListAsync();
             return StatusResponse<List<T>>.Ok(data);
         }
@@ -63,13 +64,13 @@ public class DatabaseService
             return StatusResponse<List<T>>.Error(ex.Message);
         }
     }
-    
+
     public async Task<StatusResponse<T>> CreateAsync<T>(T entity) where T : class
     {
         try
         {
             await using var _db = new DatabaseContext();
-            
+
             _db.Set<T>().Add(entity);
             await _db.SaveChangesAsync();
 
@@ -86,7 +87,7 @@ public class DatabaseService
         try
         {
             await using var _db = new DatabaseContext();
-            
+
             _db.Set<T>().Update(entity);
             await _db.SaveChangesAsync();
 
@@ -97,13 +98,13 @@ public class DatabaseService
             return StatusResponse<T>.Error(ex.Message);
         }
     }
-    
+
     public async Task<StatusResponse<T>> DeleteAsync<T>(T entity) where T : class
     {
         try
         {
             await using var _db = new DatabaseContext();
-            
+
             _db.Set<T>().Remove(entity);
             await _db.SaveChangesAsync();
 
@@ -121,7 +122,7 @@ public class DatabaseService
         try
         {
             await using var _db = new DatabaseContext();
-            
+
             var entities = await _db.Set<T>()
                 .Where(predicate)
                 .ToListAsync();

@@ -130,9 +130,9 @@
                                                                 Opacity="0.6" />
 
                                                         <TextBlock
-                                                            Text="{Binding PublishedDate, StringFormat='{}{0:MMM dd, yyyy • HH:mm}'}"
+                                                            Text="{Binding PublishedDate, Converter={StaticResource DateTimeToLocalizedStringConverter}}"
                                                             FontSize="10"
-                                                            Opacity="0.6" />
+                                                            Opacity="0.6"/>
                                                     </StackPanel>
 
                                                     <WrapPanel Margin="0,6,0,0">

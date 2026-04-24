@@ -18,6 +18,7 @@
             <conv:IntToBoolConverter x:Key="IntToBoolConverter"/>
             <conv:NullToBoolConverter x:Key="NullToBoolConverter"/>
             <conv:ColorConverter x:Key="ColorConverter" />
+            <conv:DateTimeToLocalizedStringConverter x:Key="DateTimeToLocalizedStringConverter" />
             
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://VSuiteLab/Resources/LoadingSpinner.axaml" />
