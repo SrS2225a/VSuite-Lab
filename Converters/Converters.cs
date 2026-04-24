@@ -23,4 +23,21 @@ namespace VSuiteLab.Converters
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
             throw new NotImplementedException();
     }
+    
+    public class DateTimeToLocalizedStringConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is not DateTimeOffset dt)
+                return string.Empty;
+
+            var datePart = dt.ToString("MMM dd, yyyy", culture);
+            var timePart = dt.ToString("t", culture); // this works correctly here
+
+            return $"{datePart} • {timePart}";
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
 }
