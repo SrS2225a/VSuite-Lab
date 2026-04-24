@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
+using Avalonia.Media;
 
 namespace VSuiteLab.Converters
 {
@@ -24,6 +25,27 @@ namespace VSuiteLab.Converters
             throw new NotImplementedException();
     }
     
+    public class ColorConverter : IValueConverter
+    {
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is string hex)
+            {
+                return Color.Parse(hex);
+            }
+            return Colors.White;
+        }
+    
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is Color color)
+            {
+                return color.ToString();
+            }
+            return Colors.White.ToString();
+        }
+    }
+    
     public class DateTimeToLocalizedStringConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -32,7 +54,7 @@ namespace VSuiteLab.Converters
                 return string.Empty;
 
             var datePart = dt.ToString("MMM dd, yyyy", culture);
-            var timePart = dt.ToString("t", culture); // this works correctly here
+            var timePart = dt.ToString("t", culture);
 
             return $"{datePart} • {timePart}";
         }
