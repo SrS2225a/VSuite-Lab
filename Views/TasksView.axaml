@@ -266,7 +266,7 @@
                             <ComboBox Grid.Column="0"
                                       ItemsSource="{Binding DavInstances}"
                                       SelectedItem="{Binding SelectedDavInstance}"
-                                      PlaceholderText="DAV instance"
+                                      PlaceholderText="Collection"
                                       HorizontalAlignment="Stretch"
                                       VerticalAlignment="Stretch">
                                 <ComboBox.ItemTemplate>
