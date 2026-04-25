@@ -27,7 +27,7 @@ namespace VSuiteLab.ViewModels;
 
 public partial class JournalsViewModel : ViewModelBase
 {
-    private readonly DatabaseService _databaseService;
+    private readonly DatabaseContext _db;
     private readonly QueryService _queryService = new();
 
     private SearchQueryBuilder QueryBuilder { get; }
@@ -70,6 +70,11 @@ public partial class JournalsViewModel : ViewModelBase
     [ObservableProperty] private ObservableCollection<GroupItemsCalDavJournal> groupedJournals = new();
 
     [ObservableProperty] private bool isPreviewMode = true;
+    
+    [ObservableProperty]
+    private string? categoryInput;
+    
+    public ObservableCollection<CalDavCategory> AllCategories { get; } = new();
 
     private void Refresh()
     {
@@ -155,7 +160,7 @@ public partial class JournalsViewModel : ViewModelBase
 
     public JournalsViewModel(SearchQueryBuilder queryBuilder)
     {
-        _databaseService = new DatabaseService();
+        _db = new DatabaseContext();
         QueryBuilder = queryBuilder;
 
         WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this,
@@ -178,21 +183,30 @@ public partial class JournalsViewModel : ViewModelBase
     {
         await ReloadDavInstances();
 
-        var appSettings = await _databaseService.ReadAllAsync<Settings>();
-        DebugEnabled = appSettings.Value?.FirstOrDefault()?.DebugEnabled ?? false;
+        var appSettings = await _db.Settings.ToListAsync();
+        DebugEnabled = appSettings?.FirstOrDefault()?.DebugEnabled ?? false;
 
-        var notes = await _databaseService.ReadAllAsync<CalDavJournal>(query =>
-                query
+        var notes = await _db.Journals
                     .Include(n => n.DavConfig)
                     .Include(n => n.Categories)
                     .Include(n => n.Attendees)
                     .Include(n => n.Attachments)
                     .Include(n => n.Comments)
-                    .Include(n => n.Alarms), true
-        );
+                    .Include(n => n.Alarms)
+                    .ToListAsync();
+        
 
-        if (notes.Value != null)
-            Journals = new ObservableCollection<CalDavJournal>(notes.Value.OrderByDescending(n => n.PublishedDate));
+        Journals = new ObservableCollection<CalDavJournal>(notes.OrderByDescending(n => n.PublishedDate));
+            
+        var uniqueCategoires = notes
+            .SelectMany(n => n.Categories)
+            .GroupBy(c => c.Value)
+            .Select(g => g.First())
+            .ToList();
+            
+        AllCategories.Clear();
+        foreach (var category in uniqueCategoires)
+            AllCategories.Add(category);
 
         SelectedJournal = new();
         Refresh();
@@ -207,8 +221,7 @@ public partial class JournalsViewModel : ViewModelBase
             Journals.Remove(note);
 
         // Reload only this instance's notes
-        var notes = await _databaseService.ReadAllAsync<CalDavJournal>(query =>
-            query
+        var journals = await _db.Journals
                 .Where(n => n.DavConfigId == config.Id)
                 .Include(n => n.DavConfig)
                 .Include(n => n.Categories)
@@ -216,11 +229,10 @@ public partial class JournalsViewModel : ViewModelBase
                 .Include(n => n.Attachments)
                 .Include(n => n.Comments)
                 .Include(n => n.Alarms)
-        );
-
-        if (notes.Value != null)
-            foreach (var note in notes.Value.OrderByDescending(n => n.PublishedDate))
-                Journals.Add(note);
+                .ToListAsync();
+        
+        foreach (var journal in journals)
+            Journals.Add(journal);
 
         Refresh();
     }
@@ -229,16 +241,13 @@ public partial class JournalsViewModel : ViewModelBase
     {
         DavInstances.Clear();
 
-        var instances = await _databaseService.ReadAllAsync<DavConfig>();
+        var instances = await _db.DavConfigs
+            .OrderBy(i => i.Name)
+            .ToListAsync();
 
-        if (instances.Value != null)
-        {
-            foreach (var instance in instances.Value.OrderBy(i => i.Name))
-            {
-                DavInstances.Add(instance);
-            }
-        }
-
+        foreach (var instance in instances)
+            DavInstances.Add(instance);
+        
         // keep selection valid
         if (SelectedDavInstance != null)
         {
@@ -272,8 +281,9 @@ public partial class JournalsViewModel : ViewModelBase
             SelectedJournal.PublishedDate ??= DateTimeOffset.Now;//
             SelectedJournal.Uid = Guid.NewGuid().ToString();
             SelectedJournal.IsDirty = true;
-            
-            await _databaseService.CreateAsync(SelectedJournal);
+
+            _db.Journals.Add(SelectedJournal);
+            await _db.SaveChangesAsync();
 
             Journals.Add(SelectedJournal);
 
@@ -291,8 +301,10 @@ public partial class JournalsViewModel : ViewModelBase
         {
             SelectedJournal.IsDirty = true;
             SelectedJournal.LastModified = DateTime.UtcNow;
-
-            await _databaseService.UpdateAsync(SelectedJournal);
+            
+            _db.Journals.Update(SelectedJournal);
+            await _db.SaveChangesAsync();
+            
             SelectedJournal = null;
             Dispatcher.UIThread.Post(() => SelectedJournal = new CalDavJournal());
         }
@@ -306,7 +318,8 @@ public partial class JournalsViewModel : ViewModelBase
             SelectedJournal.IsDirty = true;
             SelectedJournal.IsDeleted = true;
 
-            await _databaseService.UpdateAsync(SelectedJournal);
+            _db.Journals.Update(SelectedJournal);
+            await _db.SaveChangesAsync();
 
             Journals.Remove(SelectedJournal);
             SelectedJournal = null;
@@ -381,10 +394,19 @@ public partial class JournalsViewModel : ViewModelBase
     [RelayCommand]
     public void AddCategoryCommand()
     {
-        if (SelectedJournal == null)
+        if (SelectedJournal == null || string.IsNullOrWhiteSpace(CategoryInput))
             return;
 
-        SelectedJournal.Categories.Add(new CalDavCategory { Value = string.Empty });
+        SelectedJournal.Categories.Add(new CalDavCategory { Value = CategoryInput });
+        
+        // if (AllCategories.All(c => c.Value.Trim().ToLower() != category.Value.ToLower().Trim()))
+        //     AllCategories.Add(category);
+        //
+        // if (SelectedJournal.Categories.All(c => c.Value.ToLower().Trim() != category.Value.ToLower().Trim()))
+        //     SelectedJournal.Categories.Add(category);
+
+        // clear input
+        CategoryInput = string.Empty;
     }
 
     [RelayCommand]
@@ -394,6 +416,12 @@ public partial class JournalsViewModel : ViewModelBase
             return;
 
         SelectedJournal.Categories.Remove(category);
+
+        // optional: remove from global list ONLY if truly unused
+        if (!Journals.Any(j => j.Categories.Any(c => c.Id == category.Id)))
+        {
+            AllCategories.Remove(category);
+        }
     }
 
     [RelayCommand]

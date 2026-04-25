@@ -16,7 +16,8 @@ public class DavConfig : ObservableObject
     public bool SupportsVjournal { get; set; }
     public string? LastSyncToken { get; set; }
 
-    public virtual ICollection<CalDavTask> Tasks { get; set; } = new List<CalDavTask>();
-    public virtual ICollection<CalDavJournal> Journals { get; set; } = new List<CalDavJournal>();
-    public virtual ICollection<CalDavNote> Notes { get; set; } = new List<CalDavNote>();
+    public virtual ICollection<CalDavItem> Items { get; set; } = new List<CalDavItem>();
+    // public virtual ICollection<CalDavTask> Tasks { get; set; } = new List<CalDavTask>();
+    // public virtual ICollection<CalDavJournal> Journals { get; set; } = new List<CalDavJournal>();
+    // public virtual ICollection<CalDavNote> Notes { get; set; } = new List<CalDavNote>();
 }
