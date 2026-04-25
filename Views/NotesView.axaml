@@ -141,7 +141,7 @@
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
                                                                     <Border
-                                                                        Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                                        Background="{DynamicResource SystemAccentColor}"
                                                                         Margin="2, 0"
                                                                         CornerRadius="8"
                                                                         Padding="4,1">
@@ -305,21 +305,56 @@
 
                                 <!-- Categories -->
                                 <TextBlock Text="Categories" FontWeight="SemiBold" />
-                                <Button Content="Add Category"
-                                        Command="{Binding AddCategoryCommand}" />
+                                <StackPanel Spacing="6">
 
-                                <ItemsControl ItemsSource="{Binding SelectedNote.Categories}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="models:CalDavCategory">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBox Text="{Binding Value}" />
-                                                <Button Content="✕"
-                                                        Command="{Binding $parent[ItemsControl].DataContext.RemoveCategoryCommand}"
-                                                        CommandParameter="{Binding}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                    <!-- Existing selected tags -->
+                                    <ItemsControl ItemsSource="{Binding SelectedNote.Categories}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{DynamicResource SystemAccentColor}"
+                                                         CornerRadius="8"
+                                                         Padding="6,2"
+                                                         Margin="2">
+
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{Binding Value}" FontSize="12" />
+
+                                                        <Button Content="✕"
+                                                                FontSize="12"
+                                                                Padding="0"
+                                                                Height="20"
+                                                                Command="{Binding $parent[ItemsControl].DataContext.RemoveCategoryCommand}"
+                                                                CommandParameter="{Binding}" />
+                                                    </StackPanel>
+
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Input box -->
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <AutoCompleteBox
+                                            Watermark="Add category..."
+                                            ItemsSource="{Binding $parent[UserControl].DataContext.AllCategories}"
+                                            Text="{Binding CategoryInput, Mode=TwoWay}"
+                                            ValueMemberBinding="{Binding Value}">
+                                            <AutoCompleteBox.KeyBindings>
+                                                <KeyBinding Gesture="Enter"
+                                                            Command="{Binding AddCategoryCommand}" />
+                                            </AutoCompleteBox.KeyBindings>
+                                        </AutoCompleteBox>
+                                        
+                                        <Button Content="Add Category"
+                                                Command="{Binding AddCategoryCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
 
                                 <!-- Attendees -->
                                 <TextBlock Text="Attendees"

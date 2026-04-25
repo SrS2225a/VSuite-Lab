@@ -16,13 +16,7 @@ public partial class CalDavTask : CalDavItem
     [ObservableProperty] private string url = string.Empty;
     [ObservableProperty] private string contact = string.Empty;
     [ObservableProperty] private string? classification = string.Empty;
-
-    public ObservableCollection<CalDavAlarm> Alarms { get; set; } = new();
-    public ObservableCollection<CalDavCategory> Categories { get; set; } = new();
-    public ObservableCollection<CalDavAttendee> Attendees { get; set; } = new();
-    public ObservableCollection<CalDavAttachment> Attachments { get; set; } = new();
-    public ObservableCollection<CalDavComment> Comments { get; set; } = new();
-
+    
     public override bool HasDate => StartDate.HasValue || DueDate.HasValue;
 }
 

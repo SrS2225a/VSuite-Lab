@@ -28,7 +28,7 @@ namespace VSuiteLab.ViewModels;
 
 public partial class NotesViewModel : ViewModelBase
 {
-    private readonly DatabaseService _databaseService;
+    private readonly DatabaseContext _db;
     private readonly QueryService _queryService = new();
 
     private SearchQueryBuilder QueryBuilder { get; }
@@ -71,6 +71,11 @@ public partial class NotesViewModel : ViewModelBase
     [ObservableProperty] private ObservableCollection<GroupItemsCalDavNote> groupedNotes = new();
 
     [ObservableProperty] private bool isPreviewMode = true;
+    
+    [ObservableProperty]
+    private string? categoryInput;
+    
+    public ObservableCollection<CalDavCategory> AllCategories { get; } = new();
 
     private void Refresh()
     {
@@ -153,7 +158,7 @@ public partial class NotesViewModel : ViewModelBase
 
     public NotesViewModel(SearchQueryBuilder queryBuilder)
     {
-        _databaseService = new DatabaseService();
+        _db = new DatabaseContext();
         QueryBuilder = queryBuilder;
 
         WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this,
@@ -170,27 +175,36 @@ public partial class NotesViewModel : ViewModelBase
 
     private async Task InitializeAsync()
     {
-        await LoadJournals();
+        await LoadNotes();
     }
 
-    private async Task LoadJournals()
+    private async Task LoadNotes()
     {
         await ReloadDavInstances();
 
-        var appSettings = await _databaseService.ReadAllAsync<Settings>();
-        DebugEnabled = appSettings.Value?.FirstOrDefault()?.DebugEnabled ?? false;
+        var appSettings = await _db.Settings.ToListAsync();
+        DebugEnabled = appSettings?.FirstOrDefault()?.DebugEnabled ?? false;
 
-        var notes = await _databaseService.ReadAllAsync<CalDavNote>(query =>
-                query
-                    .Include(n => n.DavConfig)
-                    .Include(n => n.Categories)
-                    .Include(n => n.Attendees)
-                    .Include(n => n.Attachments)
-                    .Include(n => n.Comments)
-                    .Include(n => n.Alarms), true
-        );
+        var notes = await _db.Notes
+            .Include(n => n.DavConfig)
+            .Include(n => n.Alarms)
+            .Include(n => n.Categories)
+            .Include(n => n.Attendees)
+            .Include(n => n.Attachments)
+            .Include(n => n.Comments)
+            .ToListAsync();
 
-        if (notes.Value != null) Notes = new ObservableCollection<CalDavNote>(notes.Value);
+        Notes = new ObservableCollection<CalDavNote>(notes);
+            
+        var uniqueCategoires = notes
+            .SelectMany(n => n.Categories)
+            .GroupBy(c => c.Value)
+            .Select(g => g.First())
+            .ToList();
+            
+        AllCategories.Clear();
+        foreach (var category in uniqueCategoires)
+            AllCategories.Add(category);
 
         SelectedNote = new();
         Refresh();
@@ -205,8 +219,7 @@ public partial class NotesViewModel : ViewModelBase
             Notes.Remove(note);
 
         // Reload only this instance's notes
-        var notes = await _databaseService.ReadAllAsync<CalDavNote>(query =>
-            query
+        var notes = await _db.Notes
                 .Where(n => n.DavConfigId == config.Id)
                 .Include(n => n.DavConfig)
                 .Include(n => n.Categories)
@@ -214,11 +227,11 @@ public partial class NotesViewModel : ViewModelBase
                 .Include(n => n.Attachments)
                 .Include(n => n.Comments)
                 .Include(n => n.Alarms)
-        );
+                .AsSplitQuery()
+                .ToListAsync();
 
-        if (notes.Value != null)
-            foreach (var note in notes.Value)
-                Notes.Add(note);
+        foreach (var note in notes)
+            Notes.Add(note);
 
         Refresh();
     }
@@ -227,17 +240,13 @@ public partial class NotesViewModel : ViewModelBase
     {
         DavInstances.Clear();
 
-        var instances = await _databaseService.ReadAllAsync<DavConfig>();
+        var instances = await _db.DavConfigs
+            .OrderBy(i => i.Name)
+            .ToListAsync();
 
-        if (instances.Value != null)
-        {
-            foreach (var instance in instances.Value.OrderBy(i => i.Name))
-            {
-                DavInstances.Add(instance);
-            }
-        }
-
-        // keep selection valid
+        foreach (var instance in instances)
+            DavInstances.Add(instance);
+        
         if (SelectedDavInstance != null)
         {
             SelectedDavInstance = DavInstances
@@ -325,7 +334,8 @@ public partial class NotesViewModel : ViewModelBase
             SelectedNote.Uid = Guid.NewGuid().ToString();
             SelectedNote.IsDirty = true;
 
-            await _databaseService.CreateAsync(SelectedNote);
+            _db.Notes.Add(SelectedNote);
+            await _db.SaveChangesAsync();
 
             Notes.Add(SelectedNote);
 
@@ -344,7 +354,9 @@ public partial class NotesViewModel : ViewModelBase
             SelectedNote.IsDirty = true;
             SelectedNote.LastModified = DateTime.UtcNow;
 
-            await _databaseService.UpdateAsync(SelectedNote);
+            _db.Notes.Update(SelectedNote);
+            await _db.SaveChangesAsync();
+            
             SelectedNote = null;
             Dispatcher.UIThread.Post(() => SelectedNote = new CalDavNote());
         }
@@ -357,8 +369,8 @@ public partial class NotesViewModel : ViewModelBase
         {
             SelectedNote.IsDirty = true;
             SelectedNote.IsDeleted = true;
-
-            await _databaseService.UpdateAsync(SelectedNote);
+            
+            await _db.SaveChangesAsync();
 
             Notes.Remove(SelectedNote);
             SelectedNote = null;
@@ -378,10 +390,19 @@ public partial class NotesViewModel : ViewModelBase
     [RelayCommand]
     public void AddCategoryCommand()
     {
-        if (SelectedNote == null)
+        if (SelectedNote == null || string.IsNullOrWhiteSpace(CategoryInput))
             return;
 
-        SelectedNote.Categories.Add(new CalDavCategory { Value = string.Empty });
+        var category = new CalDavCategory { Value = CategoryInput };
+        
+        if (AllCategories.All(c => c.Value.Trim().ToLower() != category.Value.ToLower().Trim()))
+            AllCategories.Add(category);
+        
+        if (SelectedNote.Categories.All(c => c.Value.ToLower().Trim() != category.Value.ToLower().Trim()))
+            SelectedNote.Categories.Add(category);
+
+        // clear input
+        CategoryInput = string.Empty;
     }
 
     [RelayCommand]
@@ -391,6 +412,9 @@ public partial class NotesViewModel : ViewModelBase
             return;
 
         SelectedNote.Categories.Remove(category);
+        
+        if (Notes.Any(j => j.Categories.Any(c => c.Value.ToLower().Trim() != category.Value.ToLower().Trim())))
+            AllCategories.Remove(category);
     }
 
     [RelayCommand]

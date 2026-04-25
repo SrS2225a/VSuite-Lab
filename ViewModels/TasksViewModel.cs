@@ -28,7 +28,7 @@ namespace VSuiteLab.ViewModels
 {
     public partial class TasksViewModel : ViewModelBase
     {
-        private readonly DatabaseService _databaseService;
+        private readonly DatabaseContext _db;
         private readonly QueryService _queryService = new();
 
         private SearchQueryBuilder QueryBuilder { get; }
@@ -173,6 +173,11 @@ namespace VSuiteLab.ViewModels
         [ObservableProperty] private ObservableCollection<GroupItemsCalDavTask> groupedNotes = new();
 
         [ObservableProperty] private bool isPreviewMode = true;
+        
+        [ObservableProperty]
+        private string? categoryInput;
+    
+        public ObservableCollection<CalDavCategory> AllCategories { get; } = new();
 
         private void Refresh()
         {
@@ -265,7 +270,7 @@ namespace VSuiteLab.ViewModels
 
         public TasksViewModel(SearchQueryBuilder queryBuilder)
         {
-            _databaseService = new DatabaseService();
+            _db = new DatabaseContext();
             QueryBuilder = queryBuilder;
 
             WeakReferenceMessenger.Default.Register<SyncCompletedMessage>(this,
@@ -291,22 +296,32 @@ namespace VSuiteLab.ViewModels
         {
             await ReloadDavInstances();
 
-            var appSettings = await _databaseService.ReadAllAsync<Settings>();
-            DebugEnabled = appSettings.Value?.FirstOrDefault()?.DebugEnabled ?? false;
+            var appSettings = await _db.Settings.ToListAsync();
+            DebugEnabled = appSettings.FirstOrDefault()?.DebugEnabled ?? false;
 
-            var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
-                    query
-                        .Include(n => n.DavConfig)
-                        .Include(n => n.Alarms)
-                        .Include(n => n.Categories)
-                        .Include(n => n.Attendees)
-                        .Include(n => n.Attachments)
-                        .Include(n => n.Comments), true
-            );
+            var notes = await _db.Tasks
+                .Include(n => n.DavConfig)
+                .Include(n => n.Alarms)
+                .Include(n => n.Categories)
+                .Include(n => n.Attendees)
+                .Include(n => n.Attachments)
+                .Include(n => n.Comments)
+                .ToListAsync();
 
-            if (notes.Value != null) Tasks = new ObservableCollection<CalDavTask>(notes.Value);
+            Tasks = new ObservableCollection<CalDavTask>(notes);
+            
+            var uniqueCategories = notes
+                .SelectMany(n => n.Categories)
+                .GroupBy(c => c.Value)
+                .Select(g => g.First())
+                .ToList();
+            
+            AllCategories.Clear();
+            foreach (var category in uniqueCategories)
+                AllCategories.Add(category);
 
-            SelectedNote = new();
+            SelectedNote = new CalDavTask();
+
             ApplyGrouping();
         }
 
@@ -318,24 +333,21 @@ namespace VSuiteLab.ViewModels
             foreach (var note in toRemove)
                 Tasks.Remove(note);
 
-            // Reload only this instance's notes
-            var notes = await _databaseService.ReadAllAsync<CalDavTask>(query =>
-                query
-                    .Where(n => n.DavConfigId == config.Id)
-                    .Include(n => n.DavConfig)
-                    .Include(n => n.Alarms)
-                    .Include(n => n.Categories)
-                    .Include(n => n.Attendees)
-                    .Include(n => n.Attachments)
-                    .Include(n => n.Comments)
-                    .AsSplitQuery()
-            );
+            var notes = await _db.Tasks
+                .Where(n => n.DavConfigId == config.Id)
+                .Include(n => n.DavConfig)
+                .Include(n => n.Alarms)
+                .Include(n => n.Categories)
+                .Include(n => n.Attendees)
+                .Include(n => n.Attachments)
+                .Include(n => n.Comments)
+                .AsSplitQuery()
+                .ToListAsync();
 
-            if (notes.Value != null)
-                foreach (var note in notes.Value)
-                    Tasks.Add(note);
+            foreach (var note in notes)
+                Tasks.Add(note);
 
-            ApplyGrouping();
+            Refresh();
         }
 
         [RelayCommand]
@@ -397,17 +409,13 @@ namespace VSuiteLab.ViewModels
         {
             DavInstances.Clear();
 
-            var instances = await _databaseService.ReadAllAsync<DavConfig>();
+            var instances = await _db.DavConfigs
+                .OrderBy(i => i.Name)
+                .ToListAsync();
 
-            if (instances.Value != null)
-            {
-                foreach (var instance in instances.Value.OrderBy(i => i.Name))
-                {
-                    DavInstances.Add(instance);
-                }
-            }
+            foreach (var instance in instances)
+                DavInstances.Add(instance);
 
-            // keep selection valid
             if (SelectedDavInstance != null)
             {
                 SelectedDavInstance = DavInstances
@@ -447,10 +455,13 @@ namespace VSuiteLab.ViewModels
                 if (SelectedDavInstance != null) SelectedNote.DavConfigId = SelectedDavInstance.Id;
                 SelectedNote.Uid = Guid.NewGuid().ToString();
                 SelectedNote.IsDirty = true;
-                await _databaseService.CreateAsync(SelectedNote);
+                
+                _db.Tasks.Add(SelectedNote);
+                await _db.SaveChangesAsync();
 
                 Tasks.Add(SelectedNote);
-                SelectedNote = null;
+
+                SelectedNote = new CalDavTask();
                 Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
 
                 ApplyGrouping();
@@ -466,9 +477,10 @@ namespace VSuiteLab.ViewModels
                 SelectedNote.IsDirty = true;
                 SelectedNote.LastModified = DateTime.UtcNow;
 
-                await _databaseService.UpdateAsync(SelectedNote);
+                _db.Tasks.Update(SelectedNote);
+                await _db.SaveChangesAsync();
                 SelectedNote = null;
-                Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
+                // Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
             }
         }
 
@@ -480,11 +492,11 @@ namespace VSuiteLab.ViewModels
             {
                 SelectedNote.IsDeleted = true;
                 SelectedNote.IsDirty = true;
-                await _databaseService.UpdateAsync(SelectedNote);
+                await _db.SaveChangesAsync();
 
                 Tasks.Remove(SelectedNote);
                 SelectedNote = null;
-                Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
+                //Dispatcher.UIThread.Post(() => SelectedNote = new CalDavTask());
 
                 ApplyGrouping();
             }
@@ -500,10 +512,19 @@ namespace VSuiteLab.ViewModels
         [RelayCommand]
         public void AddCategoryCommand()
         {
-            if (SelectedNote == null)
+            if (SelectedNote == null || string.IsNullOrWhiteSpace(CategoryInput))
                 return;
 
-            SelectedNote.Categories.Add(new CalDavCategory { Value = string.Empty });
+            var category = new CalDavCategory { Value = CategoryInput };
+        
+            if (AllCategories.All(c => c.Value.Trim().ToLower() != category.Value.ToLower().Trim()))
+                AllCategories.Add(category);
+        
+            if (SelectedNote.Categories.All(c => c.Value.ToLower().Trim() != category.Value.ToLower().Trim()))
+                SelectedNote.Categories.Add(category);
+
+            // clear input
+            CategoryInput = string.Empty;
         }
 
         [RelayCommand]
@@ -513,6 +534,9 @@ namespace VSuiteLab.ViewModels
                 return;
 
             SelectedNote.Categories.Remove(category);
+        
+            if (Tasks.Any(j => j.Categories.Any(c => c.Value.ToLower().Trim() != category.Value.ToLower().Trim())))
+                AllCategories.Remove(category);
         }
 
         [RelayCommand]

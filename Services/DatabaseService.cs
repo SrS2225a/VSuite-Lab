@@ -86,10 +86,12 @@ public class DatabaseService
     {
         try
         {
-            await using var _db = new DatabaseContext();
+            await using var db = new DatabaseContext();
 
-            _db.Set<T>().Update(entity);
-            await _db.SaveChangesAsync();
+            var entry = db.Attach(entity);
+            entry.State = EntityState.Modified;
+
+            await db.SaveChangesAsync();
 
             return StatusResponse<T>.Ok(entity);
         }

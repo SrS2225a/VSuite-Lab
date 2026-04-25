@@ -31,15 +31,7 @@ public class CalDavAlarm
     }
 
     public int? Repeat { get; set; }
-
-    public Guid? CalDavTaskId { get; set; }
-    public CalDavTask? CalDavTask { get; set; }
-    
-    public Guid? CalDavJournalId { get; set; }
-    public CalDavJournal? CalDavJournal { get; set; }
-    
-    public Guid? CalDavNoteId { get; set; }
-    public CalDavNote? CalDavNote { get; set; }
-
     public bool HasRan { get; set; } = false;
+    public Guid CalDavItemId { get; set; }
+    public CalDavItem CalDavItem { get; set; }
 }
