@@ -132,7 +132,8 @@ namespace VSuiteLab.ViewModels
             SelectedNote.StartDate = null;
             StartTimeOnly = null;
             StartDateOnly = null;
-            OnPropertyChanged();
+            OnPropertyChanged(nameof(DueDateOnly));
+            OnPropertyChanged(nameof(DueTimeOnly));
         }
 
         public void ClearDueDate()
@@ -143,7 +144,8 @@ namespace VSuiteLab.ViewModels
             SelectedNote.DueDate = null;
             DueTimeOnly = null;
             DueDateOnly = null;
-            OnPropertyChanged();
+            OnPropertyChanged(nameof(StartDateOnly));
+            OnPropertyChanged(nameof(StartTimeOnly));
         }
 
         private ObservableCollection<CalDavTask> _tasks = new();

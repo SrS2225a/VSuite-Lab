@@ -299,9 +299,15 @@
                                        FontSize="11"
                                        Opacity="0.6" />
 
-                            <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+                            <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
                                 <DatePicker Grid.Column="0" SelectedDate="{Binding PublishedDateOnly, Mode=TwoWay}" />
                                 <TimePicker Grid.Column="1" SelectedTime="{Binding PublishedTimeOnly, Mode=TwoWay}" />
+                                                            
+                                <Button Grid.Column="2"
+                                        Content="✕"
+                                        Padding="6,2"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding ClearPublishedDateCommand}" />
                             </Grid>
                         </StackPanel>
 

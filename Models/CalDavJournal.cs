@@ -10,8 +10,8 @@ public partial class CalDavJournal : CalDavItem
     [ObservableProperty] private string? classification = string.Empty;
     [ObservableProperty] private string url = string.Empty;
     [ObservableProperty] private string contact = string.Empty;
-    
-    [ObservableProperty] private DateTimeOffset? publishedDate = DateTimeOffset.Now;
+
+    [ObservableProperty] private DateTimeOffset? publishedDate;
     
     public ObservableCollection<CalDavCategory> Categories { get; set; } = new();
     public ObservableCollection<CalDavAttachment> Attachments { get; set; } = new();

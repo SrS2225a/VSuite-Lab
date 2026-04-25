@@ -148,6 +148,9 @@ public partial class JournalsViewModel : ViewModelBase
         }
 
         SelectedDavInstance = DavInstances.FirstOrDefault(d => d.Id == value.DavConfigId);
+        
+        OnPropertyChanged(nameof(PublishedDateOnly));
+        OnPropertyChanged(nameof(PublishedTimeOnly));
     }
 
     public JournalsViewModel(SearchQueryBuilder queryBuilder)
@@ -266,9 +269,10 @@ public partial class JournalsViewModel : ViewModelBase
                 $"{SelectedJournal.Id}.ics");
             SelectedJournal.Uri = fullUri.ToString();
             if (SelectedDavInstance != null) SelectedJournal.DavConfigId = SelectedDavInstance.Id;
+            SelectedJournal.PublishedDate ??= DateTimeOffset.Now;//
             SelectedJournal.Uid = Guid.NewGuid().ToString();
             SelectedJournal.IsDirty = true;
-
+            
             await _databaseService.CreateAsync(SelectedJournal);
 
             Journals.Add(SelectedJournal);
@@ -499,6 +503,18 @@ public partial class JournalsViewModel : ViewModelBase
             OnPropertyChanged();
         }
     }
+    
+    [RelayCommand]
+    public void ClearPublishedDate()
+    {
+        if (SelectedJournal?.PublishedDate == null)
+            return;
+
+        SelectedJournal.PublishedDate = null;
+        PublishedDateOnly = null;
+        PublishedTimeOnly = null;
+    }
+
 
     public TimeSpan? PublishedTimeOnly
     {
