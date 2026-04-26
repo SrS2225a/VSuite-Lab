@@ -69,7 +69,7 @@ public partial class JournalsViewModel : ViewModelBase
 
     [ObservableProperty] private ObservableCollection<GroupItemsCalDavJournal> groupedJournals = new();
 
-    [ObservableProperty] private bool isPreviewMode = true;
+    [ObservableProperty] private bool isPreviewMode;
     
     [ObservableProperty]
     private string? categoryInput;

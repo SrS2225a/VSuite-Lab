@@ -26,12 +26,16 @@
         </Border>
 
         <!-- Toggle -->
-        <ToggleSwitch IsChecked="{Binding IsPreviewMode, RelativeSource={RelativeSource AncestorType=markdown:MarkdownEditor}}"
+        <ToggleSwitch IsChecked="{Binding IsPreviewMode, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=markdown:MarkdownEditor}}"
                       HorizontalAlignment="Right"
                       VerticalAlignment="Top"
                       Margin="0,6,0,0"
                       ZIndex="10"
-                      OnContent="" OffContent="" />
+                      OnContent="" OffContent="">
+            <ToolTip.Tip>
+                <TextBlock Text="Toggle preview mode" />
+            </ToolTip.Tip>
+        </ToggleSwitch>
 
     </Grid>
 </UserControl>
