@@ -172,7 +172,7 @@ namespace VSuiteLab.ViewModels
 
         [ObservableProperty] private ObservableCollection<GroupItemsCalDavTask> groupedNotes = new();
 
-        [ObservableProperty] private bool isPreviewMode = true;
+        [ObservableProperty] private bool isPreviewMode = false;
         
         [ObservableProperty]
         private string? categoryInput;

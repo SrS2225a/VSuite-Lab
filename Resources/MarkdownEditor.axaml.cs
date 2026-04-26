@@ -9,7 +9,7 @@ public partial class MarkdownEditor : UserControl
         AvaloniaProperty.Register<MarkdownEditor, string?>(nameof(Text));
 
     public static readonly StyledProperty<bool> IsPreviewModeProperty =
-        AvaloniaProperty.Register<MarkdownEditor, bool>(nameof(IsPreviewMode), true);
+        AvaloniaProperty.Register<MarkdownEditor, bool>(nameof(IsPreviewMode));
 
     public string? Text
     {

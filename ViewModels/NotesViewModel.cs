@@ -70,7 +70,7 @@ public partial class NotesViewModel : ViewModelBase
 
     [ObservableProperty] private ObservableCollection<GroupItemsCalDavNote> groupedNotes = new();
 
-    [ObservableProperty] private bool isPreviewMode = true;
+    [ObservableProperty] private bool isPreviewMode = false;
     
     [ObservableProperty]
     private string? categoryInput;
