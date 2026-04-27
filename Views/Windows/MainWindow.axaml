@@ -42,7 +42,7 @@
     </Window.DataTemplates>
     
     <Window.KeyBindings>
-        <!-- <KeyBinding Gesture="Oem2" Command="{Binding OpenSearchCommand}" /> -->
+        <KeyBinding Gesture="F1" Command="{Binding OpenHelpCommand}" />
         <KeyBinding Gesture="F5" Command="{Binding SyncCommand}" />
         <KeyBinding Gesture="F9" Command="{Binding OpenSettingsCommand}" />
     </Window.KeyBindings>

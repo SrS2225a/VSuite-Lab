@@ -203,11 +203,8 @@ namespace VSuiteLab.ViewModels
         }
 
         [RelayCommand]
-        private async Task OpenHelpAsync()
-        {
-            var helpWindow = new HelpWindow();
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: not null } desktop) await helpWindow.ShowDialog(desktop.MainWindow);
-        }
+        private void OpenHelp()
+            => OpenUrl("https://github.com/SrS2225a/VSuite-Lab/wiki");
         
         [RelayCommand]
         private void OpenSource()

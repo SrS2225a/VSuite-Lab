@@ -34,7 +34,7 @@
                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal"
                                 DockPanel.Dock="Top" Spacing="5">
                         <DropDownButton>
-                            <materialIcons:MaterialIcon Kind="Import" />
+                            <materialIcons:MaterialIcon Kind="Import" IconSize="20" />
                             <DropDownButton.Flyout>
                                 <Flyout>
                                     <ItemsControl ItemsSource="{Binding DavInstances}">
