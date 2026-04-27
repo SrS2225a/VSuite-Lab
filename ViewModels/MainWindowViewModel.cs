@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -6,12 +7,15 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MsBox.Avalonia;
+using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Enums;
+using MsBox.Avalonia.Models;
 using VSuiteLab.Models;
 using VSuiteLab.Models.Contexts;
 using VSuiteLab.Models.Helpers;
@@ -115,8 +119,8 @@ namespace VSuiteLab.ViewModels
         [RelayCommand]
         public async Task ShowAboutAsync()
         {
-            var buildDate = File.GetLastWriteTime(
-                Assembly.GetExecutingAssembly().Location);
+            var assembly = Assembly.GetExecutingAssembly();
+            var buildDate = File.GetLastWriteTime(assembly.Location);
 
             string version = ThisAssembly.AssemblyInformationalVersion;
 
@@ -126,34 +130,28 @@ namespace VSuiteLab.ViewModels
 
             var message =
                 $"""
-                 VSuite Lab
+                 ━━━━━━━━━━━━━━━━━━━━━━
+                       V S U I T E   L A B
+                 ━━━━━━━━━━━━━━━━━━━━━━
 
+                 🧾 Version
+                 {version}
+                 Built: {buildDate:yyyy-MM-dd}
 
-                 Version
-                   {version} ({buildDate.ToShortDateString()})
+                 🖥 Environment
+                 {framework}
+                 {os} ({arch})
 
-                 Environment
-                   {framework}
-                   {os}
-                   {arch}
-
-                 About
-                   Built with Avalonia UI
-
-                 Links
-                   GitHub: https://github.com/your-repo
-                   Issues: https://github.com/your-repo/issues
+                 ℹ️ Frameworks
+                 Built with Avalonia UI
 
                  ━━━━━━━━━━━━━━━━━━━━━━
                  © 2026 SrS2225a
                  """;
 
             var box = MessageBoxManager.GetMessageBoxStandard(
-                "About VSuite Lab",
-                message,
-                ButtonEnum.Ok
-            );
-
+                "About VSuite Lab", message, ButtonEnum.Ok, Icon.Info);
+            
             await box.ShowAsync();
         }
         
