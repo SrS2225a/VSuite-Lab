@@ -1,11 +1,17 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using VSuiteLab.Models;
 using VSuiteLab.Models.Contexts;
 using VSuiteLab.Models.Helpers;
@@ -13,6 +19,7 @@ using VSuiteLab.Services;
 using VSuiteLab.Services.Sync;
 using VSuiteLab.Utils.Query;
 using VSuiteLab.Views;
+using VSuiteLab.Views.Windows;
 using QueryFilterVm = VSuiteLab.Models.Contexts.QueryFilterVm;
 using QueryGroupVm = VSuiteLab.Models.Contexts.QueryGroupVm;
 using QuerySortVm = VSuiteLab.Models.Contexts.QuerySortVm;
@@ -106,6 +113,51 @@ namespace VSuiteLab.ViewModels
         }
         
         [RelayCommand]
+        public async Task ShowAboutAsync()
+        {
+            var buildDate = File.GetLastWriteTime(
+                Assembly.GetExecutingAssembly().Location);
+
+            string version = ThisAssembly.AssemblyInformationalVersion;
+
+            var os = RuntimeInformation.OSDescription;
+            var arch = RuntimeInformation.OSArchitecture;
+            var framework = RuntimeInformation.FrameworkDescription;
+
+            var message =
+                $"""
+                 VSuite Lab
+
+
+                 Version
+                   {version} ({buildDate.ToShortDateString()})
+
+                 Environment
+                   {framework}
+                   {os}
+                   {arch}
+
+                 About
+                   Built with Avalonia UI
+
+                 Links
+                   GitHub: https://github.com/your-repo
+                   Issues: https://github.com/your-repo/issues
+
+                 ━━━━━━━━━━━━━━━━━━━━━━
+                 © 2026 SrS2225a
+                 """;
+
+            var box = MessageBoxManager.GetMessageBoxStandard(
+                "About VSuite Lab",
+                message,
+                ButtonEnum.Ok
+            );
+
+            await box.ShowAsync();
+        }
+        
+        [RelayCommand]
         private async Task RetrySyncAsync(SyncProgress result)
         {
             SyncResults.Clear();
@@ -151,6 +203,25 @@ namespace VSuiteLab.ViewModels
             var settingsWindow = new SettingsWindow();
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: not null } desktop) await settingsWindow.ShowDialog(desktop.MainWindow);
         }
+
+        [RelayCommand]
+        private async Task OpenHelpAsync()
+        {
+            var helpWindow = new HelpWindow();
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: not null } desktop) await helpWindow.ShowDialog(desktop.MainWindow);
+        }
+        
+        [RelayCommand]
+        private void OpenSource()
+            => OpenUrl("https://github.com/SrS2225a/VSuite-Lab");
+
+        [RelayCommand]
+        private void OpenIssues()
+            => OpenUrl("https://github.com/SrS2225a/VSuite-Lab/issues");
+
+        [RelayCommand]
+        private void OpenDonate()
+            => OpenUrl("https://github.com/SrS2225a/VSuite-Lab");
         
         public MainWindowViewModel()
         {
@@ -206,6 +277,15 @@ namespace VSuiteLab.ViewModels
                         SyncResults.Clear();
                     });
                 });
+        }
+        
+        private void OpenUrl(string url)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
         }
         
         private int _selectedTabIndex;
