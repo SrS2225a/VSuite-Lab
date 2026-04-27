@@ -320,6 +320,22 @@
                             <TextBlock Text="Settings" />
                         </StackPanel>
                     </Button>
+                    
+                    <DropDownButton>
+                        <DropDownButton.Content>
+                            <Image Source="avares://VSuiteLab/Assets/avalonia-logo.ico" Height="21" />
+                        </DropDownButton.Content>
+                        <DropDownButton.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="Help" Command="{Binding OpenHelpCommand}" />
+                                <Separator />
+                                <MenuItem Header="Source Code" Command="{Binding OpenSourceCommand}"/>
+                                <MenuItem Header="Report bugs and feedback" Command="{Binding OpenIssuesCommand}" />
+                                <MenuItem Header="Make a donation" Command="{Binding OpenDonateCommand}" />
+                                <MenuItem Header="About VSuite Lab" Command="{Binding ShowAboutCommand}" />
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
                 </StackPanel>
 
             </Grid>
