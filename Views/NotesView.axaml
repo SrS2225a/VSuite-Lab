@@ -13,7 +13,8 @@
              mc:Ignorable="d">
     
     <UserControl.KeyBindings>
-        <KeyBinding Gesture="Escape" Command="{Binding CancelNoteSelection}" />
+        <KeyBinding Gesture="F8" Command="{Binding ImportIcsNoteCommand}" />
+        <KeyBinding Gesture="Escape" Command="{Binding CancelNoteSelectionCommand}" />
     </UserControl.KeyBindings>
 
     <Grid ColumnDefinitions="320,*" RowDefinitions="Auto,*">
