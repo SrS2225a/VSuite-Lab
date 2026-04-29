@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -222,6 +223,36 @@ namespace VSuiteLab.ViewModels
         {
             _databaseService = new DatabaseService();
             _syncService = new SyncService();
+            
+            WeakReferenceMessenger.Default.Register<DavConfigChangedMessage>(this,
+                (_, m) =>
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        switch (m.ChangeType)
+                        {
+                            case DavConfigChangeType.Added:
+                                if (!DavInstances.Any(x => x.Id == m.Value.Id))
+                                    DavInstances.Add(m.Value);
+                                break;
+
+                            case DavConfigChangeType.Updated:
+                                var existing = DavInstances.FirstOrDefault(x => x.Id == m.Value.Id);
+                                if (existing != null)
+                                {
+                                    var index = DavInstances.IndexOf(existing);
+                                    DavInstances[index] = m.Value;
+                                }
+                                break;
+
+                            case DavConfigChangeType.Deleted:
+                                var toRemove = DavInstances.FirstOrDefault(x => x.Id == m.Value.Id);
+                                if (toRemove != null)
+                                    DavInstances.Remove(toRemove);
+                                break;
+                        }
+                    });
+                });
             
             InitializationTask = InitializeAsync();
         }

@@ -75,14 +75,19 @@ public partial class DavSettingsViewModel : ViewModelBase
         
         IsAddSaving = true;
         
-        StatusResponse = await _davService.addMount(SelectedDavConfig);
+        var added = SelectedDavConfig;
+
+        StatusResponse = await _davService.addMount(added);
+
         if (StatusResponse.Success)
         {
-            DavConfigs.Add(SelectedDavConfig);
+            DavConfigs.Add(added);
+
+            WeakReferenceMessenger.Default.Send(
+                new DavConfigChangedMessage(added, DavConfigChangeType.Added));
+
             SelectedDavConfig = new DavConfig();
             StatusResponse = new();
-            
-            WeakReferenceMessenger.Default.Send(new DavConfigChangedMessage(SelectedDavConfig));
         }
         
         IsAddSaving = false;
@@ -99,17 +104,22 @@ public partial class DavSettingsViewModel : ViewModelBase
         var hasCalDav = await DavMiddlewareService.HasCalDav(davClient, SelectedDavConfig);
         if (hasCalDav.Success)
         {
-            await _databaseService.UpdateAsync( SelectedDavConfig);
+            var updated = SelectedDavConfig;
 
-            // update list
-            var found = DavConfigs.FirstOrDefault(c => c.Id == SelectedDavConfig.Id);
+            await _databaseService.UpdateAsync(updated);
+
+
+            await _databaseService.UpdateAsync(updated);
+
+            var found = DavConfigs.FirstOrDefault(c => c.Id == updated.Id);
             if (found != null)
             {
-                DavConfigs.Add(SelectedDavConfig);
-                DavConfigs.Remove(found);
-                
-                WeakReferenceMessenger.Default.Send(new DavConfigChangedMessage(SelectedDavConfig));
+                var index = DavConfigs.IndexOf(found);
+                DavConfigs[index] = updated;
             }
+
+            WeakReferenceMessenger.Default.Send(
+                new DavConfigChangedMessage(updated, DavConfigChangeType.Updated));
         }
         else
         {
@@ -125,12 +135,15 @@ public partial class DavSettingsViewModel : ViewModelBase
             return;
 
         
-        await _databaseService.DeleteAsync(SelectedDavConfig);
-        
-        DavConfigs.Remove(SelectedDavConfig);
-        
-        WeakReferenceMessenger.Default.Send(new DavConfigChangedMessage(SelectedDavConfig));
-        
+        var deleted = SelectedDavConfig;
+
+        await _databaseService.DeleteAsync(deleted);
+
+        DavConfigs.Remove(deleted);
+
+        WeakReferenceMessenger.Default.Send(
+            new DavConfigChangedMessage(deleted, DavConfigChangeType.Deleted));
+
         SelectedDavConfig = new DavConfig();
         StatusResponse = new();
     }

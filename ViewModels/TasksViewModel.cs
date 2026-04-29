@@ -277,9 +277,36 @@ namespace VSuiteLab.ViewModels
                 (_, m) => { _ = Dispatcher.UIThread.InvokeAsync(() => RefreshForInstance(m.Value)); });
 
             WeakReferenceMessenger.Default.Register<DavConfigChangedMessage>(this,
-                async (_, m) =>
+                (_, m) =>
                 {
-                    await Dispatcher.UIThread.InvokeAsync(async () => { await ReloadDavInstances(); });
+                    Dispatcher.UIThread.Post(async void () =>
+                    {
+                        switch (m.ChangeType)
+                        {
+                            case DavConfigChangeType.Added:
+                                if (!DavInstances.Any(x => x.Id == m.Value.Id))
+                                    DavInstances.Add(m.Value);
+                                break;
+
+                            case DavConfigChangeType.Updated:
+                                var existing = DavInstances.FirstOrDefault(x => x.Id == m.Value.Id);
+                                if (existing != null)
+                                {
+                                    var index = DavInstances.IndexOf(existing);
+                                    DavInstances[index] = m.Value;
+                                }
+                                break;
+
+                            case DavConfigChangeType.Deleted:
+                                var toRemove = DavInstances.FirstOrDefault(x => x.Id == m.Value.Id);
+                                if (toRemove != null)
+                                {
+                                    DavInstances.Remove(toRemove);
+                                    await RefreshForInstance(toRemove);
+                                }
+                                break;
+                        }
+                    });
                 });
 
             // Initialize notes
