@@ -120,7 +120,7 @@ namespace VSuiteLab.ViewModels
             var assembly = Assembly.GetExecutingAssembly();
             var buildDate = File.GetLastWriteTime(assembly.Location);
 
-            string version = ThisAssembly.AssemblyInformationalVersion;
+            string version = Assembly.GetEntryAssembly().GetName().Version.ToString();
 
             var os = RuntimeInformation.OSDescription;
             var arch = RuntimeInformation.OSArchitecture;
