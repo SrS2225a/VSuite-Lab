@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-$APP_NAME = "vsuitelab"
+$APP_NAME = "VSuiteLab"
 $DISPLAY_NAME = "VSuite Lab"
 $VERSION = "1.0.0"
 
@@ -66,7 +66,7 @@ AppName=$DISPLAY_NAME
 AppVersion=$VERSION
 DefaultDirName={pf}\$DISPLAY_NAME
 DefaultGroupName=$DISPLAY_NAME
-OutputBaseFilename=vsuitelab-$RID-installer
+OutputBaseFilename=$APP_NAME-$RID
 
 [Files]
 Source: "$PUBLISH_DIR\*"; DestDir: "{app}"; Flags: recursesubdirs
