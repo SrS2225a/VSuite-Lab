@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-APP_NAME="vsuitelab"
+APP_NAME="VSuiteLab"
 DISPLAY_NAME="VSuite Lab"
-BINARY="vsuitelab"
+BINARY="VSuiteLab"
 VERSION="1.0.0"
 
 RID="$1"
