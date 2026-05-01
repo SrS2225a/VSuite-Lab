@@ -437,11 +437,10 @@ public class IcsUtils
         
         foreach (var alarm in target.Alarms)
         {
-            if (!alarm.SelectedDate.HasValue) continue;
-
+            
             var trigger = new Trigger
             {
-                DateTime = new CalDateTime(alarm.SelectedDate.Value.DateTime),
+                DateTime = new CalDateTime(alarm.SelectedDate.DateTime),
             };
             trigger.Parameters.Add("VALUE", "DATE-TIME");
 
