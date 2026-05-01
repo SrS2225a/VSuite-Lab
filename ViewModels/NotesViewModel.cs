@@ -43,6 +43,7 @@ public partial class NotesViewModel : ViewModelBase
 
     public IEnumerable<EnumOption<string>> Classifications => new[]
     {
+        new EnumOption<string>(string.Empty, "No Class"),
         new EnumOption<string>("PUBLIC", "Public"),
         new EnumOption<string>("PRIVATE", "Private"),
         new EnumOption<string>("CONFIDENTIAL", "Confidential"),
