@@ -382,6 +382,12 @@ public partial class NotesViewModel : ViewModelBase
     {
         if (SelectedNote != null)
         {
+            if (SelectedNote.DavConfigId != SelectedDavInstance.Id)
+            {
+                SelectedNote.PreviousDavConfigId = SelectedNote.DavConfigId;
+                SelectedNote.DavConfigId = SelectedDavInstance.Id;
+            }
+            
             SelectedNote.IsDirty = true;
             SelectedNote.LastModified = DateTime.UtcNow;
 

@@ -24,6 +24,8 @@ public abstract partial class CalDavItem : ObservableObject
     [ObservableProperty] private bool isDirty;
     [ObservableProperty] private bool isDeleted;
     
+    public Guid? PreviousDavConfigId { get; set; }
+    
     public ObservableCollection<CalDavCategory> Categories { get; set; } = new();
     public ObservableCollection<CalDavAttachment> Attachments { get; set; } = new();
     public ObservableCollection<CalDavComment> Comments { get; set; } = new();

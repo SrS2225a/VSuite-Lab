@@ -330,6 +330,12 @@ public partial class JournalsViewModel : ViewModelBase
     {
         if (SelectedJournal != null)
         {
+            if (SelectedJournal.DavConfigId != SelectedDavInstance.Id)
+            {
+                SelectedJournal.PreviousDavConfigId = SelectedJournal.DavConfigId;
+                SelectedJournal.DavConfigId = SelectedDavInstance.Id;
+            }
+            
             SelectedJournal.IsDirty = true;
             SelectedJournal.LastModified = DateTime.UtcNow;
             
