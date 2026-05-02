@@ -424,7 +424,11 @@ public partial class JournalsViewModel : ViewModelBase
     [RelayCommand]
     public Task CancelNoteSelection()
     {
-        SelectedJournal = null;
+        SelectedJournal = new CalDavJournal();
+        SelectedDavInstance = null;
+        
+        OnPropertyChanged(nameof(PublishedDateOnly));
+        OnPropertyChanged(nameof(PublishedTimeOnly));
         return Task.CompletedTask;
     }
 

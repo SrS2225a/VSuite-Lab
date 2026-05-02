@@ -127,26 +127,20 @@ namespace VSuiteLab.ViewModels
 
         public void ClearStartDate()
         {
-            if (SelectedNote?.StartDate == null)
-                return;
-
-            SelectedNote.StartDate = null;
+            if (SelectedNote != null) SelectedNote.StartDate = null;
             StartTimeOnly = null;
             StartDateOnly = null;
-            OnPropertyChanged(nameof(DueDateOnly));
-            OnPropertyChanged(nameof(DueTimeOnly));
+            OnPropertyChanged(nameof(StartDateOnly));
+            OnPropertyChanged(nameof(StartTimeOnly));
         }
 
         public void ClearDueDate()
         {
-            if (SelectedNote?.DueDate == null)
-                return;
-
-            SelectedNote.DueDate = null;
+            if (SelectedNote != null) SelectedNote.DueDate = null;
             DueTimeOnly = null;
             DueDateOnly = null;
-            OnPropertyChanged(nameof(StartDateOnly));
-            OnPropertyChanged(nameof(StartTimeOnly));
+            OnPropertyChanged(nameof(DueDateOnly));
+            OnPropertyChanged(nameof(DueTimeOnly));
         }
 
         private ObservableCollection<CalDavTask> _tasks = new();
@@ -539,7 +533,14 @@ namespace VSuiteLab.ViewModels
         [RelayCommand]
         public Task CancelNoteSelection()
         {
-            SelectedNote = null;
+            SelectedNote = new CalDavTask();
+            SelectedDavInstance = null;
+            
+            OnPropertyChanged(nameof(StartDateOnly));
+            OnPropertyChanged(nameof(StartTimeOnly));
+            OnPropertyChanged(nameof(DueDateOnly));
+            OnPropertyChanged(nameof(DueTimeOnly));
+            
             return Task.CompletedTask;
         }
 

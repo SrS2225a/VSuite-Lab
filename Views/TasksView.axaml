@@ -76,7 +76,7 @@
 
                                     <!-- Task list -->
                                     <ListBox ItemsSource="{Binding Items}"
-                                             SelectedItem="{Binding $parent[UserControl].DataContext.SelectedNote, Mode=TwoWay}"
+                                             SelectedItem="{Binding $parent[UserControl].DataContext.SelectedNote, Mode=OneWayToSource}"
                                              BorderThickness="0" CornerRadius="4"
                                              Background="Transparent" >
                                         
@@ -339,10 +339,6 @@
                                     
                                 </Grid>
                             </Grid>
-                                
-                            <!-- ~1~ Completed @1@ -->
-                            <!-- <DatePicker SelectedDate="{Binding SelectedNote.CompletedDate}" -->
-                            <!--             Watermark="Completed Date"/> -->
 
                         </StackPanel>
                         
