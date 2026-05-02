@@ -234,6 +234,27 @@ public class BaseSyncWorker
             await semaphore.WaitAsync(token);
             try
             {
+                if (item.PreviousDavConfigId != null && item.PreviousDavConfigId != config.Id)
+                {
+                    var oldConfig = await db.DavConfigs
+                        .FirstOrDefaultAsync(c => c.Id == item.PreviousDavConfigId, token);
+                    
+                    if (oldConfig != null)
+                    {
+                        var oldClient = DavMiddlewareService.GetDavClient(oldConfig);
+                        await DavMiddlewareService.DeleteRemoteItem(oldClient, item, token);
+                    }
+                    
+                    
+                    var fullUri = new Uri(
+                        new Uri(config?.httpUrl!),
+                        $"{item.Id}.ics");
+                    item.Uri = fullUri.ToString();
+                    item.Uid = Guid.NewGuid().ToString();
+                    item.PreviousDavConfigId = null;
+                    dbSet.Update(item);
+                }
+                
                 if (item.IsDeleted)
                 {
                     await DavMiddlewareService.DeleteRemoteItem(client, item, token);

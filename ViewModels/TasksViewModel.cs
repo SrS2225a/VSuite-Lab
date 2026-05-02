@@ -480,7 +480,7 @@ namespace VSuiteLab.ViewModels
                     new Uri(SelectedDavInstance?.httpUrl!),
                     $"{SelectedNote.Id}.ics");
                 SelectedNote.Uri = fullUri.ToString();
-                if (SelectedDavInstance != null) SelectedNote.DavConfigId = SelectedDavInstance.Id;
+                SelectedNote.DavConfigId = SelectedDavInstance.Id;
                 SelectedNote.Uid = Guid.NewGuid().ToString();
                 SelectedNote.IsDirty = true;
                 
@@ -502,6 +502,12 @@ namespace VSuiteLab.ViewModels
         {
             if (SelectedNote != null && SelectedDavInstance != null)
             {
+                if (SelectedNote.DavConfigId != SelectedDavInstance.Id)
+                {
+                    SelectedNote.PreviousDavConfigId = SelectedNote.DavConfigId;
+                    SelectedNote.DavConfigId = SelectedDavInstance.Id;
+                }
+                
                 SelectedNote.IsDirty = true;
                 SelectedNote.LastModified = DateTime.UtcNow;
 
