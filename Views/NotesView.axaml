@@ -76,7 +76,7 @@
 
                                     <!-- Journal list -->
                                     <ListBox ItemsSource="{Binding Items}"
-                                             SelectedItem="{Binding $parent[UserControl].DataContext.SelectedNote}"
+                                             SelectedItem="{Binding $parent[UserControl].DataContext.SelectedNote, Mode=OneWayToSource}"
                                              BorderThickness="0"
                                              Background="Transparent">
 

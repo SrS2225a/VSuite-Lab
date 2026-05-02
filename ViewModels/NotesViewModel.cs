@@ -420,7 +420,9 @@ public partial class NotesViewModel : ViewModelBase
     [RelayCommand]
     public Task CancelNoteSelection()
     {
-        SelectedNote = null;
+        SelectedNote = new CalDavNote();
+        SelectedDavInstance = null;
+        
         return Task.CompletedTask;
     }
 
