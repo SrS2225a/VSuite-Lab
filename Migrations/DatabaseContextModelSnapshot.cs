@@ -172,6 +172,9 @@ namespace VSuiteLab.Migrations
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("PreviousDavConfigId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Sequence")
                         .HasColumnType("INTEGER");
 
@@ -247,6 +250,9 @@ namespace VSuiteLab.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<bool>("SyncOnChange")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("UpdateDoNotAsk")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
