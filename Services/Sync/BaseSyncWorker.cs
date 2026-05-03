@@ -251,6 +251,7 @@ public class BaseSyncWorker
                         $"{item.Id}.ics");
                     item.Uri = fullUri.ToString();
                     item.Uid = Guid.NewGuid().ToString();
+                    item.Etag = string.Empty;
                     item.PreviousDavConfigId = null;
                     dbSet.Update(item);
                 }
