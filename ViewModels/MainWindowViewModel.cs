@@ -118,7 +118,9 @@ namespace VSuiteLab.ViewModels
         public async Task ShowAboutAsync()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var buildDate = File.GetLastWriteTime(assembly.Location);
+            var buildDate = assembly
+                .GetCustomAttributes<AssemblyMetadataAttribute>()
+                .FirstOrDefault(a => a.Key == "BuildDate")?.Value;
 
             string version = Assembly.GetEntryAssembly().GetName().Version.ToString();
 

@@ -67,13 +67,14 @@ AppVersion=$VERSION
 DefaultDirName={pf}\$DISPLAY_NAME
 DefaultGroupName=$DISPLAY_NAME
 OutputBaseFilename=$APP_NAME-$RID
+SetupIconFile=Assets\icon.ico
 
 [Files]
 Source: "$PUBLISH_DIR\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
-Name: "{group}\$DISPLAY_NAME"; Filename: "{app}\vsuitelab.exe"
-Name: "{commondesktop}\$DISPLAY_NAME"; Filename: "{app}\vsuitelab.exe"
+Name: "{group}\$DISPLAY_NAME"; Filename: "{app}\vsuitelab.exe"; IconFilename: "{app}\icon.ico"
+Name: "{commondesktop}\$DISPLAY_NAME"; Filename: "{app}\vsuitelab.exe"; IconFilename: "{app}\icon.ico"
 "@
 
 Set-Content -Path $ISS_PATH -Value $ISS -Encoding UTF8

@@ -323,7 +323,7 @@
                     
                     <DropDownButton>
                         <DropDownButton.Content>
-                            <Image Source="avares://VSuiteLab/Assets/avalonia-logo.ico" Height="21" />
+                            <Image Source="avares://VSuiteLab/Assets/icon.png" Height="21" />
                         </DropDownButton.Content>
                         <DropDownButton.Flyout>
                             <MenuFlyout>

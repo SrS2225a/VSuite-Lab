@@ -3,10 +3,15 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>MyApp</string>
+    <string>VSuite Lab</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>VSuite Lab</string>
+    
     <key>CFBundleIdentifier</key>
-    <string>com.example.myapp</string>
-    <key>CFBundleExecutable</key>
-    <string>myapp</string>
+    <string>com.SrS2225a.vsuitelab</string>
+
+    <key>CFBundleIconFile</key>
+    <string>icon</string>
 </dict>
 </plist>
