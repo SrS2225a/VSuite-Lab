@@ -21,9 +21,11 @@ dotnet publish -c Release -f net8.0 -r $RID \
 mkdir -p pkg/usr/lib/vsuitelab
 mkdir -p pkg/usr/bin
 mkdir -p pkg/usr/share/applications
+mkdir -p pkg/usr/share/icons/hicolor/512x512/apps
 
 cp -r $PUBLISH_DIR/* pkg/usr/lib/vsuitelab/
 cp Build/Packaging/$APP_NAME.desktop pkg/usr/share/applications/
+cp Assets/icon.png pkg/usr/share/icons/hicolor/512x512/apps/vsuitelab.png
 
 # ----------------------------
 # Launcher (clean + minimal)
