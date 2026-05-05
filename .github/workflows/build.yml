@@ -1,6 +1,7 @@
 name: Build VSuite Lab
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
