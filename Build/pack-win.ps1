@@ -1,9 +1,9 @@
-$ErrorActionPreference = "Stop"
-
 param(
 [string]$RID,
 [string]$VERSION
 )
+
+$ErrorActionPreference = "Stop"
 
 if (-not $RID -or -not $VERSION) {
     throw "Usage: pack-win.ps1 <RID> <VERSION>"
