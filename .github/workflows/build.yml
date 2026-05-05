@@ -4,142 +4,100 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
-    
-    
+
 permissions:
   contents: write
 
 jobs:
-  # =========================
-  # LINUX (deb/rpm/arch)
-  # =========================
-  linux:
-    runs-on: ubuntu-latest
-
+  build:
     strategy:
       matrix:
-        rid: [linux-x64, linux-arm64]
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: ubuntu-latest
+            rid: linux-arm64
+          - os: windows-latest
+            rid: win-x64
+          - os: windows-latest
+            rid: win-arm64
+          - os: macos-latest
+            rid: osx-x64
+          - os: macos-latest
+            rid: osx-arm64
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          fetch-tags: true
+
+      - name: Extract version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
 
-      - name: Install fpm dependencies
+      - name: Install Linux deps
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y ruby ruby-dev build-essential rpm libarchive-tools
           sudo gem install --no-document fpm
 
-      - name: Build Linux app
+      - name: Build
+        shell: bash
         run: |
-          chmod +x Build/build-linux.sh
-          ./Build/build-linux.sh ${{ matrix.rid }}
+          chmod +x Build/build.sh || true
+          ./Build/build.sh ${{ matrix.rid }} "$VERSION"
 
-      - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-${{ matrix.rid }}
-          path: |
-            *.deb
-            *.rpm
-            *.pkg.tar.zst
-  
-  
-  # =========================
-  # WINDOWS (Inno Setup)
-  # =========================
-  windows:
-    runs-on: windows-latest
-
-    strategy:
-      matrix:
-        rid: [win-x64, win-arm64]
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-
-      - name: Build Windows installer
-        shell: pwsh
+      - name: List outputs
+        shell: bash
         run: |
-          ./Build/build-win.ps1 ${{ matrix.rid }}
+          echo "Generated files:"
+          find . -type f \( \
+            -name "*.deb" -o \
+            -name "*.rpm" -o \
+            -name "*.pkg" -o \
+            -name "*.exe" -o \
+            -name "*.zst" -o \
+            -name "*.app" \
+          \)
 
-      - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-${{ matrix.rid }}
-          path: |
-            ./Build/Packaging/Output/*.exe
-  
-  
-  # =========================
-  # MACOS (.app + pkg)
-  # =========================
-  macos:
-    runs-on: macos-latest
-
-    strategy:
-      matrix:
-        rid: [osx-x64, osx-arm64]
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
-
-      - name: Build macOS app
-        run: |
-          chmod +x Build/build-macos.sh
-          ./Build/build-macos.sh ${{ matrix.rid }}
-
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-${{ matrix.rid }}
-          path: |
-            *.pkg
-            *.app
-            
-  release:
-    runs-on: ubuntu-latest
-    needs: [linux, windows, macos]
-    if: startsWith(github.ref, 'refs/tags/')
-
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/**/*.exe
-            dist/**/*.deb
-            dist/**/*.rpm
-            dist/**/*.pkg
-            dist/**/*.zst
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ matrix.rid }}
+#          path: |
+#            *.deb
+#            *.rpm
+#            *.pkg
+#            *.exe
+#            *.zst
+#            *.app
+#
+#  release:
+#    needs: build
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: dist
+#
+#      - name: Create Release
+#        uses: softprops/action-gh-release@v2
+#        with:
+#          tag_name: ${{ github.ref_name }}
+#          name: VSuite Lab ${{ github.ref_name }}
+#          files: |
+#            dist/**/*.exe
+#            dist/**/*.deb
+#            dist/**/*.rpm
+#            dist/**/*.pkg
+#            dist/**/*.zst
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

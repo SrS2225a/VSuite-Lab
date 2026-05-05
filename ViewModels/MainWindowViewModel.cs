@@ -117,7 +117,7 @@ namespace VSuiteLab.ViewModels
         [RelayCommand]
         public async Task ShowAboutAsync()
         {
-            var assembly = Assembly.GetExecutingAssembly();
+            var assembly = Assembly.GetEntryAssembly();
             var buildDate = assembly
                 .GetCustomAttributes<AssemblyMetadataAttribute>()
                 .FirstOrDefault(a => a.Key == "BuildDate")?.Value;
