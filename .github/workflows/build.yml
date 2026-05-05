@@ -59,50 +59,38 @@ jobs:
           chmod +x Build/pack-macos.sh || true
           ./Build/build.sh ${{ matrix.rid }} "$VERSION"
 
-      - name: List outputs
-        shell: bash
-        run: |
-          echo "Generated files:"
-          find . -type f \( \
-            -name "*.deb" -o \
-            -name "*.rpm" -o \
-            -name "*.pkg" -o \
-            -name "*.exe" -o \
-            -name "*.zst" -o \
-            -name "*.app" \
-          \)
 
-#      - name: Upload artifacts
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: ${{ matrix.rid }}
-#          path: |
-#            *.deb
-#            *.rpm
-#            *.pkg
-#            *.exe
-#            *.zst
-#            *.app
-#
-#  release:
-#    needs: build
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - uses: actions/download-artifact@v4
-#        with:
-#          path: dist
-#
-#      - name: Create Release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          tag_name: ${{ github.ref_name }}
-#          name: VSuite Lab ${{ github.ref_name }}
-#          files: |
-#            dist/**/*.exe
-#            dist/**/*.deb
-#            dist/**/*.rpm
-#            dist/**/*.pkg
-#            dist/**/*.zst
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.rid }}
+          path: |
+            *.deb
+            *.rpm
+            *.pkg
+            *.exe
+            *.zst
+            *.app
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: VSuite Lab ${{ github.ref_name }}
+          files: |
+            dist/**/*.exe
+            dist/**/*.deb
+            dist/**/*.rpm
+            dist/**/*.pkg
+            dist/**/*.zst
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
