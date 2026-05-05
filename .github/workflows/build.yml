@@ -65,10 +65,10 @@ jobs:
         with:
           name: ${{ matrix.rid }}
           path: |
+            ./Build/Packaging/Output/*.exe
             *.deb
             *.rpm
             *.pkg
-            *.exe
             *.zst
             *.app
 

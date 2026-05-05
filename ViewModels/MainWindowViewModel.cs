@@ -305,7 +305,7 @@ namespace VSuiteLab.ViewModels
                 new MessageBoxCustomParams
                 {
                     ContentTitle = "Update Available",
-                    ContentMessage = $"A new {version} is available. Would you like to update now?",
+                    ContentMessage = $"A new VSuite Lav version {version} is available. Would you like to update now?",
                     ButtonDefinitions =
                     [
                         new ButtonDefinition { Name = "Update" },
@@ -327,7 +327,7 @@ namespace VSuiteLab.ViewModels
                     break;
                 }
 
-                case "Never ask again":
+                case "Don't ask again":
                 {
                     settings.UpdateDoNotAsk = true;
                     await _databaseService.UpdateAsync(settings);
