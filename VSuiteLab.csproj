@@ -20,9 +20,9 @@
   <ItemGroup>
     <AssemblyMetadata Include="BuildDate" Value="$(BuildDate)" />
 
-    <PackageReference Include="Avalonia" Version="12.0.1" />
+    <PackageReference Include="Avalonia" Version="12.0.2" />
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
-    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.0.1" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.0.2" />
     <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
     <PackageReference Include="Avalonia.Labs.Controls" Version="12.0.2" />
     <PackageReference Include="Avalonia.Labs.Panels" Version="12.0.2" />
