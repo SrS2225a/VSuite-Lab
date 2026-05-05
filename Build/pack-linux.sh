@@ -3,17 +3,10 @@ set -e
 
 APP_NAME="VSuiteLab"
 DISPLAY_NAME="VSuite Lab"
-VERSION="1.0.0"
-
 RID="$1"
+VERSION="$2"
 
 PUBLISH_DIR=publish/$RID
-
-dotnet publish -c Release -f net8.0 -r $RID \
-  -p:SelfContained=true \
-  -p:UseAppHost=true \
-  -p:PublishSingleFile=true \
-  -o $PUBLISH_DIR
   
 # ----------------------------
 # Layout (Linux standard)
@@ -41,9 +34,7 @@ chmod +x pkg/usr/bin/vsuitelab
 # Architecture mapping
 # ----------------------------
 ARCH="amd64"
-if [[ "$RID" == *"arm64"* ]]; then
-  ARCH="arm64"
-fi
+[[ "$RID" == *"arm64"* ]] && ARCH="arm64"
 
 # ----------------------------
 # DEB
