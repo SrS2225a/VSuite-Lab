@@ -35,7 +35,9 @@ case "$RID" in
     ./Build/pack-linux.sh "$RID" "$VERSION"
     ;;
   win-*)
-    pwsh ./Build/pack-win.ps1 "$RID" "$VERSION"
+    pwsh -NoProfile -ExecutionPolicy Bypass -File ./Build/pack-win.ps1 \
+      -RID "$RID" \
+      -VERSION "$VERSION"
     ;;
   osx-*)
     ./Build/pack-macos.sh "$RID" "$VERSION"
