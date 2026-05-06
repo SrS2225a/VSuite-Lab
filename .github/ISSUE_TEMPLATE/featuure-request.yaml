@@ -1,0 +1,29 @@
+name: Feature Request
+description: Got an idea for a feature that VSuite Lab doesn't have currently? Submit your idea here!
+labels: ["enhancement"]
+assignees:
+  - SrS2225a
+body:
+  - type: markdown
+    attributes:
+      value: |
+        NOTE: Please take a moment to check that your feature hasn't already been suggested.
+  - type: textarea
+    id: description
+    attributes:
+      label: What you want to be added
+      description: A clear and concise description of what you want to be added
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why you want this feature
+      description: A clear and concise description of why you want this feature
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If you can, provide screenshots of an implementation on another site e.g. GitHub

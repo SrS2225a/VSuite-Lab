@@ -76,6 +76,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include=".github\ISSUE_TEMPLATE\bug-report.yaml" />
+    <Content Include=".github\ISSUE_TEMPLATE\featuure-request.yaml" />
+    <Content Include=".github\ISSUE_TEMPLATE\question.yaml" />
     <Content Include=".github\workflows\build.yml" />
   </ItemGroup>
 </Project>
