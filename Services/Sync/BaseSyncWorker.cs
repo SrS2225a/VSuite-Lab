@@ -385,8 +385,13 @@ public class BaseSyncWorker
         var existingJournals = await db.Journals.Where(x => x.DavConfigId == config.Id).ToListAsync(token);
         var existingNotes = await db.Notes.Where(x => x.DavConfigId == config.Id).ToListAsync(token);
 
-        var journalsByUri = existingJournals.ToDictionary(x => x.Uri);
-        var notesByUri = existingNotes.ToDictionary(x => x.Uri);
+        var journalsByUid = existingJournals
+            .Where(x => !string.IsNullOrEmpty(x.Uri))
+            .ToDictionary(x => x.Uri);
+
+        var notesByUid = existingNotes
+            .Where(x => !string.IsNullOrEmpty(x.Uri))
+            .ToDictionary(x => x.Uri);
 
         var deletedSet = syncResult.DeletedResources.ToHashSet();
         db.Journals.RemoveRange(existingJournals.Where(x => x.Uri != null && deletedSet.Contains(x.Uri) && x.DavConfigId == config.Id));
@@ -399,8 +404,8 @@ public class BaseSyncWorker
             var remoteUri = new Uri(client?.BaseAddress!, resource.Uri).ToString();
             var remoteETag = resource.Etag;
             
-            if ((journalsByUri.TryGetValue(remoteUri, out var existingJournal) && existingJournal.Etag == remoteETag) ||
-                (notesByUri.TryGetValue(remoteUri, out var existingNote) && existingNote.Etag == remoteETag) || string.IsNullOrEmpty(remoteUri))
+            if ((journalsByUid.TryGetValue(remoteUri, out var existingJournal) && existingJournal.Etag == remoteETag) ||
+                (notesByUid.TryGetValue(remoteUri, out var existingNote) && existingNote.Etag == remoteETag) || string.IsNullOrEmpty(remoteUri))
             {
                 continue;
             }

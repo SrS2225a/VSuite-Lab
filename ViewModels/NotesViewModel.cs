@@ -243,6 +243,7 @@ public partial class NotesViewModel : ViewModelBase
 
     private async Task RefreshForInstance(DavConfig config)
     {
+        _db.ChangeTracker.Clear();
         GroupedNotes.Clear();
 
         var toRemove = Notes.Where(n => n.DavConfigId == config.Id).ToList();

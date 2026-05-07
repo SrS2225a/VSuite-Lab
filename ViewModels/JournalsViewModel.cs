@@ -245,6 +245,7 @@ public partial class JournalsViewModel : ViewModelBase
 
     private async Task RefreshForInstance(DavConfig config)
     {
+        _db.ChangeTracker.Clear();
         GroupedJournals.Clear();
 
         var toRemove = Journals.Where(n => n.DavConfigId == config.Id).ToList();

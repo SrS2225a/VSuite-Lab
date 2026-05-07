@@ -405,8 +405,6 @@ public class IcsUtils
 
         foreach (var a in target.Attachments)
         {
-            if (string.IsNullOrWhiteSpace(a.Uri)) continue;
-
             var att = new Attachment(a.Uri)
             {
                 FormatType = a.ContentType
