@@ -237,7 +237,7 @@ public partial class NotesViewModel : ViewModelBase
         foreach (var category in uniqueCategoires)
             AllCategories.Add(category);
 
-        SelectedNote = new();
+        SelectedNote = new CalDavNote();
         Refresh();
     }
 

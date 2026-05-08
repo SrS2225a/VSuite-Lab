@@ -239,7 +239,7 @@ public partial class JournalsViewModel : ViewModelBase
         foreach (var category in uniqueCategoires)
             AllCategories.Add(category);
 
-        SelectedJournal = new();
+        SelectedJournal = new CalDavJournal();
         Refresh();
     }
 
