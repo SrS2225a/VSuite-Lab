@@ -401,17 +401,45 @@ namespace VSuiteLab.ViewModels
             switch (SelectedTabIndex)
             {
                 case 0:
-                    SelectedTabContent = new JournalsView() { DataContext = JournalsViewModel };
+                {
+                    var view = new JournalsView
+                    {
+                        DataContext = JournalsViewModel
+                    };
+
+                    view.Loaded += (_, _) => { JournalsViewModel.CancelNoteSelection(); };
+
+                    SelectedTabContent = view;
                     QueryBuilder.SetAvailableFields(QuerySchemaRegistry.Get<CalDavJournal>());
                     break;
+                }
                 case 1:
-                    SelectedTabContent = new NotesView() { DataContext = NotesViewModel };
+                {
+                    var view = new NotesView
+                    {
+                        DataContext = NotesViewModel
+                    };
+
+                    view.Loaded += (_, _) => { NotesViewModel.CancelNoteSelection(); };
+
+                    SelectedTabContent = view;
+
                     QueryBuilder.SetAvailableFields(QuerySchemaRegistry.Get<CalDavNote>());
                     break;
+                }
                 case 2:
-                    SelectedTabContent = new TasksView() { DataContext = TasksViewModel };
+                {
+                    var view = new TasksView
+                    {
+                        DataContext = TasksViewModel
+                    };
+
+                    view.Loaded += (_, _) => { TasksViewModel.CancelNoteSelection(); };
+
+                    SelectedTabContent = view;
                     QueryBuilder.SetAvailableFields(QuerySchemaRegistry.Get<CalDavTask>());
                     break;
+                }
                 default:
                     SelectedTabContent = null;
                     break;
