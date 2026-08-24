@@ -31,7 +31,7 @@ $ICON_PATH = Join-Path $ROOT "Assets\icon.ico"
 $TOOLS_DIR = Join-Path $ROOT ".tools"
 $IS_DIR = Join-Path $TOOLS_DIR "innosetup"
 $ISCC = Join-Path $IS_DIR "ISCC.exe"
-$IS_URL = "https://jrsoftware.org/download.php/is.exe"
+$IS_URL = "https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe"
 
 if (-not (Test-Path $ISCC)) {
     Write-Host "Installing Inno Setup..."
